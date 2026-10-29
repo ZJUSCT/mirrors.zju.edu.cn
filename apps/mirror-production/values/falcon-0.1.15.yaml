@@ -142,12 +142,10 @@ ui:
     # rendered config references it via ${...} expansion only.
     clientSecret: ""
     existingSecret: falcon-github-oauth
-    allowedUserIDs:
-      - '16241583'
-      - '22582237'
-      - '35755846'
-      - '52441312'
-      - '114898949'
+    # A user ID or active membership in any listed organization grants access.
+    allowedUserIDs: []
+    allowedOrganizations:
+      - ZJUSCT
   route:
     hostnames:
       - falcon.mirrors.zjusct.io

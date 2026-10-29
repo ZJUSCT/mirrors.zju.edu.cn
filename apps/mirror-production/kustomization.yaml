@@ -68,11 +68,11 @@ configMapGenerator:
 helmCharts:
   - name: falcon
     repo: oci://ghcr.io/zjusct/charts
-    version: 0.1.14
+    version: 0.1.15
     includeCRDs: true
     releaseName: falcon
     namespace: mirror-production
-    valuesFile: values/falcon-0.1.14.yaml
+    valuesFile: values/falcon-0.1.15.yaml
   - name: mirror-front
     repo: oci://ghcr.io/zjusct/charts
     version: 0.2.0
