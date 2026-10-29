@@ -1,0 +1,261 @@
+replicaCount: 2
+nameOverride: ""
+fullnameOverride: ""
+
+# Override only when adopting a Deployment with an existing immutable selector.
+# Empty uses app.kubernetes.io/name and app.kubernetes.io/instance.
+selectorLabels: {}
+
+image:
+  repository: ghcr.io/zjusct/mirror-front
+  # Track the latest published frontend image.
+  tag: latest
+  digest: ""
+  pullPolicy: Always
+imagePullSecrets: []
+
+annotations: {}
+podAnnotations: {}
+podLabels: {}
+
+# Allows rolling updates even when strict anti-affinity occupies all eligible nodes.
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 0
+    maxUnavailable: 1
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 101
+  runAsGroup: 101
+  fsGroup: 101
+  seccompProfile:
+    type: RuntimeDefault
+
+# Applied to both containers.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 128Mi
+  limits:
+    cpu: "1.5"
+    memory: 256Mi
+
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 2
+  timeoutSeconds: 1
+  failureThreshold: 15
+readinessProbe:
+  httpGet:
+    path: /manifest.webmanifest
+    port: http
+  periodSeconds: 5
+  timeoutSeconds: 2
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 2
+
+nodeSelector: {}
+tolerations: []
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: zjusct.io/pool
+              operator: In
+              values: [frontend]
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: mirror-front
+
+service:
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+
+httpRoute:
+  enabled: true
+  annotations: {}
+  parentRefs:
+    - name: envoy-gateway-production
+  hostnames:
+    - mirrors.zju.edu.cn
+    - mirror.zju.edu.cn
+
+nginx:
+  # Maps of filenames to literal NGINX snippets. Files should end in .conf.
+  # These extend the image's configuration through its http.d and server.d includes.
+  http:
+    campus-network.conf: |
+      # Envoy appends the downstream address to X-Forwarded-For. Trust only
+      # connections from the cluster Pod networks and select that rightmost value.
+      set_real_ip_from 172.26.0.0/16;
+      set_real_ip_from fda8:d4b1:99d0:100::/56;
+      real_ip_header X-Forwarded-For;
+      real_ip_recursive off;
+
+      geo $zju_network_mode {
+          default 0;
+
+          # Campus-internal IPv4 clients.
+          10.0.0.0/8 1;
+
+          # ZJU public IPv4 egress prefixes.
+          210.32.0.0/20 1;
+          222.205.0.0/17 1;
+          210.32.128.0/19 1;
+          210.32.160.0/21 1;
+          210.32.168.0/22 1;
+          210.32.172.0/23 1;
+          210.32.174.0/24 1;
+          210.32.176.0/20 1;
+          58.196.192.0/19 1;
+          58.196.224.0/20 1;
+
+          # ZJU IPv6 prefixes.
+          2001:da8:e000::/48 2;
+          2001:da8:e009::/48 2;
+          2001:250:6400::/48 2;
+          2402:4b80::/32 2;
+          240c:c781::/33 2;
+          2408:8642:891::/48 2;
+          2408:8640:892::/48 2;
+          2408:8642:893::/48 2;
+      }
+    mirrorz.conf: |
+      proxy_cache_path /tmp/mirrorz-cache levels=1:2 keys_zone=mirrorz:1m max_size=8m inactive=30s use_temp_path=off;
+  server:
+    campus-network.conf: |
+      location = /api/is_campus_network {
+          if ($request_method != GET) {
+              return 405;
+          }
+
+          default_type application/json;
+          add_header Cache-Control "no-store" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          return 200 "$zju_network_mode\n";
+      }
+    mirrorz.conf: |
+      location = /mirrorz.json {
+          proxy_pass http://falcon-mirrorz;
+          proxy_set_header Host $host;
+          proxy_set_header Connection "";
+          proxy_http_version 1.1;
+          proxy_cache mirrorz;
+          proxy_cache_key "$host$uri";
+          proxy_cache_valid 200 1s;
+          proxy_cache_lock on;
+          proxy_cache_lock_timeout 2s;
+          proxy_cache_lock_age 2s;
+          proxy_buffering on;
+          add_header Access-Control-Allow-Origin * always;
+          add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+          add_header X-Mirrorz-Cache $upstream_cache_status;
+      }
+  tmpSizeLimit: 32Mi
+
+statistics:
+  enabled: true
+  # The exporter always runs as a single-replica Deployment, whatever the
+  # mirror-front replica count is; there is deliberately no replicas knob.
+  # When enabled, the chart also injects an NGINX snippet into mirror-front
+  # that proxies /statistics-data/ to the exporter Service (uncached).
+  image:
+    repository: ghcr.io/zjusct/mirror-front-statistics-exporter
+    # Track the latest published exporter image.
+    tag: latest
+    digest: ""
+    pullPolicy: Always
+  grafanaURL: http://kube-prometheus-stack-grafana.kube-prometheus-stack.svc
+  # Must exist in this release's namespace; the chart never generates credentials.
+  existingSecret: grafana-credentials
+  auth:
+    # basic or token; only the selected keys are mounted into the exporter.
+    mode: basic
+    usernameKey: admin-user
+    passwordKey: admin-password
+    tokenKey: token
+  config:
+    width: 1200
+    height: 500
+    lookback: 24h
+    timezone: Asia/Shanghai
+    panels:
+      # GitOps-managed Mirror Front Statistics dashboard
+      - id: network-bits-received
+        title:
+          zh: 入站比特速率
+          en: Current Rate of Bits Received
+        dashboardUid: mirror-front-statistics
+        panelId: 1
+        variables:
+          datasource: PAE45454D0EDB9216
+      - id: network-bits-transmitted
+        title:
+          zh: 出站比特速率
+          en: Current Rate of Bits Transmitted
+        dashboardUid: mirror-front-statistics
+        panelId: 2
+        variables:
+          datasource: PAE45454D0EDB9216
+      - id: compute-cpu-usage
+        title:
+          zh: CPU 使用
+          en: CPU Usage
+        dashboardUid: mirror-front-statistics
+        panelId: 3
+        variables:
+          datasource: PAE45454D0EDB9216
+      - id: compute-memory-usage
+        title:
+          zh: 内存使用
+          en: Memory
+        dashboardUid: mirror-front-statistics
+        panelId: 4
+        variables:
+          datasource: PAE45454D0EDB9216
+      - id: compute-disk-iops
+        title:
+          zh: 磁盘 IOPS（读 + 写）
+          en: IOPS (Reads + Writes)
+        dashboardUid: mirror-front-statistics
+        panelId: 5
+        variables:
+          datasource: PAE45454D0EDB9216
+      - id: compute-disk-throughput
+        title:
+          zh: 磁盘吞吐量（读 + 写）
+          en: Throughput (Read + Write)
+        dashboardUid: mirror-front-statistics
+        panelId: 6
+        variables:
+          datasource: PAE45454D0EDB9216
+  outputSizeLimit: 256Mi
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi

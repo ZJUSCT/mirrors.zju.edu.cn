@@ -1,0 +1,36 @@
+metadata:
+  name: cpan
+info:
+  description: Perl 模块与源码的综合归档网络
+  upstream: rsync://cpan-rsync.perl.org/CPAN/ # 官方 Tier 1 汇聚入口，当前无其他官方 rsync 候选
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+storage:
+  size: 64Gi
+  volumeName: pvc-c8498d33-ca3b-43a1-9c95-507c10e03125
+publish:
+  aliases:
+    - /CPAN
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.cpan.org/
+      - https://www.cpan.org/misc/how-to-mirror.html
+      - https://www.cpan.org/indices/mirrors.json
+    policy:
+      - 完整或公共镜像应使用 rsync 并启用 --delete，每日同步一次。
+      - 可行时推荐使用即时镜像；Tier 1 镜像必须使用即时镜像。
+      - 官方当前不接受新增公共镜像。
+  upstreams:
+    - url: rsync://cpan-rsync.perl.org/CPAN/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 TCP 建连约 200–230ms，单文件 rsync 约 2.7MiB/s
+      note: 官方 Tier 1 汇聚入口；仅提供 CPAN 模块，当前未发布 AAAA 记录。

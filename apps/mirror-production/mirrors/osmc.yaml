@@ -1,0 +1,50 @@
+metadata:
+  name: osmc
+info:
+  description: OSMC 媒体中心发行版软件仓库
+  upstream: rsync://rsync.samnazarko.co.uk/cdn/
+sync:
+  type: rsync
+  interval: 4h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 284Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://osmc.tv/about/
+    - https://osmc.tv/download/
+    - https://osmc.tv/wiki/development/mirroring-osmc
+    - rsync://rsync.samnazarko.co.uk/cdn/
+    policy:
+    - 官方 Mirroring OSMC 文档要求镜像链路至少 1Gbps；必须支持 rsync 拉取、HTTP/HTTPS 服务和对外 rsync endpoint；镜像系统至少每 4 小时同步一次。
+    - 官方给出完整命令 rsync -auP --delete --delay-updates rsync://rsync.samnazarko.co.uk/cdn /var/www/html；因此上游范围是 cdn
+      根，包括 osmc/ 和 raspbmc/，不是只取当前设备目录。
+    - 工作站 IPv4 rsync 列表确认 cdn 根有 osmc/、raspbmc/、sync-track；TUNA 初始化日志为 76,157 项、55,921 普通文件、约 176.07 GiB，范围与官方
+      cdn 根兼容。
+    - 官方文档没有更短的内容发布周期；4h 是明确的最低同步频率，应将 interval/timeout 设为 4h。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/osmc/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-03'
+    note: TUNA 首轮初始化已成功；仅作为已完成初始化来源，当前保持暂停。
+  - url: rsync://rsync.samnazarko.co.uk/cdn/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: 官方 Mirroring OSMC 文档指定的主源；IPv4 rsync 列表成功，显示 osmc、raspbmc、sync-track。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
+    reported_size: 176.07G

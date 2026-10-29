@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: rook-ceph
+resources:
+  - resources/namespace.yaml
+helmCharts:
+  - name: rook-ceph
+    repo: oci://quay.io/rook
+    releaseName: rook-ceph
+    namespace: rook-ceph
+    valuesFile: values/rook-ceph-v1.20.7.yaml
+    version: v1.20.7
+    includeCRDs: true
+  - name: ceph-csi-drivers
+    repo: https://ceph.github.io/ceph-csi-operator
+    releaseName: ceph-csi-drivers
+    namespace: rook-ceph
+    valuesFile: values/ceph-csi-drivers-1.0.4.yaml
+    version: 1.0.4
+  - name: rook-ceph-cluster
+    repo: oci://quay.io/rook
+    releaseName: rook-ceph-cluster
+    namespace: rook-ceph
+    valuesFile: values/rook-ceph-cluster-v1.20.7.yaml
+    version: v1.20.7
+    includeCRDs: true

@@ -1,0 +1,53 @@
+metadata:
+  name: dart-pub
+info:
+  description: Dart 与 Flutter 的 pub 软件包仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/dart-pub/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 336h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 2148Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://dart.dev/tools/pub/custom-package-repositories
+    - https://github.com/dart-lang/pub/blob/master/doc/repository-spec-v2.md
+    - https://pub.dev/help/api
+    - https://mirrors.tuna.tsinghua.edu.cn/help/dart-pub/
+    - https://github.com/tuna/tunasync-scripts/blob/master/pub-mirror.py
+    policy:
+    - 官方 Dart 文档支持用 PUB_HOSTED_URL 指定镜像，要求镜像实现 Hosted Pub Repository Specification Version 2 的 REST API；未在所读官方文档中找到
+      rsync 服务、镜像注册流程或强制全量同步频率。
+    - 官方 pub.dev/help/api 专门提供用于归档和镜像的 /api/package-names：必须跟随 nextUrl 分页，不得假设顺序、页大小或 URL 结构固定；文档要求客户端至少缓存2小时，示例
+      Cache-Control 为 max-age=28800（8小时），应遵循实际响应缓存头。24h 是本地建议策略。
+    - 每个包需读取 /api/packages/<name> 的 latest、versions、retracted、archive_url 与 archive_sha256，按元数据取得压缩包并验证摘要。archive_url
+      可为临时地址；镜像须改写为本地公开 URL，同时保留摘要和撤回状态，不能只递归抓取 pub.dev 首页。
+    - TUNA rsync 根仅含 api/ 与 packages/；具体元数据保存为 api/packages/http/meta.json，而客户端协议请求为 /api/packages/http。TUNA 专用
+      pub-mirror.py 枚举官方 API、校验压缩包 SHA256、改写 archive_url 并生成 meta.json；发布端还须将 API 请求映射到该文件并返回 JSON。
+    - 实测 http 1.6.0 官方 archive_url 为 https://pub.dev/api/archives/http-1.6.0.tar.gz，TUNA 则为 https://mirrors.tuna.tsinghua.edu.cn/dart-pub/packages/http/versions/1.6.0.tar.gz，两者
+      archive_sha256 相同。原样复制 TUNA 元数据会继续让客户端从 TUNA 下载，不能视为本地镜像验证成功。
+    - 现有 rsync、ftpsync、qfm、tsumugu 通用模板不能完成 Pub API 分页、JSON 地址改写和完整性驱动的发布；需要专用 Pub 同步器及 HTTP API 路由。TUNA 脚本可作实现参考，不直接执行：缓存策略、失败返回值、元数据更新判断和删除保护须先审查。
+    - 本次对 https://mirrors.zju.edu.cn/dart-pub/api/packages/http 的只读请求返回 HTTP 200 的站点 HTML，非协议 JSON；这单独证明公开 API
+      尚未通过功能验证，不能仅凭 HTTP 200 宣告可用，也不能仅据此判定后端快照缺失。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/dart-pub/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-04'
+    note: 初始化任务 dart-pub-sync-1791027614 已成功；源 api/、packages/ 布局已只读核对，仍保持暂停。
+  - url: https://pub.dev
+    stack: unknown
+    status: candidate
+    surveyed_at: '2026-10-04'
+    note: 官方包名和包版本 API 均返回200；非静态目录源，不声称已完成双栈或同步兼容性验证。
+  bootstrap:
+    note: TUNA 初始化成功；元数据 archive_url 指向 TUNA，ZJU 公开 API 请求返回 HTML，需实现专用同步及发布适配后验证，再决定恢复自动同步。

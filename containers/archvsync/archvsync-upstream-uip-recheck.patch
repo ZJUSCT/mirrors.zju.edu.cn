@@ -1,0 +1,195 @@
+From: Baolin Zhu <zhubaolin@zju.edu.cn>
+Subject: [PATCH] Re-check upstream after stage 2
+
+Stage 2 can copy a foreign Archive-Update-in-Progress file that
+appeared while it was running. The old check runs only before stage 2,
+so that file was published and the run still exited 0 and wrote a
+trace.
+
+Look again after a successful stage 2. A foreign file takes the same
+retry path as a pre-stage2 hit: sleep UIPSLEEP and rerun from stage 1,
+sharing the UIPRETRIES counter. The trace is written only after a
+stage 2 that leaves no foreign file. When the retries run out the
+script exits with an error and writes no trace.
+
+Applies to archvsync master (6533577), independently of
+archvsync-container-logging.patch.
+---
+diff --git a/README.md b/README.md
+index 009ded8..507e881 100644
+--- a/README.md
++++ b/README.md
+@@ -110,6 +110,15 @@ When the script receives a second push while it is running and syncing
+ the archive it won't ignore it. Instead it will rerun the
+ synchronisation step to ensure the archive is correctly synchronised.
+ 
++The same applies when the upstream mirror itself starts an update during
++our run. A foreign `Archive-Update-in-Progress-*` file is checked before
++stage 2 and again after stage 2. Stage 2 can copy one that appeared
++while it was running; accepting that tree would publish indexes from
++the middle of the upstream push. The run is retried from stage 1, and
++the trace file is written only once stage 2 finishes with no such file
++left. If the retries run out, the script exits with an error and writes
++no trace.
++
+ Scripts that fail to do that risk ending up with an inconsistent archive.
+ 
+ ### Can do multi-stage archive synchronisations
+diff --git a/bin/ftpsync b/bin/ftpsync
+index 25cefe5..fd65587 100755
+--- a/bin/ftpsync
++++ b/bin/ftpsync
+@@ -135,6 +135,58 @@ run_rsync() {
+     >>"${LOG_RSYNC_ERROR}" 2>&1 || return $?
+ }
+ 
++# Look for an upstream Archive-Update-in-Progress file in $TO.
++#
++# Our own lock is ignored. A foreign AUIP means upstream started (or was
++# still in) an update that overlaps this run. Such a file is deleted: if
++# upstream is still updating, the next rsync will copy it again.
++#
++# Sets upstream_uip=true when one was found, false otherwise.
++detect_upstream_uip() {
++    upstream_uip=false
++    for aupfile in "${TO}/Archive-Update-in-Progress-"*; do
++        case "$aupfile" in
++            "${TO}/Archive-Update-in-Progress-*")
++                error "Lock file is missing, this should not happen"
++                ;;
++            "${LOCK}")
++                :
++                ;;
++            *)
++                if [[ -f $aupfile ]]; then
++                    # Remove the file, it will be synced again if
++                    # upstream is still not done
++                    rm -f "$aupfile"
++                else
++                    log "AUIP file '$aupfile' is not really a file, weird"
++                fi
++                upstream_uip=true
++                ;;
++        esac
++    done
++}
++
++# Upstream was updating. Sleep and retry while we still have attempts,
++# otherwise fail this sync. A retry re-runs stage1 before stage2, so the
++# tree is fetched again against a quiet upstream.
++#
++# Leaves result=0 when a retry was scheduled, result=1 when giving up.
++# The caller must not write a trace while a retry is pending or after
++# this gives up: the tree was copied while upstream was mid-update.
++defer_or_abort_for_upstream_uip() {
++    if [[ ${UPDATE_RETRIES} -lt ${UIPRETRIES} ]]; then
++        log "Retrying update in ${UIPSLEEP}"
++        touch "${UPDATEREQUIRED}"
++        UPDATE_RETRIES=$(($UPDATE_RETRIES+1))
++        sleep "${UIPSLEEP}"
++        result=0
++    else
++        error "Update has been retried ${UPDATE_RETRIES} times, aborting"
++        log "Perhaps upstream is still updating or there's a stale AUIP file"
++        result=1
++    fi
++}
++
+ # Check rsyncs return value
+ check_rsync() {
+     ret=$1
+@@ -657,41 +709,11 @@ while [[ -e ${UPDATEREQUIRED} ]]; do
+ 
+     # if we want stage2 *or* all
+     if [[ true = ${SYNCSTAGE2} ]] || [[ true = ${SYNCALL} ]]; then
+-        upstream_uip=false
+-        for aupfile in "${TO}/Archive-Update-in-Progress-"*; do
+-            case "$aupfile" in
+-                "${TO}/Archive-Update-in-Progress-*")
+-                    error "Lock file is missing, this should not happen"
+-                    ;;
+-                "${LOCK}")
+-                    :
+-                    ;;
+-                *)
+-                    if [[ -f $aupfile ]]; then
+-                        # Remove the file, it will be synced again if
+-                        # upstream is still not done
+-                        rm -f "$aupfile"
+-                    else
+-                        log "AUIP file '$aupfile' is not really a file, weird"
+-                    fi
+-                    upstream_uip=true
+-                    ;;
+-            esac
+-        done
++        detect_upstream_uip
+ 
+         if [[ true = ${upstream_uip} ]]; then
+             log "Upstream archive update in progress, skipping stage2"
+-            if [[ ${UPDATE_RETRIES} -lt ${UIPRETRIES} ]]; then
+-                log "Retrying update in ${UIPSLEEP}"
+-                touch "${UPDATEREQUIRED}"
+-                UPDATE_RETRIES=$(($UPDATE_RETRIES+1))
+-                sleep "${UIPSLEEP}"
+-                result=0
+-            else
+-                error "Update has been retried ${UPDATE_RETRIES} times, aborting"
+-                log "Perhaps upstream is still updating or there's a stale AUIP file"
+-                result=1
+-            fi
++            defer_or_abort_for_upstream_uip
+         else
+             # We are lucky, it worked. Now do step 2 and sync again, this time including
+             # the packages/releases files
+@@ -702,6 +724,20 @@ while [[ -e ${UPDATEREQUIRED} ]]; do
+             STATS_TOTAL_RSYNC_TIME2=$(( STATS_TOTAL_RSYNC_TIME2 + rsync_ended - rsync_started ))
+ 
+             log "Back from rsync with returncode ${result}"
++
++            # Stage2 itself can copy a foreign AUIP. Upstream may have
++            # started a push after the check above, and a long stage2
++            # then publishes indexes from the middle of that push.
++            # Treat that the same as a pre-stage2 hit: do not accept
++            # this run. The trace is written only after the loop, once
++            # no foreign AUIP remains.
++            if [[ ${result} -eq 0 ]] || [[ ${result} -eq 24 ]]; then
++                detect_upstream_uip
++                if [[ true = ${upstream_uip} ]]; then
++                    log "Upstream archive update in progress after stage2, not accepting this sync"
++                    defer_or_abort_for_upstream_uip
++                fi
++            fi
+         fi
+     else
+         # Fake a good resultcode
+diff --git a/doc/ftpsync.conf.5.md b/doc/ftpsync.conf.5.md
+index 120f7ad..96c2dc5 100644
+--- a/doc/ftpsync.conf.5.md
++++ b/doc/ftpsync.conf.5.md
+@@ -218,13 +218,23 @@ These options can be used to include or exclude specified architectures or other
+ 
+ **UIPSLEEP**
+ :   Number of seconds to sleep before retrying to sync whenever upstream
+-    is found to be updating while our update is running
++    is found to be updating while our update is running.
++
++    Upstream is considered to be updating when a foreign
++    `Archive-Update-in-Progress-*` file is present. That check runs
++    before stage 2 and again after a successful stage 2: stage 2 can
++    copy such a file if upstream starts a push while it is running.
++    Either hit skips accepting the tree. The foreign file is removed
++    and the whole sync is retried after this delay, so stage 1 runs
++    again before the next stage 2. The trace file is written only
++    after a stage 2 that leaves no foreign file behind.
+ 
+     Default: **1200**
+ 
+ **UIPRETRIES**
+ :   Number of times the update operation will be retried when upstream
+-    is found to be updating while our update is running.
++    is found to be updating while our update is running. Hits before
++    stage 2 and hits discovered after stage 2 share this counter.
+     Note that these are retries, so: 1st attempt + retries = total attempts
+ 
+     Default: **3**

@@ -1,0 +1,41 @@
+metadata:
+  name: nix
+info:
+  description: Nix 包管理器发布文件
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/nix/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 136Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://nixos.org/manual/nix/stable/installation/
+    - https://releases.nixos.org/
+    - https://nix-releases.s3.amazonaws.com/?prefix=nix/
+    policy:
+    - Nix安装手册未规定镜像同步间隔；建议24h本地策略。
+    - 官方发布存储是S3 bucket nix-releases，nix/前缀包含版本发布、构建日志和多平台文件；匿名ListBucketResult返回IsTruncated=true，必须用marker/continuation分页。
+    - 普通HTTPS /nix/目录不是可靠入口；S3对象列表和内容需保留nix/前缀及删除语义。现有tsumugu s3-indexbuilder针对HTML，不解析此XML API，不能直接同步。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/nix/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始同步已成功（nix-sync-1790960182），当前保持 sync-paused。
+  - url: https://nix-releases.s3.amazonaws.com/?prefix=nix/
+    stack: dual
+    status: candidate
+    surveyed_at: '2026-10-03'
+    note: 官方S3 ListBucket XML可匿名读取；响应显示Prefix=nix/、MaxKeys=1000、IsTruncated=true。
+  bootstrap:
+    note: TUNA 初始同步已成功（nix-sync-1790960182）；当前仍暂停。官方为S3发布桶，现有HTTP/tsumugu模板不支持XML分页对象同步；TUNA初始化只能作为快照，保持暂停。

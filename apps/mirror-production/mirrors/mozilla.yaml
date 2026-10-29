@@ -1,0 +1,38 @@
+metadata:
+  name: mozilla
+info:
+  description: Firefox 各发布通道与 Mozilla VPN 的 APT 软件包
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/mozilla/ # 官方仅提供 HTTP；TUNA 当前与官方元数据一致
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 50Gi
+  volumeName: pvc-51305775-6100-41fa-9ece-cb77e36576be
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  # TODO: 实现 APT 仓库的 HTTP 同步工具后，改为直接从 https://packages.mozilla.org/apt/ 同步。
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://support.mozilla.org/en-US/kb/install-firefox-linux
+      - https://packages.mozilla.org/apt/
+    policy:
+      - 官方 APT 仓提供 Firefox 稳定版、Beta、Developer Edition、ESR、Nightly、语言包及 Mozilla VPN。
+      - 仓库 suite 为 mozilla，发布 all、amd64、arm64 和 i386 软件包。
+      - 官方仅提供 HTTP 和 HTTPS 仓库，未公布 rsync 上源、镜像接入规范或同步间隔。
+  upstreams:
+    - url: https://packages.mozilla.org/apt/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 68ms、9.6MiB/s
+      note: Mozilla 官方 APT 仓；仅提供 HTTP 和 HTTPS，当前同步器无法直接使用。
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/mozilla/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4/IPv6 RTT 约 30ms；IPv4 约 44MiB/s，IPv6 约 52MiB/s
+      note: 非官方同步来源；Release 元数据与官方完全一致，当前仓库约 23GB。

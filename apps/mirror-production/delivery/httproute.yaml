@@ -1,0 +1,24 @@
+# /delivery 前缀独立于 mirror-front 的 / 兜底路由：Gateway API 按最长前缀
+# 优先，不影响各镜像的发布路由；不与 Falcon 管理的任何镜像路径重叠。
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mirror-delivery
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: mirror-delivery
+    app.kubernetes.io/component: delivery-http
+spec:
+  parentRefs:
+    - name: envoy-gateway-production
+  hostnames:
+    - mirrors.zju.edu.cn
+    - mirror.zju.edu.cn
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /delivery
+      backendRefs:
+        - name: mirror-delivery
+          port: 80

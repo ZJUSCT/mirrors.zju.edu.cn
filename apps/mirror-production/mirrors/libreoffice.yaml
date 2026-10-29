@@ -1,0 +1,54 @@
+metadata:
+  name: libreoffice
+info:
+  description: LibreOffice 开源办公套件发布文件
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/tdf/ # 仅首次初始化；完成后切换 comment.upstreams 中的官方源
+sync:
+  type: rsync
+  # USTC 初始化期间按每日一次；官方源日常周期见下方注释。
+  interval: 24h
+  timeout: 24h
+  # WaitForFirstConsumer 首次落盘到 s1；PVC 绑定后可移除此选择器。
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 300Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+    # 两端均同步 TDF 根；公开路径 /libreoffice/ 直接呈现套件目录。
+    subPath: libreoffice
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://wiki.documentfoundation.org/Infra/Mirroring
+    policy:
+    - Document Foundation 明确公共 rsync 源为 rsync://rsync.documentfoundation.org/tdf-pub/；staging 源需授权，不能用于本次公开镜像。
+    - 官方要求镜像同步到顶层 tdf/，保留原目录层级，并提供 HTTPS；公共源建议每 4–8h。镜像登记需向 hostmaster@documentfoundation.org 提交运营者、tdf HTTPS/FTP/rsync URL、联系方式和带宽信息。
+    - 官方对 public repository 建议每 4–8h 同步；本站 6h 候选符合该建议，当前初始化配置仍为 24h 且暂停。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: libreoffice-sync-1790969988
+    succeeded_at: '2026-10-02T22:14:56Z'
+    published_at: '2026-10-02T22:15:05Z'
+    note: USTC bootstrap source libreoffice-sync-1790969988 于 2026-10-02T22:14:56Z UTC 成功，快照发布于 2026-10-02T22:15:05Z UTC；mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。此
+      URL 只记录首次初始化来源，不表示已切换到官方源。
+    official_cutover: 未执行；须先按下列候选源完成范围、删除集、新鲜度和完整性验收。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/tdf/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 仅作为本次首次同步种子；该镜像的 USTC bootstrap rsync 已成功，自动增量仍暂停。
+  - url: rsync://rsync.documentfoundation.org/tdf-pub/
+    surveyed_at: '2026-10-03'
+    status: candidate-unverified-registration-required
+    note: 官方公共 daemon 根列表 exit 0，根含 TIMESTAMP 和 libreoffice/；尚未完成 HTTPS 公网路径登记、生产 dry-run/真实同步，不能宣布官方 cutover。
+  verification:
+    surveyed_at: '2026-10-03'
+    checks:
+    - 公共根列表成功；TIMESTAMP 为 2026-10-03 03:42:01，libreoffice/ 子树可见。
+    - 官方文档的 4–8h 建议适用于 public repository；本地 6h 候选与之相容但仍待登记和验收。
+    caveats:
+    - 必须以公开 /tdf/ 顶层提供 HTTPS；现有 ZJU 发布配置的路径映射需父任务另行确认。staging 源不是公开候选。

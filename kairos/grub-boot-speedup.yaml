@@ -1,0 +1,43 @@
+# ZJU Mirror: keep COS_STATE/grub2/grub.cfg current across installs/upgrades.
+#
+# "kairos-agent upgrade" never rewrites COS_STATE/grub2/grub.cfg on its own
+# (only a fresh install or reset does, via grub.Install in
+# agent/pkg/action/{install,reset}.go), so a patched /etc/cos/grub.cfg baked
+# into an image would never reach nodes installed from an older image.
+#
+# These stages run chrooted into the newly deployed image (stage name
+# "<hook>-chroot"; "/dev", "/proc", "/sys" are bind-mounted, so blkid and
+# mount work), where /etc/cos/grub.cfg is the new image's file. Never copy
+# it from the plain "<hook>" stages: those run in the old-system (or live
+# installer) context and would restore the old file.
+#
+# The patched grub.cfg is self-contained (it inlines the boot assessment and
+# never sources kairos-init's grubcustom/grub_boot_assessment), so no
+# companion patching of those files is needed. A previous revision tried to
+# re-anchor their "search" lines with sed after each hook and lost the race:
+# yip executes stage steps within a hook in non-deterministic (Go map)
+# order, so kairos-init's template rewrite could land after the sed.
+name: "GRUB boot speedup maintenance"
+stages:
+  after-install-chroot:
+    - &refresh
+      name: "Refresh state GRUB config from the new image"
+      if: grep -vq "rd.immucore.uki" /proc/cmdline
+      commands:
+      - |
+        STATEDIR=/tmp/mnt/grub-refresh
+        STATE=$(blkid -L COS_STATE || true)
+        if [ -z "${STATE}" ]; then
+          echo "COS_STATE partition not found, skipping"
+        else
+          mkdir -p $STATEDIR || true
+          mount ${STATE} $STATEDIR
+          if [ -f /etc/cos/grub.cfg ] && ! cmp -s /etc/cos/grub.cfg $STATEDIR/grub2/grub.cfg; then
+            cp /etc/cos/grub.cfg $STATEDIR/grub2/grub.cfg
+          fi
+          umount $STATEDIR
+        fi
+  after-upgrade-chroot:
+    - *refresh
+  after-reset-chroot:
+    - *refresh

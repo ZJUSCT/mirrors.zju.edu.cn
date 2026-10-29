@@ -1,0 +1,48 @@
+metadata:
+  name: wireshark
+info:
+  description: Wireshark 网络协议分析器发布文件
+  upstream: rsync://rsync.wireshark.org/wsdl/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 328Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.wireshark.org/download.html
+    - https://www.wireshark.org/docs/
+    - rsync://rsync.wireshark.org/wsdl/
+    policy:
+    - Wireshark 官方下载页当前列出稳定版 4.6.9、旧稳定版 4.4.19、开发版 4.7.3，并说明可浏览主站下载区及镜像的 all-versions 历史目录。
+    - 官方下载页列出 Yamagata 的公开 rsync 镜像；项目候选 rsync.wireshark.org/wsdl 为 Wireshark 官方 rsync 服务，IPv6 列表成功，根含签名文件、docs、osx、src、win32、win64。
+    - TUNA 初始化日志为 4,360 项、4,350 普通文件、约 218.61G，根目录和平台子树与官方 rsync 列表一致；包含历史 all-versions，不能仅同步当前版本。
+    - 官方未给出固定同步周期；下载发布后应尽快更新，本站 24h 是保守周期，待运行指标后再调整。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/wireshark/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-03'
+    note: TUNA 首轮初始化已成功；仅作为已完成初始化来源，当前保持暂停。
+  - url: rsync://rsync.wireshark.org/wsdl/
+    stack: ipv6
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: 官方项目 rsync 根；IPv6 list-only 成功，目录范围与 TUNA 初始化一致。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  - url: rsync://ftp.yz.yamagata-u.ac.jp/pub/network/security/wireshark/
+    stack: ipv4
+    status: mirror
+    surveyed_at: '2026-10-03'
+    note: 官方下载页列出的日本 rsync 镜像，作为备选而非首选。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
+    reported_size: 203G

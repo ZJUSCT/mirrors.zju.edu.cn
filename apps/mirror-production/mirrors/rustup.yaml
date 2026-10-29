@@ -1,0 +1,39 @@
+metadata:
+  name: rustup
+info:
+  description: Rust 工具链与 rustup 安装程序
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/rustup/ # 官方仅提供 HTTP；TUNA 保持完整的工具链发布树
+sync:
+  type: rsync
+  interval: 12h
+  timeout: 12h
+storage:
+  size: 1Ti
+  volumeName: pvc-f1af2ca6-3968-4bea-837e-1f8efb2902b3
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  # TODO: 实现 HTTP 同步工具后，改为直接从 https://static.rust-lang.org/ 同步。
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://rust-lang.github.io/rustup/environment-variables.html
+      - https://forge.rust-lang.org/infra/channel-layout.html
+      - https://rust-lang.github.io/rustup/concepts/components.html
+      - https://doc.rust-lang.org/cargo/reference/registries.html
+    policy:
+      - 官方通过 static.rust-lang.org 发布 Rust 各发布通道的工具链清单、组件及 rustup 自更新文件。
+      - 客户端可通过 RUSTUP_DIST_SERVER 和 RUSTUP_UPDATE_ROOT 切换至镜像。
+      - 该镜像不包含 crates.io 的 Cargo 包索引与 crate 文件；官方未提供公共 rsync 上源或建议同步间隔。
+  upstreams:
+    - url: https://static.rust-lang.org/
+      stack: dual
+      surveyed_at: 2026-09-19
+      note: Rust 官方 CDN；仅提供 HTTP 和 HTTPS，当前同步器无法直接使用。
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/rustup/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4/IPv6 RTT 约 30–31ms；IPv4 约 56MiB/s，IPv6 约 69MiB/s
+      note: TUNA 的双栈 rsync 镜像；包含 dist、rustup 与 orig，当前完整树约 496GiB。

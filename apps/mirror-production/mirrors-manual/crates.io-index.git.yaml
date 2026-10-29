@@ -1,0 +1,226 @@
+# comment:
+#   official:
+#     surveyed_at: 2026-09-19
+#     docs:
+#       - https://github.com/rust-lang/crates.io-index
+#       - https://doc.rust-lang.org/cargo/reference/registries.html#registry-protocols
+#       - https://crates.io/data-access
+#     policy:
+#       - crates.io 的旧版索引以 Git 仓库发布，Cargo 使用 Git 协议时会克隆整个索引。
+#       - Git 索引仍受官方支持，适用于旧版 Cargo 或需要大部分索引元数据的工具。
+#       - 该仓库托管于 GitHub，访问须遵守 GitHub Acceptable Use Policies。
+#   upstreams:
+#     - url: https://github.com/rust-lang/crates.io-index.git
+#       stack: ipv4
+#       surveyed_at: 2026-09-19
+#       metrics: IPv4 RTT 约 144ms；smart HTTP 探测约 0.59s
+#       note: 官方旧版 Git 索引；本地以裸仓库提供 smart HTTP，config.json 仍指向官方包体 CDN。
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: crates.io-index.git
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Rust 语言软件包索引 crates.io（git 仓库）
+    upstream: https://github.com/rust-lang/crates.io-index.git
+  storage:
+    retention: 1
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      volumeMode: Filesystem
+      resources:
+        requests:
+          storage: 16Gi
+      volumeName: pvc-ea1b6794-0790-4ecc-a402-ec365db9ad29
+  sync:
+    interval: 30m
+    retryInterval: 15m
+    timeout: 6h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          fsGroup: 65532
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: gitsync
+            image: docker.io/ustcmirror/gitsync:latest
+            imagePullPolicy: Always
+            # 绕过 ustcmirror base 的 entry（su-exec 在无特权容器内致命失败，
+            # 2026-09-14 排障）；直跑 gitsync 本体，输出直达 stdout
+            command: [/bin/bash, /sync.sh]
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 65532
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: false
+            env:
+              # entry.sh 原本 export DEBUG=${DEBUG:-false}，set -u 下脚本裸引用
+              - name: DEBUG
+                value: "false"
+              # GitHub 访问走集群代理（同 homebrew 的模式）
+              - name: HTTP_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: HTTPS_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: NO_PROXY
+                value: localhost,127.0.0.1,::1,10.0.0.0/8,172.26.0.0/16,172.27.0.0/16,fda8:d4b1:99d0:100::/56,fda8:d4b1:99d0:200::/112,.svc,.cluster.local
+              - name: GITSYNC_URL
+                value: https://github.com/rust-lang/crates.io-index.git
+              # false = git clone --bare：数据集根即裸仓库
+              - name: GITSYNC_CHECKOUT
+                value: "false"
+              - name: TO
+                value: /data
+              - name: LOGDIR
+                value: /tmp
+              - name: OWNER
+                value: 65532:65532
+              - name: HOME
+                value: /tmp
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+  publish:
+    http:
+      replicas: 1
+      podTemplate:
+        spec:
+          securityContext:
+            # 与同步用户一致（65532）：裸仓库属主即 65532，git-http-backend
+            # 无 safe.directory 冲突；镜像内 spawn-fcgi/fcgiwrap 均以当前
+            # 用户运行，socket 属主随之对齐
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: git-http
+              image: ghcr.io/zjusct/git-http-backend:latest
+              imagePullPolicy: Always
+              command: [sh, -ec]
+              args:
+                - |
+                  sed 's/worker_processes  auto;/worker_processes  2;/' /etc/nginx/nginx.conf > /tmp/nginx.conf
+                  spawn-fcgi -s /tmp/fcgiwrap.socket -M 0660 -- /usr/bin/fcgiwrap
+                  exec nginx -c /tmp/nginx.conf -g 'daemon off;'
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /crates.io-index.git/info/refs?service=git-upload-pack
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /crates.io-index.git/info/refs?service=git-upload-pack
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 3
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                # 裸仓库挂在 GIT_PROJECT_ROOT 下，仓库名与公开路径一致
+                - name: mirror-data
+                  mountPath: /srv/git/crates.io-index.git
+                  readOnly: true
+                - name: git-http-config
+                  mountPath: /etc/nginx/locations
+                  readOnly: true
+              resources:
+                requests: {cpu: 50m, memory: 64Mi}
+                limits: {cpu: "1", memory: 256Mi}
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              emptyDir: {}
+            - name: git-http-config
+              configMap:
+                name: crates-io-index-git-http
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crates-io-index-git-http
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  # 共享发布 server（nginx-conf）下的 location 覆写：git 请求交
+  # git-http-backend（fcgiwrap），
+  # PATH_INFO 即 /crates.io-index.git/...，与 GIT_PROJECT_ROOT=/srv/git
+  # 下的裸仓库名对齐
+  git-http.conf: |
+    location ^~ /crates.io-index.git/ {
+        fastcgi_pass unix:/tmp/fcgiwrap.socket;
+        include /etc/nginx/fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /usr/libexec/git-core/git-http-backend;
+        fastcgi_param GIT_HTTP_EXPORT_ALL "";
+        fastcgi_param GIT_PROJECT_ROOT /srv/git;
+        fastcgi_param PATH_INFO $uri;
+        fastcgi_read_timeout 300;
+    }

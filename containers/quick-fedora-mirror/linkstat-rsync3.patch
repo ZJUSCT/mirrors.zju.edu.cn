@@ -1,0 +1,40 @@
+From: Baolin Zhu <zhubaolin@zju.edu.cn>
+Subject: [PATCH] Fix stale-file-list detection for rsync 3.x daemon mode
+
+rsyserr() in rsync 3.x always prefixes its output with the process
+role in brackets, e.g. "rsync: [sender] link_stat ... failed: ..." —
+see rsync log.c rsyserr(), which formats RSYNC_NAME ": [%s] " with
+the return value of who_am_i().  When a --files-from entry no longer
+exists on the server, the sender reports it through this path (flist.c
+send_file_list, the link_stat error at the top level of the per-arg
+loop), so the stderr line always carries the [sender] prefix in daemon
+mode.  The old grep pattern anchored on '^rsync: link_stat' can never
+match that format, so the "file list is outdated" early-exit never
+triggered: code 23 fell through to the generic retry loop, which
+resent the same stale --files-from list up to MAXRETRIES times.
+
+Fix: use two grep patterns — one matching rsync 3.x format with the
+[role] prefix, one matching rsync 2.x format without.
+
+Detected during a first-sync of fedora-enchilada (1.19M files) against
+dl.fedoraproject.org: each retry cycle spent ~20 minutes in server-side
+list processing, produced 100+ link_stat ENOENT errors, then exited 23
+again, looping until MAXRETRIES.
+
+Applies to quick-fedora-mirror master (ee1f19f).
+--- a/quick-fedora-mirror
++++ b/quick-fedora-mirror
+@@ -380,7 +380,12 @@
+             #     (could be a file list problem)
+             if [[ $rr -eq 23 && -f $errlog ]] ; then
+                 # See if it we tried to tranfer files that don't exist
+-                grep -q '^rsync: link_stat .* failed: No such file or directory (2)$' $errlog
++                # rsync 3.x rsyserr() prefixes output with the process
++                # role ("rsync: [sender] link_stat ..."); daemon mode also
++                # appends "(in module)" via full_fname().  Match without
++                # anchoring on prefix or suffix so 2.x and 3.x both work.
++                grep -q 'rsync: .*\[.*\] link_stat .* failed: No such file or directory' $errlog \
++                 || grep -q 'rsync: link_stat .* failed: No such file or directory' $errlog
+                 if (( ? == 0 )); then
+                     logit e "Looks like the file list is outdated."
+                     (>&2 echo "Looks like the file list is outdated.")

@@ -1,0 +1,33 @@
+metadata:
+  name: bioconductor
+info:
+  description: 用于生物数据严谨、可重复分析的开源软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/bioconductor/ # 官方 SSH 源需申请访问且当前生成器不支持，暂用 TUNA
+sync:
+  type: rsync
+  interval: 168h
+  timeout: 24h
+storage:
+  size: 1Ti
+  volumeName: pvc-d7014f22-53f7-494f-9d49-e38383834bf9
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://bioconductor.org/about/
+      - https://bioconductor.org/about/mirrors/
+      - https://bioconductor.org/about/mirrors/mirror-how-to/
+    policy:
+      - 官方同步源通过 SSH 提供 rsync，需提交 SSH 公钥和出口 IP 申请访问；release 与 devel 需分别同步。
+      - release 建议每月同步一至两次；devel 最多每周同步一次。
+      - 公共镜像必须提供 HTTPS 服务。
+  upstreams:
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/bioconductor/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4/IPv6 RTT 约 30ms，单文件 rsync 约 38MiB/s
+      note: 官方公共镜像列表收录的清华大学镜像；MOTD 提供 bioconductor 模块。

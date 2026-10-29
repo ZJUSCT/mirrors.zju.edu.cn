@@ -1,0 +1,53 @@
+metadata:
+  name: rudder
+info:
+  description: Rudder 配置管理平台软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/rudder/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 16Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://docs.rudder.io/reference/current/installation/server/debian.html
+    - https://docs.rudder.io/reference/current/installation/server/rhel.html
+    - https://repository.rudder.io/
+    - https://repository.rudder.io/apt/latest/
+    - https://repository.rudder.io/rpm/latest/
+    policy:
+    - 已阅读的官方安装/仓库文档未规定第三方镜像同步间隔；建议后续每日（24h）检查一次作为本地低负载策略，非官方要求，当前暂停时不生效。
+    - 官方公开源 repository.rudder.io 提供 APT 与 RPM；Debian/Ubuntu 安装文档使用 apt/9.1/<suite> main 并要求导入 rudder_apt_key.gpg；LTS
+      订阅源是另一主机 download.rudder.io，需要账号认证，不属于本次公共镜像。
+    - TUNA rudder.sh 当前仅更新 latest：APT https://repository.rudder.io/apt/latest/ -> apt/latest/，选 Ubuntu LTS 与 Debian
+      current、main/amd64；RPM https://repository.rudder.io/rpm/latest/RHEL_<ver>/ -> rpm/rudderlatest-RHEL_<ver>/，选
+      x86_64。缓存脚本 @rhel-current 展开为 9,10。
+    - 当前 TUNA 仍保留 apt/4.3,5.0,6.0 与 rpm/rudder4.3-RHEL_7,rudder5.0-RHEL_7,rudder6.0-RHEL_7 历史树；这不等于当前脚本仍更新它们，迁移时须明确保留策略。官方
+      latest 当前重定向到 9.1，RPM 根还含 SLES、AL、RHEL_8 等 TUNA 未选子树。
+    - 官方仓库根匿名 GET 成功，含 apt/rpm/tools/sources/plugins/maven 等多种树。现有根目录 tsumugu 试验在目录解析阶段退出3；即使修复解析器，完整根同步仍会扩大范围并把
+      RPM 路径改成 rpm/latest/RHEL_9，而非现有 rpm/rudderlatest-RHEL_9。
+    - 需要 APT/YUM 索引同步和 RPM 目标目录重写，或新增多子树映射实现并保留历史树；官方未在已读安装文档公布 rsync 镜像端点。现有 qfm 依赖 Fedora filelist/rsync，不能用作一般
+      YUM HTTP 同步器，保持暂停。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/rudder/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: TUNA 初始同步已成功；当前 sync-paused，不作为未获授权的长期同步源。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  - url: https://repository.rudder.io/
+    stack: dual
+    status: hold
+    surveyed_at: '2026-10-02'
+    note: 已确认公开官方 APT/RPM 源，无需订阅凭证；TUNA 子集与 RPM 重命名要求阻止直接按整根同步。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  bootstrap:
+    note: TUNA 初始同步已成功（rudder-sync-1790957298）；当前保持 sync-paused。官方文档和现有布局调查已完成；官方源可访问，但 TUNA 仅镜像 APT/YUM 子集且重写
+      RPM 路径，另保留历史树；当前目录解析失败，修复解析也不能解决映射，需专用 APT/YUM 多子树同步。

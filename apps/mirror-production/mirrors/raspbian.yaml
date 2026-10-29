@@ -1,0 +1,34 @@
+metadata:
+  name: raspbian
+info:
+  description: 针对 Raspberry Pi 硬件优化的 Debian 衍生发行版软件包仓库
+  upstream: rsync://archive.raspbian.org/archive/ # Raspbian 官方主仓库
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 1Ti
+  volumeName: pvc-fe9a06af-17e6-488d-b827-d6988c6caea9
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.raspbian.org/
+      - https://www.raspbian.org/RaspbianRepository
+      - https://www.raspbian.org/RaspbianMirrors
+    policy:
+      - Raspbian 是基于 Debian、针对 Raspberry Pi 硬件优化的独立项目，不隶属于 Raspberry Pi Foundation。
+      - 官方推荐使用 raspmirror 保证一致性并降低源站负载，同时继续支持公共镜像通过 archive.raspbian.org::archive 同步完整仓库。
+      - 列入官方镜像列表须至少每日同步两次，并至少提供 HTTP 和 rsync 服务。
+      - 加入镜像重定向系统须明确授权；美国和欧洲的新节点还须支持 IPv6 和 rsync。
+  upstreams:
+    - url: rsync://archive.raspbian.org/archive/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 267ms；IPv6 RTT 约 244ms；rsync 约 2.8MiB/s
+      note: Raspbian 官方主仓库；无 MOTD，archive 模块当前约 659GiB。

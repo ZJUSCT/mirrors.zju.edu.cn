@@ -1,0 +1,40 @@
+metadata:
+  name: termux-its-pointless
+info:
+  description: Termux 的 its-pointless 第三方软件包仓库
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/termux-its-pointless/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 12Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://its-pointless.github.io/
+    - https://github.com/its-pointless/its-pointless.github.io
+    - https://raw.githubusercontent.com/its-pointless/its-pointless.github.io/master/setup-pointless-repo.sh
+    policy:
+    - 这是its-pointless个人第三方Termux仓库，不是Termux官方仓库。安装脚本按Termux版本选择/files/24或/files/21，使用https://its-pointless.github.io/pointless.gpg及suite=termux、component=extras。
+    - 当前官方站点根只有‘it is pointless yep its pointless’，/files/返回404；GitHub仓库仍可见旧deb、pointless.gpg和setup脚本，但没有可核实的当前发布周期或维护承诺。
+    - 未发现官方rsync端点、镜像政策或固定同步周期；现配置24h只能作为本地选择，不能写成官方建议。
+    - 必须保留第三方标签、Release/Packages签名和expiry检查；不能执行上游setup脚本，也不能把404解释为所有旧包必然删除。
+  bootstrap:
+    note: USTC bootstrap已完成；官方生产cutover尚未发生。当前官方/files不可用且无可验证rsync，保持USTC静态归档并暂停自动切换；任何恢复需先验证具体suite、索引签名、包时间戳和维护状态。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/termux-its-pointless/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete-third-party
+    note: USTC初始化源；Oct2状态容量4.62GiB，非当前官方可用性保证。
+  - url: https://its-pointless.github.io/files/
+    surveyed_at: '2026-10-03'
+    status: official-http-404
+    note: 安装脚本历史上引用/files/24与/files/21；本次/files/返回404，不能作为生产cutover源。

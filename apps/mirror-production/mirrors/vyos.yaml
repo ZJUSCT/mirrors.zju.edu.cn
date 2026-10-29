@@ -1,0 +1,41 @@
+metadata:
+  name: vyos
+info:
+  description: 面向路由器和防火墙的 VyOS 网络操作系统镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/vyos/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 12Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://packages.vyos.net/
+    - https://docs.vyos.io/en/latest/installation/install.html
+    - https://raw.githubusercontent.com/vyos/vyos-build/current/README.md
+    policy:
+    - 官方packages.vyos.net根公开releases/、repositories/、saltproject/、source-mirror/、tarballs/及vyos_dev_public.key/asc；这是VyOS发布、APT仓库、源镜像与构建物的混合HTTP树，不应描述为仅ISO或仅APT。
+    - VyOS文档区分Rolling、Release Candidate和LTS；Rolling持续接收最新修复，LTS保持多年维护且签名，具体发行版本在releases/tarballs目录按代号组织。
+    - 官方安装文档要求用VyOS发布签名公钥/minisign验证镜像；rolling公钥由vyos-nightly-build仓库公开。保留签名文件和验证路径，不能把HTTP目录200当作镜像完整性。
+    - packages.vyos.net:873连接超时(exit 35)，未发现可用官方rsync模块；官方候选是HTTPS静态树。
+    - 未发现官方固定同步周期；现配置24h是本地选择，不是VyOS政策。现有rsync类型不能直接切HTTPS，生产cutover保持阻塞。
+  bootstrap:
+    note: USTC bootstrap已完成并仍是当前种子；官方生产cutover尚未发生。必须先确定要发布releases、repositories、tarballs、source-mirror哪些范围及各自签名校验，不能把官方根整树替换成仅一个目录。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/vyos/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC初始化源；Oct2状态容量4.87GiB，非官方完整容量保证。
+  - url: https://packages.vyos.net/
+    surveyed_at: '2026-10-03'
+    status: official-http-no-rsync
+    note: 根目录可列releases/circinus,sagitta、repositories/rolling等；部分版本目录受403保护，不能据此推断目录为空。daemon rsync timeout，未切换。

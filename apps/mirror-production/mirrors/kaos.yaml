@@ -1,0 +1,66 @@
+metadata:
+  name: kaos
+info:
+  description: 专注 KDE 与 Qt 的 KaOS Linux 发行版
+  upstream: rsync://kaosx.org/kaos/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 36Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+  aliases:
+  - /KaOS
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://kaosx.us/
+    - https://kaosx.us/packages/mirrors.php
+    - https://kaosx.us/pacman/
+    - http://kaosx.org/repo/
+    - https://repo.kaosx.us/
+    policy:
+    - KaOS 官方说明仓库分为 core、main、apps，build 为测试入口；镜像实际还包含 dinit、kde-next、staging 及根目录 ISO/签名/校验和。本次同步完整模块根目录，保持 TUNA
+      的目录布局。
+    - 官方当前镜像状态页列出 http://kaosx.org/repo/ 且标记 Fully synced；同一官方域名的 rsync daemon 实测公开 kaos 模块，rsync://kaosx.org/kaos/
+      根目录与 TUNA 初始化布局一致。
+    - 旧 rsync://kaosx.tk/kaos/ 域名当前无法解析；这不是 KaOS 停止提供 rsync 的证据，应改用当前官方 kaosx.org。
+    - 生产 IPv4 rsync dry-run 已完整读取官方模块并正常结束，但预计删除 188 个普通包文件，超过 100 条保护阈值；控制器在真实同步前停止，当前仍保持暂停。
+    - 已阅读官网、当前镜像状态和 Pacman 文档，未找到镜像同步间隔的官方规定；建议暂用本站 24h，并将常规 timeout 同步为 24h。
+    - 已逐条审查 188 条删除：139 条同库版本更新、44 条 build 包按相同文件名晋级稳定库、5 条 build 旧版本由稳定库更新版本替代；每条均有官方当前全树和仓库数据库确认的替代包，没有目录、ISO、索引或无替代包删除。详见
+      research/evidence/kaos/deletion-review.md；可在复核当前差异后对本次明确集合作受限例外，不应全局放宽删除保护。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/KaOS/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-02'
+    note: 已完成的一次性 TUNA 初始化来源；当前暂停自动同步。
+  - url: rsync://kaosx.tk/kaos/
+    stack: unresolved
+    status: unavailable
+    surveyed_at: '2026-10-02'
+    note: 旧域名当前 DNS 不可解析，弃用该历史候选。
+  - url: rsync://kaosx.org/kaos/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 生产 IPv4 dry-run 可达且布局兼容；188 条删除触发保护。全部删除已逐条确认是版本更新或 build 晋级，但官方真实同步及发布验收尚未执行，当前继续暂停。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  - url: https://repo.kaosx.us/
+    stack: dual
+    status: alternative
+    surveyed_at: '2026-10-02'
+    note: 官方状态页列出的 HTTPS 树可列目录且布局相同；其 rsync 端口在工作站超时。优先使用 kaosx.org 的直接 rsync。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
+    reported_size: 20.7G

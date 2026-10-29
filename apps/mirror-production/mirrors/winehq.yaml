@@ -1,0 +1,58 @@
+metadata:
+  name: winehq
+info:
+  description: Wine 源码及相关发布文件
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/winehq/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 88Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://wiki.winehq.org/Download
+    - https://dl.winehq.org/
+    - https://dl.winehq.org/wine/
+    - https://dl.winehq.org/wine-builds/
+    policy:
+    - WineHQ 官方下载页面和 dl.winehq.org 当前目录将发布内容分为 wine/、wine-builds/、mono/、other/、vkd3d；wine/ 下含 docs、logos、source、wine-gecko、wine-mono。
+    - TUNA 初始化日志为 3,886 项、3,765 普通文件、约 57.58G，路径均以 wine/ 开始，说明当前条目对应 dl.winehq.org/wine/，不应把已单独部署的 wine-builds/
+      合并进来。
+    - TUNA 初始化日志中的所有路径均以 `wine/` 开头（3,886 项、3,765 普通文件、约 57.58G），对应旧 FTP `/pub/` 的父目录布局；若把 tsumugu URL 直接设为 https://dl.winehq.org/wine/，其内容根是
+      source、docs、logos 等，会把 wine/ 前缀剥掉并改变公开布局。当前通用切源验证器未证明可用父根 https://dl.winehq.org/ 加 include/exclude 保留 wine/
+      前缀，因此不能恢复自动同步。
+    - 官方没有公开固定同步间隔；Wine 发布和辅助运行时可能不规则，24h 为本站配置建议。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/winehq/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 首轮初始化已成功；仅作为已完成初始化来源，当前保持暂停。
+  - url: https://dl.winehq.org/wine/
+    stack: dual
+    status: scope-incompatible
+    surveyed_at: '2026-10-03'
+    note: 该 URL 内容根为 docs/logos/source/wine-gecko/wine-mono，不能直接写入保留 wine/ 前缀的 TUNA 目标。需验证父根筛选或增加路径映射。
+  - url: https://dl.winehq.org/wine-builds/
+    stack: dual
+    status: excluded
+    surveyed_at: '2026-10-03'
+    note: 官方同根的另一内容树；不在本次 winehq TUNA 初始化范围，且已有独立 wine-builds 镜像。
+  - url: ftp://ftp.winehq.org/pub/
+    stack: unresolved
+    status: obsolete
+    surveyed_at: '2026-10-03'
+    note: 计划中的旧 FTP 主机当前 DNS 不可用，不能作为切源。
+  bootstrap:
+    note: TUNA 初始化已成功完成，当前保持 sync-paused；官方 HTTPS wine/ 内容可读，但直接以 wine/ 为 URL 会丢失 TUNA 既有 wine/ 前缀，父根 include/exclude
+      尚未通过通用验证，保持暂停。
+    reported_size: 54.5G

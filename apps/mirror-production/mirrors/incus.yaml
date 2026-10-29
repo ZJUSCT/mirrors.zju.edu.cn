@@ -1,0 +1,40 @@
+metadata:
+  name: incus
+info:
+  description: Incus 系统容器与虚拟机管理器的软件包
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/incus/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 8Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://linuxcontainers.org/incus/docs/main/installing/
+    - https://github.com/zabbly/incus
+    policy:
+    - Linux Containers 官方安装文档将 Zabbly 列为提供完整功能包的第三方仓库；Zabbly README 明确提供 lts-6.0、lts-7.0、stable、daily 四个仓库。
+    - README 支持 Ubuntu jammy/noble/resolute 与 Debian bullseye（文档）/bookworm/trixie（当前stable目录可见）等发行版代号，amd64与arm64；daily为未测试构建，LTS与stable用途不同，不能合并成一个无版本的‘Incus源’。
+    - 官方 key.asc 指纹应为 4EFC 5906 96CB 15B8 7C73 A3AD 82CC 8797 C838 DCFD；Packages signed-by应保留，不能因镜像而关闭校验。
+    - pkgs.zabbly.com:873 官方rsync连接被拒绝(exit 10，IPv6/IPv4均显示connection refused)，因此没有官方rsync切换路径；只有HTTPS静态APT树。
+    - 未发现官方同步周期；现配置24h/候选6h只能作为本地选择。现有rsync类型不能直接把HTTPS上游当作同一同步实现，生产切换保持阻塞。
+  bootstrap:
+    note: USTC bootstrap已完成并保持为当前种子；官方生产cutover尚未发生。由于官方没有可验证rsync服务，不能仅替换URL；继续暂停，避免把stable/daily/LTS多个树错误拼合。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/incus/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC初始化源；Oct2状态容量3.41GiB，非官方完整容量或PVC保证。
+  - url: https://pkgs.zabbly.com/incus/
+    surveyed_at: '2026-10-03'
+    status: official-http-blocked-for-rsync
+    note: 官方Zabbly HTTPS候选；stable/dists当前列出bookworm、jammy、noble、resolute、trixie。根HTTP 403不影响已获取key/dists；daemon rsync连接拒绝，未发生生产切换。

@@ -1,0 +1,58 @@
+metadata:
+  name: gmt
+info:
+  description: 通用制图工具 GMT 的源码与发布文件
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/gmt/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 52Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.generic-mapping-tools.org/mirrors/
+    - https://www.earthbyte.org/webdav/gmt_mirror/gmt/
+    policy:
+    - GMT 官方页面称 FTP 发布镜像约 25 GB，建议周期性（例如每日）更新；发布树可通过 EarthByte WebDAV HTTPS 读取，根含 bin/、data/、legacy/、README.GMT、VERSION。
+    - 官方页面给出的 rsync://oceania.generic-mapping-tools.org/gmtdata/ 只属于独立 GMT data server，不是本镜像的 FTP release 树；因此 gmt 的官方 release
+      rsync handoff 尚未建立。
+    - 官方要求周期性更新并举每日为例；本站 24h 候选与此一致，当前自动同步仍暂停。
+  bootstrap:
+    status: succeeded-bootstrap-publication-failed
+    job: gmt-sync-1791010568
+    succeeded_at: '2026-10-03T07:57:37Z'
+    published_at: null
+    note: USTC bootstrap source gmt-sync-1791010568 于 2026-10-03T07:57:37Z UTC 成功；快照 publication 进入 RollingOut 但未成功发布，mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。此
+      URL 只记录首次初始化来源，不表示已切换到官方源。
+    official_cutover: 未执行；须先按下列候选源完成范围、删除集、新鲜度和完整性验收。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/gmt/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 仅作为本次首次同步种子；该镜像的 USTC bootstrap rsync 已成功，自动增量仍暂停。
+  - url: https://www.earthbyte.org/webdav/gmt_mirror/gmt/
+    surveyed_at: '2026-10-03'
+    status: blocked-official-handoff
+    note: EarthByte WebDAV 是官方列出的 release mirror 候选，但当前同步模板使用 rsync，且尚未确认可用于生产增量；GMT data-server rsync 不能替代 release 树。
+  verification:
+    surveyed_at: '2026-10-03'
+    checks:
+    - GMT 官方页面与 EarthByte WebDAV 均 HTTP 200；WebDAV 根结构与 USTC 首次树的 bin/data/legacy/及顶层 README.GMT、VERSION 对齐。
+    - USTC job gmt-sync-1791010568 于 2026-10-03T07:57:37Z 成功，总文件大小 26.36G bytes（十进制），共 468 项，其中传输 445 个普通文件；随后快照发布卡在 RollingOut。
+    - 'live Mirror status：Ready=False、Progressing=True、Degraded=True，均 reason=PublishDeploymentFailed；message 为 Deployment
+      gmt-publish-http: ProgressDeadlineExceeded: ReplicaSet "gmt-publish-http-8559468695" has timed out progressing。'
+    - 'gmt-publish-http pod 仍 Pending；事件报告 初期事件为 snapshot PVC 未绑定，最新事件为 0/5 nodes（1 Too many pods；4 node(s) did not match
+      PersistentVolume node affinity）。launcher log 于 2026-10-03T08:08:06.541905Z 记录 STOP: Mirror failure detected; no new
+      jobs released: gmt。'
+    caveats:
+    - USTC rsync 成功不等于公开发布成功；当前 publication.phase=RollingOut、sync.phase=Waiting、reason=PublishDeploymentFailed。未重试、未切换官方源。
+    - 官方页面只给出 FTP/lftp 和独立 gmtdata rsync 示例；在官方 release rsync 入口、协议适配和发布恢复前，gmt 不能宣布官方 cutover。

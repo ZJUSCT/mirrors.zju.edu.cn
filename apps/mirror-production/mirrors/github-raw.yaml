@@ -1,0 +1,51 @@
+metadata:
+  name: github-raw
+info:
+  description: 选定 GitHub 仓库原始文件的镜像
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/github-raw/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://docs.github.com/en/rest/git/trees
+    - https://docs.github.com/en/rest/git/blobs
+    - https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
+    - https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/sources.list.d/20-default.list
+    policy:
+    - GitHub 官方未给出本镜像的同步周期；公共 REST API 未认证每源IP 60请求/小时，常见认证用户为5000请求/小时，另有 secondary rate limits。建议维持24h周期作为本地低负载策略并实现限流退避；当前暂停时不生效。
+    - 官方 Git Trees GET /repos/{owner}/{repo}/git/trees/{ref_or_sha} 和 Blobs GET /repos/{owner}/{repo}/git/blobs/{sha}
+      可匿名读取公共仓库；令牌可选，若使用 fine-grained token 则需要 Contents read。Blob API 最大100MB，可通过 application/vnd.github.raw+json
+      获取原始内容。
+    - TUNA github-raw.py 是精选文件聚合，不是整个 GitHub 镜像：fpco/stackage-content/master/stack/global-hints.yaml；ros/rosdistro/master/rosdep
+      的20-default.list、osx-homebrew/base/python/ruby.yaml，及 releases/targets.yaml；opencollab/llvm-jenkins.debian.net/master/llvm.sh；docker/docker-install/master/install.sh。目录保持
+      owner/repo/ref/path，并用 .sha/<blob-sha> 配合符号链接保存版本。
+    - TUNA 对 rosdep/sources.list.d/20-default.list 执行原始内容改写：将 raw.githubusercontent.com URL 换成 MIRROR_BASE_URL，并删除含
+      gbpdistro 的行；此次对照官方原文件与 TUNA 文件确认已有 TUNA 域名。ZJU 后续必须将 MIRROR_BASE_URL 设为 https://mirrors.zju.edu.cn/github-raw/，不能直接保留初始化内容的
+      TUNA 内嵌 URL。
+    - 现有 rsync/ftpsync/qfm/tsumugu 模板不提供 GitHub API 精选文件、blob SHA 及内容改写；需要专用脚本并确保任何文件失败都会让作业失败，避免原脚本仅打印异常后误报成功。保持暂停等待专用实现。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/github-raw/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: TUNA 初始同步已成功；当前 sync-paused，不作为未获授权的长期同步源。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  - url: https://api.github.com/repos/
+    stack: ipv4
+    status: hold
+    surveyed_at: '2026-10-02'
+    note: 官方 REST API 不是可递归文件目录；需按仓库/ref/path 请求 Trees/Blobs，保持选择范围并执行 ZJU URL 改写。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  bootstrap:
+    note: TUNA 初始同步已成功（github-raw-sync-1790957148）；当前保持 sync-paused。官方文档和现有布局调查已完成；已确定官方 GitHub API 与精选文件列表，且
+      ROS 文件必须将 TUNA 内嵌链接改为 ZJU；现有四类模板不能表达 API/SHA/内容改写，需专用脚本，保持暂停。

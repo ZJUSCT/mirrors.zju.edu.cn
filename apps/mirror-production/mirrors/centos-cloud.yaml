@@ -1,0 +1,52 @@
+metadata:
+  name: centos-cloud
+info:
+  description: 适用于云平台的 CentOS 通用系统镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/centos-cloud/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 864Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://cloud.centos.org/
+    - https://cloud.centos.org/centos/
+    policy:
+    - 范围为cloud.centos.org原根：altarch/、centos/、TIME、timestamp.txt；centos/当前含6、7、8、8-stream、9-stream、10-stream、scos，保留历史目录，不静默只选当前Stream，也不混入ubuntu-cloud-images。
+    - 官方HTTPS根及centos/9-stream/x86_64/images/代表叶目录通过现有tsumugu apache-f2非递归list；这是可继续验证的允许同步器候选，不需要先引入新同步工具。
+    - 需保留各树内原始校验和及签名；完整核对镜像文件、别名/链接、历史归档和删除集合，使用可信CentOS签名密钥验证后再核对镜像摘要。
+    - 本轮官方目录没有给出可确认的rsync端点或固定同步周期，24h仅为本地候选；未从普通目录访问推断注册要求。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: centos-cloud-sync-1791196852
+    succeeded_at: '2026-10-05T15:49:46Z'
+    published_at: '2026-10-05T15:49:56Z'
+    note: hourly-live.json确认USTC初始化成功且匹配快照已发布；仍暂停，未执行官方切源。
+    official_interval_candidate: 24h
+    official_cutover_blocker: tsumugu apache-f2仅根及代表叶目录列表通过；仍需生产镜像全树范围/精确容量/删除集对比，校验和签名与镜像摘要验证，真实官方同步及匹配快照发布验收。属于可推进技术待办。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/centos-cloud/
+    surveyed_at: '2026-10-07'
+    status: bootstrap-complete
+    note: 成功发布并暂停；本轮未向USTC发起请求。
+  - url: https://cloud.centos.org/
+    surveyed_at: '2026-10-07'
+    status: documented-candidate-not-cut-over
+    note: tsumugu apache-f2仅根及代表叶目录列表通过；仍需生产镜像全树范围/精确容量/删除集对比，校验和签名与镜像摘要验证，真实官方同步及匹配快照发布验收。属于可推进技术待办。
+  verification:
+    surveyed_at: '2026-10-07'
+    checks:
+    - 官方根和centos/目录HTTP200，根解析准确列出TIME、altarch、centos、timestamp.txt。
+    - 现有tsumugu apache-f2根及代表叶目录list退出0；命令、返回码和输出保存review-backlog.evidence/parser-results.json及centos-*.list；未传输镜像内容。
+    - 成功发布状态依据hourly-live.json；本轮没有集群修改、传输预留或公网发布验收。
+    remaining: tsumugu apache-f2仅根及代表叶目录列表通过；仍需生产镜像全树范围/精确容量/删除集对比，校验和签名与镜像摘要验证，真实官方同步及匹配快照发布验收。属于可推进技术待办。

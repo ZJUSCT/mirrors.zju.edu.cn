@@ -1,0 +1,177 @@
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: epel
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: EPEL 企业级 Linux 附加软件包仓库
+    upstream: rsync://dl.fedoraproject.org/fedora-epel/
+  sync:
+    interval: 1h
+    retryInterval: 15m
+    timeout: 6h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          # QFM 的同步用户与发布用户分离，避免预发布内容提前可读
+          fsGroup: 65432
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65432"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: qfm
+            image: ghcr.io/zjusct/quick-fedora-mirror:latest
+            imagePullPolicy: Always
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 65432
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command:
+              - zsh
+              - /usr/local/bin/quick-fedora-mirror
+              - -c
+              - /etc/quick-fedora-mirror/qfm.conf
+            env:
+              # info.upstream 记录逻辑模块；QFM 实际从同一主机的
+              # fedora-buffet 聚合模块按 MODULES 文件列表同步。
+              - name: QFM_REMOTE
+                value: rsync://dl.fedoraproject.org
+              - name: QFM_MODULE
+                value: fedora-epel
+              - name: QFM_RSYNC_FAMILY
+                value: '-6'
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+              - name: qfm-config
+                mountPath: /etc/quick-fedora-mirror
+                readOnly: true
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+              limits: {cpu: "4", memory: 4Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+          - name: qfm-config
+            configMap:
+              name: qfm-conf
+  storage:
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    pvcTemplate:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 2Ti
+      volumeMode: Filesystem
+      volumeName: pvc-bc7168c8-e951-4cbc-8c78-55d20eb22ec8
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    retention: 1
+  publish:
+    http:
+      replicas: 1
+      podTemplate:
+        metadata:
+          annotations:
+            reloader.stakater.com/auto: "true"
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              startupProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 2
+                timeoutSeconds: 2
+                failureThreshold: 30
+              readinessProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 6
+              resources:
+                requests: {cpu: "10m", memory: 32Mi}
+                limits: {cpu: "4", memory: 1Gi}
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/epel
+                  subPath: epel
+                  readOnly: true
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              # 目录缓存上限 512Mi，额外空间用于正在填充的响应及其他临时文件。
+              emptyDir:
+                sizeLimit: 1Gi

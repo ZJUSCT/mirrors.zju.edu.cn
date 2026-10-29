@@ -1,0 +1,64 @@
+metadata:
+  name: devuan
+info:
+  description: 不依赖 systemd 的 Debian 衍生发行版软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/devuan/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 56Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.devuan.org/os/packages
+    - https://pkgmaster.devuan.org/devuan_mirror_walkthrough.txt
+    - https://pkgmaster.devuan.org/mirror_list.txt
+    - https://pkgmaster.devuan.org/scripts/test_rewrite.sh
+    - https://pkgmaster.devuan.org/
+    policy:
+    - 官方包镜像 walkthrough 第2/3节明确强烈偏好每30分钟同步一次（正常每半小时）；建议 interval/timeout 均30m，实际正式全量验证可另设一次性超时。不要沿用初始化计划的24h作为日常周期。
+    - 本镜像是 Devuan 软件包仓库，不是 ISO；官方分别把 ISO 镜像指向 files.devuan.org/MIRRORS.txt。TUNA devuan 模块与 pkgmaster 根均包含 devuan/、merged/、changelogs/、log/、scripts/、amprolla.txt
+      等；merged/dists 是 amprolla 合并的 Debian+Devuan 索引，devuan/pool 是 Devuan 特有/修改过的软件包，完整 Debian 包体不在本镜像中。
+    - 官方规定从 pkgmaster.devuan.org 经 SSH 公钥认证执行 rsync，示例 rsync --delete -avzX vesta@pkgmaster.devuan.org:~/devuan
+      ./；若本地直接映射镜像根，应选择远端 ~/devuan/ 的内容，避免增加一层 devuan。首次设置时官方提示可能需要连续同步两次，因为 amprolla 每几分钟更新。
+    - 取得主站访问需将 SSH 公钥、联系人、域名/IP、BaseURL、带宽/磁盘限制、更新频率、国家/CC、支持协议等提交 mirrors@devuan.org，并由管理者订阅 devuan-mirrors 邮件列表。当前未发送邮件、未申请或推断拥有
+      SSH 密钥授权。pkgmaster 的 TCP873 在双栈均拒绝连接，不能将 SSH 路径错误转换成匿名 rsync:// 模块后据此认定上游故障；因此无可读取的主站 rsync-daemon MOTD。
+    - 官方第5节要求发布时对 merged/pool/DEVUAN、DEBIAN、DEBIAN-SECURITY 进行路径重写。按 ZJU 当前 /devuan 前缀，目标分别应为 /devuan/devuan/pool/<path>、/debian/pool/<path>、/debian-security/pool/<path>（跨
+      Mirror 发布宜采用同站相对重定向）；不能只复制目录然后用通用静态 Nginx 提供服务。
+    - 已检查当前官方 excalibur/main/amd64 Packages，实际 Filename 有 pool/DEVUAN/... 与 pool/DEBIAN/...。ZJU 对各选一个真实包的 /devuan/merged/pool/...
+      HEAD 均404，确认当前缺少可用包路径。官方 test_rewrite.sh 可作思路参考，但它硬编码 Jessie 的旧包，验收应从当前各 suite Packages 选样，不把历史包404误判为新规则故障。
+    - 官方 mirror_list 将 ftp.fau.de 标为 Active yes、RSYNC、30m；rsync://ftp.fau.de/devuan/ 匿名列目录/MOTD成功，根与 TUNA 对齐，可作已有
+      rsync 模板的数据备选，但它是官方认可的第三方镜像而非项目主站，且不能替代发布重写。sledjhamr 官方列表虽列RSYNC，此次连接被拒绝；不选用。
+    - 保留暂停：当前通用模板无 SSH 密钥/known_hosts 集成，且发布缺少三个必要 pool 路径映射。待实现获授权的 SSH rsync（或明确选择已核实公开二级源）并完成当前包下载、索引/签名和路径规则验收后，才可恢复30m自动同步。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/devuan/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 初始同步 devuan-sync-1790957682 成功：34.65GB、47,710普通文件和10,097符号链接；当前保持暂停。
+  - url: vesta@pkgmaster.devuan.org:~/devuan/
+    stack: dual
+    status: auth-required
+    surveyed_at: '2026-10-02'
+    note: 官方明确规定 SSH 公钥白名单访问的主源；尚无已配置凭据，必须保持 devuan/merged 同级布局。
+  - url: https://pkgmaster.devuan.org/
+    stack: dual
+    status: reference
+    surveyed_at: '2026-10-02'
+    note: 公开 HTTP 目录及官方说明可读；官方镜像流程采用 SSH rsync。HTTP 全树抓取的符号链接语义尚未验证，而且仍需完成发布路径重写。
+  - url: rsync://ftp.fau.de/devuan/
+    stack: dual
+    status: fallback
+    surveyed_at: '2026-10-02'
+    note: 官方包镜像列表明确列为有效 RSYNC 节点，匿名根列表与 MOTD 已验证；只是备选数据源，不能修复 ZJU merged/pool 路径。
+  bootstrap:
+    note: TUNA 初始同步 devuan-sync-1790957682 已成功，保持 sync-paused；官方调查已确认30m、SSH主源与三类发布路径重写要求。当前包路径404，待修复同步凭据/方式及发布映射后再验收。

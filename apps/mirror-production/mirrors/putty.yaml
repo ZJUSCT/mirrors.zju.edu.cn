@@ -1,0 +1,46 @@
+metadata:
+  name: putty
+info:
+  description: PuTTY SSH 客户端发布文件
+  upstream: rsync://rsync.chiark.greenend.org.uk/ftp/users/sgtatham/putty-website-mirror/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.chiark.greenend.org.uk/~sgtatham/putty/mirrors.html
+    - https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
+    policy:
+    - 官方 Mirroring guidelines 明确允许无需事先许可建镜像，首选 rsync://rsync.chiark.greenend.org.uk/ftp/users/sgtatham/putty-website-mirror/；这是为独立镜像预处理的整站内容，保留根目录
+      HTML、版本目录、二进制和在线文档。
+    - 官方示例 rsync -auH 每日执行；明确目前比每日一次更频繁没有意义，并建议至少每周一次以接收紧急安全更新。因此 interval/timeout 采用 24h，单镜像不重叠运行，上游有 rsync 连接数限制。
+    - 官方已弃用 wget 镜像方法，因为 rsync 节省带宽且预处理由上游承担；不要改为递归抓取官方网页。
+    - 官方验收要求下载链接和最新版本在线文档都指向镜像自身并可用；ZJU latest.html 中二进制和 htmldoc 均为版本目录相对链接，0.85/w64/putty.exe 与 0.85/htmldoc/
+      本次 HTTP 实测均返回 200。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/putty/
+    stack: ipv6
+    status: bootstrap-complete
+    surveyed_at: '2026-10-02'
+    note: TUNA 首轮同步已成功，仅作本次初始化源。
+  - url: rsync://rsync.chiark.greenend.org.uk/ftp/users/sgtatham/putty-website-mirror/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 官方文档精确指定当前模块；生产 IPv4 回源成功，完整 dry-run 为 891 项、0 新增、0 删除、0 文件传输。当前 -4 与实际可用协议族保持一致。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、官方源真实同步、快照发布及 HTTP 文件内容校验均已通过，已恢复自动同步。
+    reported_size: 88.3M

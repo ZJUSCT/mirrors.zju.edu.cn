@@ -1,0 +1,64 @@
+metadata:
+  name: epel-archive
+info:
+  description: EPEL 7 软件包归档（保留 USTC 现有架构与目录范围）
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/epel-archive/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 160Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://docs.fedoraproject.org/en-US/epel/epel-faq/
+    - https://archives.fedoraproject.org/pub/archive/epel/7/
+    - https://fedoraproject.org/wiki/Infrastructure/Mirroring
+    - https://fedoraproject.org/wiki/Infrastructure/Mirroring/Tiering
+    policy:
+    - 本项仅保留USTC现有EPEL7子集，不是完整EPEL历史全集。2026-10-04获准的两次HTTP目录元数据读取确认：/epel-archive/仅含7/，/epel-archive/7/含aarch64/、source/、SRPMS/、x86_64/及58字节state；公开路径保持/epel-archive/7/<架构>/。
+    - 官方/pub/archive/epel/7/还包含ppc64/、ppc64le/，种子未展示这些目录；不得因都属EPEL7就自动加入。也不加入父根其他版本、日期快照或testing/7。顶层范围已确认，尚未比较每个保留子树内的全部文件/深层过滤。
+    - Fedora文档把fedora-archive模块映射到/pub/archive，官方FAQ链接EPEL archive。USTC metadata实际来源rsync://ftp-stud.hs-esslingen.de/fedora-archive/epel/7，官方Tiering列Esslingen为双栈Tier1，但本轮未探测其archive
+      rsync模块/ACL；不能把HTTP档案存在等同于候选rsync已验证。
+    - 现有rsync模板足以保留该范围：bootstrap用USTC模块末尾/原样取得7/；官方候选用.../fedora-archive/epel/./7/加--relative和7/内已观察条目的锚定allowlist。只排除ppc64/ppc64le不足以阻止未来新架构，所以使用允许列表，并继续保留--safe-links。
+    - 官方HTTP对SRPMS/和source/均直接返回200，无跨路径重定向；HTTP索引无法证明底层实体目录/符号链接/硬链接。后续rsync只读范围检查必须核对真实链接目标，不添加--copy-links或对存档做扁平化。过滤规则显式保留条目本身及子树，可容纳安全相对符号链接。
+    - 官方7/state为/mnt/koji/compose/updates/Fedora-Epel-7-updates-20240701.0，页面明确存档不再受维护；不把state内容当作需要复制的本地路径。24h为本地静态存档候选，并非官方专属要求；通用指南建议普通rsync每天数次，QFM可10分钟，不能混为归档硬性周期。
+    - 根布局和公开URL已可按种子确定，无需让用户在EPEL7与全archive间重新选择。只有扩大架构/版本/深层范围或改变公开路径才产生新的范围决策；初始化现已成功发布，仍待官方接续及内容验收。
+    - 2026-10-07再次读取官方FAQ及EPEL7索引均HTTP200；官方仍含ppc64/ppc64le/，现有架构允许列表与7/公开层级约束继续适用。此前Esslingen rsync和本地参数证据的日期保留，不当成本轮远端探测。
+  bootstrap:
+    status: succeeded-and-published-paused
+    note: hourly-live.json确认USTC初始化成功，匹配快照及PVC epel-archive-snap-1791277707 已发布且Ready；自动同步仍暂停。本轮文档复核不等同公网内容或官方切源验收。
+    reported_size: 79.78 GiB（2026-10-02 USTC报告）
+    official_interval_candidate: 24h
+    job: epel-archive-sync-1791277707
+    succeeded_at: '2026-10-06T11:56:59Z'
+    published_at: '2026-10-06T11:57:08Z'
+    official_cutover_blocker: Esslingen archive rsync模块、地址族/ACL仍需有界复核；使用现有--relative和架构允许列表在一次性可写克隆上完整dry-run，核对深层范围、链接和删除集，再验签及真实同步发布。范围保持现有EPEL7子集，无需重新选择完整archive。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/epel-archive/
+    surveyed_at: '2026-10-07'
+    status: bootstrap-complete
+    note: 初始化成功并发布；仍为USTC种子源且暂停，本轮无额外USTC请求。
+  - url: rsync://ftp-stud.hs-esslingen.de/fedora-archive/epel/./7/
+    surveyed_at: '2026-10-04'
+    status: scope-mapped-rsync-unverified
+    note: USTC所用、Fedora Tier1运营方的同源候选；需--relative和已观察子项allowlist，绝不可无过滤拉取整个EPEL7，更不可拉取全archive。
+  - url: https://archives.fedoraproject.org/pub/archive/epel/7/
+    surveyed_at: '2026-10-04'
+    status: official-scope-reference
+    note: 官方范围参考，包含种子没有的ppc64/ppc64le，不作为无过滤等价源。
+  verification:
+    surveyed_at: '2026-10-07'
+    checks:
+    - 初始化及发布时间来自hourly-live.json，保留匹配快照/PVC和Ready条件证据于review-remaining-success.evidence/bootstrap-status.json。
+    - 本轮仅复核官方网页，HTTP结果及原文在review-remaining-success.evidence；未发起rsync、包传输或集群变更。
+    remaining: Esslingen archive rsync模块、地址族/ACL仍需有界复核；使用现有--relative和架构允许列表在一次性可写克隆上完整dry-run，核对深层范围、链接和删除集，再验签及真实同步发布。范围保持现有EPEL7子集，无需重新选择完整archive。
+      官方同步成功且匹配快照/PVC Ready、发布内容验证后才能取消暂停。

@@ -1,0 +1,38 @@
+metadata:
+  name: ros
+info:
+  description: ROS 1 软件包归档
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/ros/ # 官方 rsync 模块无法直接保持客户端所需的 ubuntu/ 布局
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 300Gi
+  volumeName: pvc-eccd9bf7-bbe6-4d04-9917-aec034c1ef99
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  # TODO: 实现布局感知的同步工具后，将官方 ros-main 模块同步至 ubuntu/ 子目录。
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://www.ros.org/blog/noetic-eol/
+      - http://packages.ros.org/ros/ubuntu/
+    policy:
+      - ROS 1 Noetic 及所有 ROS 1 版本已于 2025-05-31 结束支持；官方不再提供更新，但继续托管现有二进制软件包。
+      - 官方 APT 路径为 packages.ros.org/ros/ubuntu；ros-main 模块则直接暴露仓库根目录。
+      - 官方 rsync 服务的 MOTD 建议仅 primary 和 secondary 镜像使用。
+  upstreams:
+    - url: rsync://rsync.osuosl.org/ros-main/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 276ms；IPv6 RTT 约 233ms
+      note: ROS 官方主归档；内容已冻结，但根目录布局与现有公开 URL 不兼容。
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/ros/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4/IPv6 RTT 约 30–31ms、rsync 约 30MiB/s
+      note: 非官方同步来源；内容与官方逐字节一致，并保持客户端所需的 ubuntu/ 布局。

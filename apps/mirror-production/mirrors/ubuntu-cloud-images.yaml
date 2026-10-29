@@ -1,0 +1,31 @@
+metadata:
+  name: ubuntu-cloud-images
+info:
+  description: Ubuntu 官方云平台预装磁盘镜像
+  upstream: rsync://cloud-images.ubuntu.com/cloud-images/ # Canonical 官方 rsync 源
+sync:
+  type: rsync
+  interval: 12h
+  timeout: 12h
+storage:
+  size: 4Ti
+  volumeName: pvc-edb8a57b-04e5-49d5-8ebd-1122bc6eabdd
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://cloud-images.ubuntu.com/
+    policy:
+      - Ubuntu Cloud Images 是 Canonical 针对 Ubuntu Certified 公有云、OpenStack 和 LXD 等环境定制的官方预装磁盘镜像。
+      - 官方通过 cloud-images.ubuntu.com 的 cloud-images 模块提供完整 rsync 源。
+      - 官方未说明建议的同步间隔，也未公布云镜像的登记或推送触发机制。
+  upstreams:
+    - url: rsync://cloud-images.ubuntu.com/cloud-images/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 248–264ms、9.2MiB/s；IPv6 RTT 约 242ms、9.9MiB/s
+      note: Canonical 官方源；MOTD 提醒善意使用，cloud-images 模块覆盖每日构建、正式发布和精简云镜像。

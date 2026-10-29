@@ -1,0 +1,36 @@
+metadata:
+  name: kde-application
+info:
+  description: KDE 应用程序源码镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/kde-application/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 1368Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://kde.org/mirrors/ftp_howto/
+    policy:
+    - applicationdata不是kdeftp，也不是包含两者的alldata；root含digikam/kdenlive/krita/kde-linux等，原样目录树。
+    - 官方明确in-app data必须每2h
+  bootstrap:
+    note: 用户已通知 USTC；初始放行由会话按并发上限控制。官方源可行时验证后切换，否则先记录阻塞，不擅自改写内容。
+    official_interval_candidate: 2h
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/kde-application/
+    surveyed_at: '2026-10-02'
+    status: selected
+    note: USTC 首次初始化源；容量 683.35 GiB 为站点报告值，非实际占用保证。
+  - url: rsync://rsync.kde.org/applicationdata/
+    surveyed_at: '2026-10-02'
+    note: 官方或项目认可的后续调查入口；只有验证协议、范围、签名和完整性后才能切换。

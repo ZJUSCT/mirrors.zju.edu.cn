@@ -1,0 +1,31 @@
+metadata:
+  name: linuxmint-cd
+info:
+  description: Linux Mint 与 LMDE ISO 镜像
+  upstream: rsync://pub.linuxmint.com/pub/ # Linux Mint 官方指定的 ISO 镜像同步入口
+sync:
+  type: rsync
+  ipv6: false
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 300Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://linuxmint.com/mirrors.php
+    policy:
+      - Linux Mint ISO 镜像归档应从 pub.linuxmint.com::pub 同步，官方要求每日同步一次，估计占用约 200GB。
+      - ISO 镜像归档与 Linux Mint 软件包仓库相互独立。
+      - 按要求完成同步后，应发送邮件至 root@linuxmint.com 登记镜像。
+  upstreams:
+    - url: rsync://pub.linuxmint.com/pub/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 280ms、6.8MiB/s
+      note: 官方指定的匿名 rsync 同步入口；仅提供 pub 模块，模块说明为 Public Area，无额外 MOTD 或访问限制。

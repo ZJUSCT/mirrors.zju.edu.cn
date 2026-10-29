@@ -1,0 +1,61 @@
+metadata:
+  name: libreelec
+info:
+  description: 面向家庭影院设备的 LibreELEC 系统镜像
+  upstream: rsync://releases.libreelec.tv/releases/
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 176Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://raw.githubusercontent.com/LibreELEC/documentation/master/project/mirrors.md
+    policy:
+    - LibreELEC 官方镜像文档明确给出 rsync://releases.libreelec.tv/releases；主下载（系统发布镜像及安装器）由志愿镜像网络分发。本次精确 releases/ 模块根可列。
+    - 根含多个硬件/架构的 .img.gz、.tar、部分 .sha256、USB-SD Creator 安装器、releases.json、releases_v2.json、noobs/ 和 .bk_noobs/；必须保持模块完整范围，不仅复制某一种硬件或最新版本。
+    - 官方要求镜像具备每 1–12 小时同步的能力、至少 100Mbit/sec 且不限流量、长期维护；现已采用6h周期，符合该区间；保留原24h任务timeout。
+    - 向 mirrors@libreelec.tv 联系用于提供镜像并加入项目 mirror pool；文档公开列出无认证 rsync 地址，没有说明必须先联系才能拉取。登记未完成不是该公开 rsync 技术不可用的证据；本次未发邮件或宣称已入池。
+    - 现有 rsync 模板可直接同步发布文件，无需增加同步器。HTTPS 根只是指向下载页的短页面，不应把它误当目录清单；已有 rsync 入口可避免 HTTP 目录发现问题。
+    - 2026-10-04已切换官方rsync://releases.libreelec.tv/releases/；DNS仅观察到A=164.92.230.217，生产明确使用IPv4。完整同过滤dry-run与真实同步exit0，公网完整系统镜像SHA256验证通过后恢复自动同步。
+    - 官方全树含12个NOOBS绝对别名链接，目标形如/var/www/releases/noobs/LibreELEC_RPi2/System.tar.xz；现有safe-links已将这些别名排除，USTC种子快照同样没有它们。保持safe-links，不跟随绝对链接或重写它们；8个不同规范Storage/System文件均在镜像中，noobs及.bk_noobs目录保留。该别名限制并非本次切源新增，不宣称NOOBS安装器兼容验收。
+  bootstrap:
+    status: official-handoff-complete
+    job: libreelec-sync-1791050061
+    succeeded_at: '2026-10-03T18:38:22Z'
+    published_at: '2026-10-03T18:38:30Z'
+    note: USTC初始化于2026-10-03T18:38:22Z成功、18:38:30Z发布。2026-10-04官方切源完成：libreelec-sync-1791110389于10:40:01Z成功，10:40:12Z发布libreelec-snap-1791110389；新快照/PVC与Ready匹配，公网清单及完整149601724字节系统镜像SHA256通过后解除暂停。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/libreelec/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 首次初始化种子；当前配置仍指向此源且暂停，不代表官方日常增量已经启用。
+  - url: rsync://releases.libreelec.tv/releases/
+    surveyed_at: '2026-10-04'
+    status: selected
+    note: 官方公开rsync模块；生产IPv4 dry-run与真实同步均exit0，零创建/删除/文件传输。新快照Ready和完整系统镜像公网SHA256验收后启用6h同步；镜像池登记未联系、未宣称完成。
+    stack: ipv4
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 生产检查Pod只读挂载已发布VolumeSnapshot克隆libreelec-snap-1791050061，不挂载工作PVC。IPv4同过滤dry-run exit0：761项（740普通文件、9目录、12源链接），总计92027178906字节，零创建、零删除、零文件传输。
+    - 额外生产只读递归列表定位12个NOOBS绝对链接，均被既有safe-links排除；本地snapshot零symlink。其8个不同规范Storage/System payload均存在，RPi2 os.json/partitions.json和主发布清单、系统镜像均保留。
+    - 旧kubectl放弃共持有的upstream/args/interval/nodeSelector前，server dry-run与实际放弃后逐项证明spec/annotations不变；argocd-controller非force
+      SSA只改变官方源、IPv4参数、6h周期和移除bootstrap nodeSelector，保留24h timeout及176Gi存储。
+    - 真实官方Job libreelec-sync-1791110389的rsync exit0，10:40:01Z成功、10:40:12Z发布；真实统计仍零创建/删除/文件传输。activePVC=activeSnapshot=libreelec-snap-1791110389，PVC来源匹配VolumeSnapshot且readyToUse=true，Mirror
+      Ready=True且observedGeneration匹配。
+    - 官方HTTPS与公网逐字节比对6项通过：releases.json、releases_v2.json、RPi2 NOOBS的os.json/partitions.json/Storage.tar.xz，以及代表系统镜像.sha256。
+    - 从最新清单系列LibreELEC-12.2中选择最新补丁版12.2.1的NanoPi M1完整系统镜像，公网下载LibreELEC-H3.arm-12.2.1-nanopi-m1.img.gz共149601724字节，SHA256=9c3b0739180a1302dc5b506ecb7da1c4ccb3dc66f6ba1d0f1052430185fe87f3，与独立官方releases.json及.sha256双重一致；未将镜像写盘或启动。
+    - 所有验收通过后，用resourceVersion条件JSON patch只删除sync-paused；恢复6h周期。检查Pod已删除，reservation已释放。
+    remaining: 此次官方切源、真实同步、新快照发布和代表完整系统镜像公网校验已完成。保留12个绝对NOOBS别名被safe-links排除的既有边界，不宣称所有硬件启动、NOOBS安装器兼容或数字签名认证。公开镜像池联系/登记未执行，不将其描述成公开拉取的前置授权。

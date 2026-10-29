@@ -1,0 +1,40 @@
+metadata:
+  name: zerotier
+info:
+  description: ZeroTier 虚拟组网工具的软件包
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/zerotier/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 24Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://download.zerotier.com/
+    - https://docs.zerotier.com/install/linux/
+    policy:
+    - ZeroTier 官方下载站是 HTTPS 目录，根含 RELEASES、PRERELEASES、debian、redhat、dist、obsolete；2026-05-27 更新的 RELEASES/debian/dist 目录可见。
+    - USTC module 是 rsync 初始化种子，不能将其成功复制等同于官方仍提供 rsync。官方 HTTPS 目录没有本次确认的 rsync module；现有生产模板只允许 rsync/ftpsync/qfm/tsumugu，尚未证明官方目录与
+      tsumugu 的稳定 parser、包签名和链接范围完全适配。
+    - 官方目录包含 Debian 多发行版目录（含 trixie、bookworm、noble、resolute 等）及 dist/；切换前必须固定范围、检查 Release/Packages 签名和淘汰目录，不能把所有历史目录自动删除。
+    - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
+  bootstrap:
+    note: USTC 首次同步于 2026-10-03T06:00:57Z UTC 成功，发布于 2026-10-03T06:01:07Z UTC；当前 mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。官方只有
+      HTTPS 候选，当前没有经模板验证的官方 cutover；保持 USTC 快照已发布但自动同步暂停，不新增专用同步器。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/zerotier/
+    surveyed_at: '2026-10-03'
+    status: selected
+    note: USTC 首次同步源；站点报告容量 10.26 GiB，不是实际占用保证。
+  - url: https://download.zerotier.com/
+    surveyed_at: '2026-10-03'
+    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。

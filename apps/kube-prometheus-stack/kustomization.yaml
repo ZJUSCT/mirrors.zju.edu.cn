@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: kube-prometheus-stack
+resources:
+  - resources/namespace.yaml
+  - resources/sealedsecret-clickhouse-grafana.yaml
+  - resources/sealedsecret-grafana.yaml
+  - resources/sealedsecret-grafana-image-renderer.yaml
+  - resources/objectbucketclaim-mimir.yaml
+  - resources/objectbucketclaim-tempo.yaml
+
+helmCharts:
+  - name: kube-prometheus-stack
+    repo: oci://ghcr.io/prometheus-community/charts
+    includeCRDs: true
+    releaseName: kube-prometheus-stack
+    namespace: kube-prometheus-stack
+    valuesFile: values/kube-prometheus-stack-87.17.0.yaml
+    version: 87.17.0
+  - name: prometheus-smartctl-exporter
+    repo: oci://ghcr.io/prometheus-community/charts
+    releaseName: prometheus-smartctl-exporter
+    namespace: kube-prometheus-stack
+    valuesFile: values/prometheus-smartctl-exporter-0.17.1.yaml
+    version: 0.17.1
+  - name: tempo-distributed
+    repo: oci://ghcr.io/grafana-community/helm-charts
+    includeCRDs: true
+    releaseName: tempo
+    namespace: kube-prometheus-stack
+    valuesFile: values/tempo-distributed-2.2.0.yaml
+    version: 2.2.0
+  - name: mimir-distributed
+    repo: oci://ghcr.io/grafana/helm-charts
+    includeCRDs: true
+    releaseName: mimir
+    namespace: kube-prometheus-stack
+    valuesFile: values/mimir-distributed-6.2.0.yaml
+    version: 6.2.0

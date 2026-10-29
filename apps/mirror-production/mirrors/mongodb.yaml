@@ -1,0 +1,57 @@
+metadata:
+  name: mongodb
+info:
+  description: MongoDB 数据库软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/mongodb/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 832Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
+    - https://www.mongodb.com/docs/manual/administration/production-notes/
+    - https://repo.mongodb.org/
+    - https://repo.mongodb.org/apt/ubuntu/dists/jammy/mongodb-org/8.0/Release
+    - https://repo.mongodb.org/yum/amazon/2023/mongodb-org/8.0/x86_64/repodata/repomd.xml
+    policy:
+    - MongoDB 官方文档未规定第三方镜像同步间隔；建议每24小时轮询一次作为本地策略，明确这不是官方要求。
+    - 官方 APT 布局为 /apt/<发行版>/dists/<代号>/mongodb-org/<版本>/，包含 Release、Packages 及多个架构；官方 YUM 布局为 /yum/<发行版>/<版本>/mongodb-org/<版本>/<架构>/repodata
+      及 RPM。此次探测 Ubuntu jammy MongoDB 8.0 Release 和 Amazon 2023 x86_64 repomd.xml 均返回 HTTP 200。
+    - repo.mongodb.org 根目录是 JavaScript S3 浏览器（bucket 为 repo.mongodb.org、bucketHost 为 https://s3.amazonaws.com），不是静态递归目录；对象列表需要
+      S3 分页。通用 HTML/s3-indexbuilder 不能安全完成同步。
+    - TUNA 范围正好是模块根下的 apt/ 与 yum/（已通过 rsync 列表确认）。初始化日志显示约519G；发布 Deployment 另有超时，不能误判为源同步失败。
+    - 未在已读文档中找到官方 rsync 入口；客户端依赖签名的 Release/repomd 元数据和 MongoDB 公钥，必须原样保留。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/mongodb/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始化已完成；当前资源仍暂停。
+  - url: https://repo.mongodb.org/
+    stack: dual
+    status: candidate
+    surveyed_at: '2026-10-03'
+    note: 官方根目录 HTTP 200，但由动态 S3 浏览器生成，不适合作为递归同步 URL。
+  - url: https://repo.mongodb.org/apt/ubuntu/dists/jammy/mongodb-org/8.0/Release
+    stack: dual
+    status: verified
+    surveyed_at: '2026-10-03'
+    note: 官方 Release 返回200，声明 amd64/arm64 与 multiverse 元数据。
+  - url: https://repo.mongodb.org/yum/amazon/2023/mongodb-org/8.0/x86_64/repodata/repomd.xml
+    stack: dual
+    status: verified
+    surveyed_at: '2026-10-03'
+    note: 官方 repomd.xml 返回200。
+  bootstrap:
+    note: TUNA 初始化已完成（mongodb-sync-1790993322）；当前仍暂停。官方仓库是 S3 后端的 APT/YUM 树，需要专用同步器。发布 Deployment 同时报告 ProgressDeadlineExceeded，作为独立部署问题记录。

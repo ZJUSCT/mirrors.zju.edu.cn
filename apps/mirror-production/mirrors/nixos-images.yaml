@@ -1,0 +1,43 @@
+metadata:
+  name: nixos-images
+info:
+  description: NixOS 安装镜像
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/nixos-images/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 240Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://nixos.org/download/
+    - https://nixos.org/channels/
+    - https://channels.nixos.org/
+    - https://nix-channels.s3.amazonaws.com/?delimiter=/&max-keys=20
+    policy:
+    - NixOS下载页通过channel链接提供安装镜像；未找到官方固定镜像同步间隔，建议24h本地策略。
+    - channels.nixos.org是S3 bucket nix-channels的网站，前端脚本明确BUCKET_URL=https://nix-channels.s3.amazonaws.com；根对象列表按CommonPrefixes/分页，频道目录含git-revision、latest-nixos-*镜像及sha256。
+    - TUNA初始化日志195文件、160.22G，包含历史nixos-*与nixos-unstable频道；官方频道对象根为S3 XML而非标准HTTP目录，必须明确频道纳入范围并分页。
+    - 现有tsumugu s3-indexbuilder不等价于S3 ListBucket XML，不能安全地用通用HTTP模板；专用频道同步还需避免将动态latest符号/对象错误删除。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/nixos-images/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始同步已成功（nixos-images-sync-1790962211），当前保持 sync-paused。
+  - url: https://nix-channels.s3.amazonaws.com/
+    stack: dual
+    status: candidate
+    surveyed_at: '2026-10-03'
+    note: 官方channels.nixos.org前端源码声明的bucket；匿名S3 XML根列表成功，CommonPrefixes分页。
+  bootstrap:
+    note: TUNA 初始同步已成功（nixos-images-sync-1790962211）；当前仍暂停。官方安装镜像来自Nix频道S3桶，需按频道及S3分页同步；现有模板不支持，保持暂停。

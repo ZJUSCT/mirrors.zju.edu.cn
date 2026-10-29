@@ -1,0 +1,54 @@
+metadata:
+  name: flightgear
+info:
+  description: FlightGear 飞行模拟器资源
+  upstream: rsync://rsync.ibiblio.org/flightgear/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 540Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.flightgear.org/download/
+    - https://rsync.ibiblio.org/flightgear/
+    - rsync://rsync.ibiblio.org/flightgear/
+    policy:
+    - FlightGear 官方下载页将当前稳定版本下载链接直接指向 mirrors.ibiblio.org/flightgear/ftp/release-2024.1/，说明 ibiblio 是项目发布下载镜像；公开
+      rsync 根包含 ftp/ 和 www/，完整站点数据不应只抓 release 子目录。
+    - mirrors.ibiblio.org rsync MOTD 明确该旧主机自 2024-05-01 退役、脚本应改用 rsync.ibiblio.org；新旧主机 list-only 根均为 ftp/、www/，TUNA
+      根列表集合一致。故正式配置应使用新主机，避免保留已退休别名。
+    - 官方 FlightGear 下载页没有规定镜像轮询间隔；采用 24h 保守增量 rsync。
+    - 保留 ftp 发布树及 www 文档/旧版本；切换前应以 rsync.ibiblio.org 新主机执行 IPv4 完整 dry-run，再验证当前下载页所列 release 文件和旧文档路径。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/flightgear/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-03'
+    note: 当前初始化源；根目录 ftp、www 与 ibiblio 官方候选一致。
+  - url: rsync://rsync.ibiblio.org/flightgear/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: ibiblio 新 rsync 主机；list-only 成功，旧 mirrors.ibiblio MOTD 要求迁移到此主机。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  - url: rsync://mirrors.ibiblio.org/flightgear/
+    stack: ipv4
+    status: retired-alias
+    surveyed_at: '2026-10-03'
+    note: 旧主机仍可列目录但 MOTD 明确要求 2024-05-01 后改用 rsync.ibiblio.org，不应作为正式 upstream。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
+    reported_size: 336G

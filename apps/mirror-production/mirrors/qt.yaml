@@ -1,0 +1,34 @@
+metadata:
+  name: qt
+info:
+  description: Qt 跨平台应用开发框架的发布与在线安装仓库
+  # upstream: rsync://master.qt.io/qt-all/ # Qt 自有域名提供的完整公开 rsync 模块 # too slow(peak 50Mb/s, 2026-9-20)
+  upstream: rsync://mirrors.nju.edu.cn/qt/ # 2026-09-20
+sync:
+  type: rsync
+  ipv6: false
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 4Ti
+  volumeName: pvc-02fa2ed7-86a8-4959-990d-0917cccfd885
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.qt.io/
+      - https://download.qt.io/
+      - https://download.qt.io/static/mirrorlist/
+    policy:
+      - 官方下载树包含正式发布、开发版本、在线安装仓库、快照及历史归档等内容。
+      - 官方未说明建议的同步间隔；完整 qt-all 模块当前约为 3.01TB。
+  upstreams:
+    - url: rsync://master.qt.io/qt-all/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 284ms、4.6MiB/s
+      note: Qt 自有域名提供的完整公开 rsync 模块；当日时间戳正常，无额外 MOTD。

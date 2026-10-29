@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - resources/namespace.yaml
+  - resources/sealedsecret-cloudflare.yaml
+  - resources/clusterissuer.yaml
+  - resources/certificate.yaml
+  - resources/referencegrant.yaml
+helmCharts:
+  - name: cert-manager
+    repo: oci://quay.io/jetstack/charts
+    includeCRDs: true
+    releaseName: cert-manager
+    namespace: cert-manager
+    valuesFile: values/cert-manager-v1.21.1.yaml
+    version: v1.21.1

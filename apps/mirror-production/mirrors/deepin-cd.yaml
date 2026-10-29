@@ -1,0 +1,32 @@
+metadata:
+  name: deepin-cd
+info:
+  description: deepin 操作系统安装镜像
+  upstream: rsync://rsync.deepin.com/releases/ # deepin 官方指定的 ISO 镜像同步入口
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 200Gi
+  volumeName: pvc-d17cf439-5e7a-4dde-b97c-3983ec780c26
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.deepin.org/
+      - https://www.deepin.org/en/mirrors/
+    policy:
+      - deepin ISO 镜像应从 rsync.deepin.com::releases 同步，并通过每日定时任务保持更新。
+      - 同时维护软件包与 ISO 镜像时，官方建议先同步软件包仓库，再同步 ISO 仓库。
+      - 镜像目录中不应存放非官方镜像等其他文件，以免引起误解。
+  upstreams:
+    - url: rsync://rsync.deepin.com/releases/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: RTT 约 50–70ms
+      note: deepin 官方匿名 rsync 主站；releases 模块标注为 LinuxDeepin Release CD Images。

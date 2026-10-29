@@ -1,0 +1,72 @@
+metadata:
+  name: freebsd
+info:
+  description: FreeBSD 的安装镜像和系统发布文件
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/freebsd/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 604Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://docs.freebsd.org/en/articles/hubs/
+    - https://www.kr.freebsd.org/mirrors/
+    - https://www.freebsd.org/where/
+    - https://www.freebsd.org/releases/15.1R/announce/
+    - https://www.freebsd.org/releases/15.1R/signatures/
+    policy:
+    - FreeBSD官方Mirroring FreeBSD推荐FTP发行文件树使用rsync，示例-vaHz --delete；至少每日同步一次并防止并发重入，因此24h符合已读建议。建议预留10–20%磁盘空间；文档中的老版本容量/CPU数字不能当成当前预算。
+    - 官方文档明确不接受新的community mirrors，不可宣称已登记为官方镜像；另明确要求联系所选上游管理员说明请求并确认条款。韩国节点公开页面提供匿名rsync、列FreeBSD为官方镜像、上游ftp-master、每日更新，daemon
+      MOTD给管理员入口；匿名列表成功不等于本站已完成条款确认。本轮未发送邮件或取得登记/授权，正式切换前需复核已有授权或解决所选节点政策条件。
+    - 候选rsync://ftp.kr.freebsd.org/FreeBSD/为韩国FreeBSD用户组运营的国家镜像，不称FreeBSD自营master，也不仅凭DNS推定层级。官方禁止用ftp.FreeBSD.org自动镜像；ftp-master访问受限，不能把它当作匿名替代。
+    - 已发布种子根为doc/、ports/、releases/、README.TXT、TIMESTAMP、dir.sizes；韩国候选另有development/与snapshots/，不得无过滤整根切换。候选排除这两个根目录前须从固定快照lstat确认它们及相关链接确实不存在；HTTP列表不能证明隐藏文件或链接不存在。韩国rsync还列.message/.notar/.stfolder/.stignore，必须在完整差异中核对种子隐藏文件。
+    - 保留种子完整release布局及历史版本：ISO-IMAGES、CI-IMAGES、OCI-IMAGES、VM-IMAGES、PKGBASE-REPOS与amd64/arm/arm64/i386/powerpc/riscv。当前ISO目录含14.4、14.5、15.0、15.1，不缩为最新amd64。已存在的PKGBASE-REPOS为发行树内base系统包范围，不因名字包含pkg而删掉；官方公共packages镜像限制不授权新增pkg.FreeBSD.org第三方软件包仓库。
+    - 本条目ports/是已有发行树的历史兼容目录，不等于独立freebsd-ports镜像。ports/distfiles/抽样只有185字节README，说明缓存已迁至distcache.FreeBSD.org/ports-distfiles/；不在本条目追抓该链接，不合并仍独立处理的freebsd-ports。
+    - 现有标准rsync -aH和--safe-links足以保留内树相对链接与硬链接语义，不用--copy-links/-L扩大范围。抽样releases/amd64/{14.4,14.5,15.0,15.1}-RELEASE分别链接至amd64/<同名版本>，均在传输根内；这不代替全树链接闭包审计。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: freebsd-sync-1791108565
+    succeeded_at: '2026-10-04T20:29:21Z'
+    published_at: '2026-10-04T20:29:32Z'
+    note: 父会话最新hourly-live.json记录activePVC/activeSnapshot=freebsd-snap-1791108565，Ready=True、Degraded=False、Progressing=False，暂停true；604Gi，UID=f0dab62c-2e9f-4fee-a613-56a324800821、generation2、resourceVersion26664642。该状态尚无sizeBytes，不能把USTC报告301.80GiB当成精确落盘容量。本轮未查询或修改集群。
+    official_interval_candidate: 24h
+    official_cutover_state: viable-existing-rsync-pending-scope-policy-and-production-validation
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/freebsd/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: 当前仍为USTC且暂停；本轮未访问USTC rsync或重新引导。
+  - url: rsync://ftp.kr.freebsd.org/FreeBSD/
+    surveyed_at: '2026-10-04'
+    status: candidate-verified-readonly
+    note: 根及releases/、releases/amd64/、releases/ISO-IMAGES/、ports/共5次有界非递归列表exit0。韩国节点官方页面列明FreeBSD服务及每日节奏；现有默认-6/生产网络尚未实测，管理员条款确认待核实。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 有界获取官方政策、韩国站说明、目录、README、TIMESTAMP及小型校验文件；只执行5次非递归rsync列表，没有递归同步、包体/ISO下载、reservation或仓库/集群修改。证据在review-freebsd.evidence/。
+    - 候选与发布releases根13项、ports根4项、PKGBASE-REPOS根2项名称集合一致；ISO-IMAGES/15.1共70个文件名称及精确字节大小全部一致。ISO版本根双方为14.4/14.5/15.0/15.1；amd64的4个版本兼容入口在候选rsync中明确为内树相对symlink，ZJU
+      HTTP显示为directory不能证明本地存储类型。
+    - 双方根TIMESTAMP逐字节相同：1791072000 2026-10-04T00:00:00 UTC。README.TXT仍为2015文件，不当当前发布/镜像规范；dir.sizes是候选全树统计，含被排除development/snapshots，不能用来认定604Gi种子镜像大小或切源峰值。
+    - 双方CHECKSUM.SHA256-FreeBSD-15.1-RELEASE-amd64共1171字节完全相同；其10条摘要与官方15.1R PGP clearsigned checksum正文一致。官网公告明确提供SHA256/SHA512及PGP签名校验文件。未验证OpenPGP签名、公钥信任或任何镜像体摘要，仅证明代表元数据一致，不能写完整性/签名已通过。
+    remaining: 先核实所选韩国节点条款/已有授权及新community mirror登记限制的适用范围；不擅自联系。生产固定snapshot clone中按development/snapshots两项排除复核完整lstat/链接/隐藏文件、删除集、精确容量与10–20%余量；确认原种子无被排除内容后执行原标准模板-6可达性与非破坏全树差异。可信官网发布公钥验证签名校验清单，再用已有本地ISO/安装文件核对SHA256，保留PKGBASE及所有平台历史范围。真实官方国家镜像同步成功、新快照Ready、发布对应并公网抽样后再解除暂停。freebsd-ports不是本项，不改其源、状态或数据。
+  candidate_config:
+    info:
+      upstream: rsync://ftp.kr.freebsd.org/FreeBSD/
+    sync:
+      type: rsync
+      interval: 24h
+      timeout: 24h
+      rsync:
+        extra_args:
+        - --exclude=/development/
+        - --exclude=/snapshots/

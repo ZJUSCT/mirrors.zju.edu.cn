@@ -1,0 +1,68 @@
+metadata:
+  name: gmtdata
+info:
+  description: GMT 使用的全球地理与地球科学数据集
+  upstream: rsync://oceania.generic-mapping-tools.org/gmtdata/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 164Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://www.generic-mapping-tools.org/mirrors/
+    - https://oceania.generic-mapping-tools.org/
+    - rsync://oceania.generic-mapping-tools.org/gmtdata/
+    policy:
+    - GMT 官网将 Oceania 列为数据服务器 Master，明确示例 rsync -av --delete rsync://oceania.generic-mapping-tools.org/gmtdata
+      /your/local/gmtdata；可直接用现有 rsync 模板同步模块内容到 /gmtdata/ 根。
+    - 官网要求周期运行，并以 daily 为例；24h 符合该示例，不是精确强制频率。官网说先运行镜像再通知以列入列表，因此登记属于后续列名/域名转发申请，不是文档中公开拉取的先决条件；本次不发消息。
+    - 官方区分 GMT FTP 发布树（约25GB）与 GMT 数据树（约120GB）；gmtdata 是后者，不能与 gmt 合并或别名去重。容量是官网估计，不能当当前精确容量或替代USTC81.60GiB站点报告。
+    - 官方模块根包含 cache/、geography/、server/、gmt_data_server.txt、gmt_hash_server.txt、gmt_md5_server.txt 和 earth_relief*.grd；观察到的
+      symlink 均为同层 grd 或 server/earth 内部目标，保留 safe-links 和相对链接语义。
+    - gmt_data_server.txt 是版本/数据集目录说明，gmt_hash_server.txt 提供当前示例的64位十六进制SHA256和大小；保留历史目录/索引。未发现本轮可用签名认证流程，不应把散列一致当发行者签名。
+    - 2026-10-04已完成生产IPv4同过滤dry-run、Oceania真实同步与新快照公网数据验收；启用24h自动同步，保留24h任务timeout和164Gi容量。未执行镜像登记或联系。
+  bootstrap:
+    note: USTC初始化完成。官方Job gmtdata-sync-1791145953于2026-10-04T20:32:55Z同步成功，20:32:58Z Job完成、20:33:04Z发布gmtdata-snap-1791145953；rsync
+      exit0，新快照/PVC和Ready匹配，公网校验后解除暂停。
+    official_interval_candidate: 24h
+    status: official-handoff-complete
+    job: gmtdata-sync-1791047557
+    succeeded_at: '2026-10-03T21:00:37Z'
+    published_at: '2026-10-03T21:00:45Z'
+  validation:
+    observed_at: '2026-10-04'
+    completed:
+    - 生产检查Pod只读挂载已发布VolumeSnapshot克隆gmtdata-snap-1791047557，不挂载工作PVC。官方同过滤dry-run exit0：42037项（41769普通文件、252目录、16链接），84925934509字节；零创建、零删除、零文件传输。
+    - 快照根cache/、geography/、server/、catalog/hash及relief/srtm别名保留；16条链接均为内部相对路径，解析保持在快照内，无特殊文件。默认rsync size/mtime比较不等同整树逐字节校验。
+    - 旧kubectl manager放弃共持有字段前后证明spec/annotations值不变；argocd-controller非force SSA仅切换官方上游、IPv4并移除bootstrap nodeSelector。24h周期、24h
+      timeout及164Gi存储保持。
+    - 官方真实Job gmtdata-sync-1791145953 rsync exit0，20:32:55Z同步成功、20:32:58Z Job完成、20:33:04Z发布；真实统计零创建/删除/传输。activePVC=activeSnapshot=gmtdata-snap-1791145953，PVC来源匹配VolumeSnapshot且readyToUse，Ready=True与observedGeneration匹配。
+    - 新快照公网与官方HTTPS逐字节比对8项通过：gmt_data_server.txt、gmt_hash_server.txt、gmt_md5_server.txt、cache/AFR.nc、cache/cube.nc、server/earth/earth_relief/earth_relief_01d_g.grd和earth_relief_01d.grd、earth_relief_60m.grd两条别名。
+    - 官方散列表215项已解析。AFR.nc为129281字节，SHA256=ee581d480ab40b8c196dc1c5a951a05cc577c9b735865036b28ce223d827513f；cube.nc为3040字节，SHA256=01170492bd75b97a8b3daa9a144e7aa6c03601703433a9b3ac4fc1c20e06bb2a；均符合官方大小和SHA256。
+    - 使用已安装SciPy1.15.3读取公网cube.nc：cube变量形状4×11×11，484个有限值、范围0–140；坐标x/y为0–10，z为1–5。未安装新工具。
+    - 目录声明的一度全球relief文件113844字节，SHA256=f7d59d629e66b28bc82db4f282d4414b58c728acf17b04ad2f419b1ea0a258d1；两条公网别名与规范网格一致，HDF5
+      magic匹配。未宣称GMT原生/HDF5解析验收。
+    - 验收后以resourceVersion条件JSON patch仅移除sync-paused；保留原nextSyncAt=2026-10-04T21:00:37Z。检查Pod删除，租约释放。
+    remaining: 此次官方切源、真实同步、新快照发布及代表数据读取验收完成。SHA256是散列一致性而非数字签名；未逐文件校验全树、未使用GMT原生客户端读取所有数据，也未执行镜像登记。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/gmtdata/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: 仅用于首次初始化，已切换至官方Oceania源；不再承担日常同步。
+  - url: rsync://oceania.generic-mapping-tools.org/gmtdata/
+    surveyed_at: '2026-10-04'
+    status: selected
+    note: 官网Master精确rsync模块；生产IPv4 dry-run和真实同步均exit0、零创建/删除/传输。新快照及代表数据公网校验通过后启用24h同步；未执行登记。
+    stack: ipv4

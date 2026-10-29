@@ -1,0 +1,36 @@
+metadata:
+  name: monitoring-plugins
+info:
+  description: Nagios 等监控系统使用的检查插件
+  upstream: rsync://rsync.monitoring-plugins.org/plugins/
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.monitoring-plugins.org/download.html
+    - https://www.monitoring-plugins.org/download/
+    policy:
+    - 官网当前稳定版为3.0.3，另提供随master提交重建的开发snapshot；镜像应保留发行tarball、.sha1、snapshot/、archive/、mib/、presentation/及模块内相对链接。
+    - 精确官方rsync模块为rsync://rsync.monitoring-plugins.org/plugins/，模块根内容直接映射发布根/monitoring-plugins/；官网列USTC为分发镜像，官方域名daemon及已完成真实同步直接证明该源可用。
+    - 未查到官方强制同步周期；interval/timeout均6h是本站选择。实测官方IPv4可用，使用现有rsync模板、ipv6:false和-4，无需新同步类型。
+    - 官网为tarball提供.sha1摘要，当前根列表未发现.asc/.sig或官方签名密钥说明；摘要核对与独立官方HTTPS文件的SHA256比较用于一致性验证，不能称为PGP签名验证。
+  upstreams:
+  - url: rsync://rsync.monitoring-plugins.org/plugins/
+    stack: ipv4
+    surveyed_at: '2026-10-02'
+    status: selected
+    note: 官方项目域名daemon；生产IPv4 dry-run及真实同步/发布校验通过，日常6h为本站选择。

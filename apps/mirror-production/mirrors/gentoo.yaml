@@ -1,0 +1,36 @@
+metadata:
+  name: gentoo
+info:
+  description: Gentoo 安装文件、仓库快照与 distfiles
+  upstream: rsync://masterdistfiles.gentoo.org/gentoo/ # Gentoo 主归档；其 MOTD 明确供上下游镜像同步
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 2Ti
+  volumeName: pvc-531f1a39-b016-4947-9439-23b24ed1145c
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.gentoo.org/
+      - https://www.gentoo.org/downloads/mirrors/
+    policy:
+      - Gentoo 源码镜像包含安装文件、ebuild 仓库快照与 distfiles；用于更新 Portage 树的 rsync 镜像是另一套独立服务。
+      - 官方源码镜像页面未规定同步间隔；当前每日同步一次属于本站策略。
+  upstreams:
+    - url: rsync://masterdistfiles.gentoo.org/gentoo/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: 单文件约 0.7MB/s
+      note: Gentoo 位于 OSUOSL 的主归档，包含 distfiles、releases 与 snapshots；MOTD 希望仅由一级、二级镜像使用。
+    - url: rsync://mirrors.mit.edu/gentoo-distfiles/
+      stack: ipv4
+      surveyed_at: 2026-09-16
+      metrics: 单文件约 2.6MB/s
+      note: 官方镜像列表收录的美国节点，可作完整源码镜像备选。

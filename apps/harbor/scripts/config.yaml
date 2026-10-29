@@ -1,0 +1,153 @@
+# Harbor declarative configuration
+# Applied by configure_harbor.py via Harbor REST API (v2.0)
+
+# --- System Settings (PUT /api/v2.0/configurations) ---
+# Only listed keys will be updated; omitted keys are left untouched.
+system:
+  auth_mode: db_auth
+  self_registration: false
+  project_creation_restriction: adminonly
+
+# --- Registry Endpoints (POST /api/v2.0/registries) ---
+# type: docker-hub, github-ghcr, docker-registry, harbor, quay, ...
+registries:
+  - name: hub.docker.com
+    type: docker-hub
+    url: https://hub.docker.com
+
+  - name: ghcr.io
+    type: github-ghcr
+    url: https://ghcr.io
+
+  - name: quay.io
+    type: docker-registry
+    url: https://quay.io
+
+  - name: nvcr.io
+    type: docker-registry
+    url: https://nvcr.io
+
+  - name: registry.k8s.io
+    type: docker-registry
+    url: https://registry.k8s.io
+
+  - name: registry.gitlab.com
+    type: docker-registry
+    url: https://registry.gitlab.com
+
+  - name: public.ecr.aws
+    type: docker-registry
+    url: https://public.ecr.aws
+
+  - name: mcr.microsoft.com
+    type: docker-registry
+    url: https://mcr.microsoft.com
+
+  - name: docker.elastic.co
+    type: docker-registry
+    url: https://docker.elastic.co
+
+  - name: gcr.io
+    type: docker-registry
+    url: https://gcr.io
+
+  - name: k8s.gcr.io
+    type: docker-registry
+    url: https://k8s.gcr.io
+
+  - name: us.gcr.io
+    type: docker-registry
+    url: https://us.gcr.io
+
+  - name: lscr.io
+    type: docker-registry
+    url: https://lscr.io
+
+  - name: docker.osgeo.org
+    type: docker-registry
+    url: https://docker.osgeo.org
+
+# --- Projects (POST /api/v2.0/projects) ---
+# For proxy cache projects, set registry to the name of a registry endpoint
+# above. Regular projects omit the registry field.
+projects:
+  - name: hub.docker.com
+    public: true
+    registry: hub.docker.com
+    metadata:
+      max_upstream_conn: 1
+  - name: docker.io
+    public: true
+    registry: hub.docker.com
+    metadata:
+      max_upstream_conn: 1
+  - name: registry-1.docker.io
+    public: true
+    registry: hub.docker.com
+    metadata:
+      max_upstream_conn: 1
+  - name: ghcr.io
+    public: true
+    registry: ghcr.io
+    metadata:
+      max_upstream_conn: 1
+  - name: quay.io
+    public: true
+    registry: quay.io
+    metadata:
+      max_upstream_conn: 1
+  - name: nvcr.io
+    public: true
+    registry: nvcr.io
+    metadata:
+      max_upstream_conn: 1
+  - name: registry.k8s.io
+    public: true
+    registry: registry.k8s.io
+    metadata:
+      max_upstream_conn: 1
+  - name: registry.gitlab.com
+    public: true
+    registry: registry.gitlab.com
+    metadata:
+      max_upstream_conn: 1
+  - name: public.ecr.aws
+    public: true
+    registry: public.ecr.aws
+    metadata:
+      max_upstream_conn: 1
+  - name: mcr.microsoft.com
+    public: true
+    registry: mcr.microsoft.com
+    metadata:
+      max_upstream_conn: 1
+  - name: docker.elastic.co
+    public: true
+    registry: docker.elastic.co
+    metadata:
+      max_upstream_conn: 1
+  - name: gcr.io
+    public: true
+    registry: gcr.io
+    metadata:
+      max_upstream_conn: 1
+  - name: k8s.gcr.io
+    public: true
+    registry: k8s.gcr.io
+    metadata:
+      max_upstream_conn: 1
+  - name: us.gcr.io
+    public: true
+    registry: us.gcr.io
+    metadata:
+      max_upstream_conn: 1
+  - name: lscr.io
+    public: true
+    registry: lscr.io
+    metadata:
+      max_upstream_conn: 1
+  - name: docker.osgeo.org
+    public: true
+    registry: docker.osgeo.org
+    metadata:
+      max_upstream_conn: 1

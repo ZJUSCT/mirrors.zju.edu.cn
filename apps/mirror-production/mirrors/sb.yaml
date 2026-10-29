@@ -1,0 +1,59 @@
+metadata:
+  name: sb
+info:
+  description: 为 Debian 和 Ubuntu 构建、支持新特性的 Nginx 第三方软件包
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/sb/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://n.wtf/
+    - https://n.wtf/mirrors/
+    - https://n.wtf/public.key
+    policy:
+    - n.wtf官方Mirrors页“Mirror Our Repo”明确指定rsync://mirrors.xtom.com/repo/sb/；官方主机为mirrors.xtom.com、模块repo、子路径sb/，不是从域名或USTC配置猜出的地址。
+    - 官方sb子树根为gdnsd/、nginx/和nginx-quic -> nginx；ZJU公网sb根三项一致，nginx内含dists/、pool/、src/、public.key、public-rsa.key和releases.json。现有rsync模板可直接用该源的sb/内容同步目标根，无需自定义类型/元数据重写。
+    - N.WTF客户端APT URI必须指向/sb/nginx/，suite是发行版代号，component=main；不要把/sb/当APT根。保留nginx-quic相对链接和safe-links；公开JSON会把可跟随链接显示成directory，不能据此认定上游无链接。
+    - N.WTF测试仓库debian-repo.xxx.sb含未测试构建，官方明确现有镜像仅接收测试发布后的包；不要把测试仓库作为生产上游。
+    - 未发现官方强制同步周期；interval/timeout均24h是本站候选日常配置，不是官方要求。工作站一次非递归rsync列表成功不等于生产出口或指定IPv4/IPv6均验证。
+    - sb与xtom必须独立：sb来自mirrors.xtom.com的repo模块下sb/；xtom来自另一个主机rsync.repo.xtom.com的repo模块，根只有deb/、rpm/、README.md、xtom.key，不包含sb。两个repo模块名称相同不代表同一树。
+  bootstrap:
+    note: USTC初始化和快照发布完成，自动同步仍暂停。官方URI和源树已由官方文档与工作站daemon根列表独立确认；现在阻塞是生产切换验收，不是“未找到官方rsync”。
+  validation:
+    observed_at: '2026-10-02'
+    completed:
+    - 运行记录sb-sync-1790957231于2026-10-02T16:12:52Z同步成功、16:13:01Z发布，Ready=True；sync-paused=true。
+    - 2026-10-02从公网.mirror-index确认/sb/{gdnsd,nginx,nginx-quic}，从官方rsync://mirrors.xtom.com/repo/sb/只读根列表确认同层与nginx-quic ->
+      nginx，exit=0；没有从工作站执行生产卷同步。
+    - 使用官方HTTPS https://n.wtf/public.key，指纹1604614B4A6C2B73654BB8B6C5215CAF0055522F，gpgv验证公网/sb/nginx/dists/bookworm/InRelease成功；签名时间2026-09-29T20:07:45Z。
+    - 该公网InRelease与官方mirror-cdn.xtom.com/sb/nginx同路径内容完全一致；公网main/binary-amd64/Packages.gz为9994字节，SHA256=376422652de8dc33e2db96628cba94c8915d7c5917a15179ccead28d25f8d421，匹配已验签InRelease。
+    - 2026-10-02公网包级核验：由已验签bookworm/amd64索引选择nginx-extras 2:1.31.6-1nwtf+403+deb12u1，/sb/nginx/pool/main/n/nginx/nginx-extras_1.31.6-1nwtf+403+deb12u1_all.deb为69152字节，SHA256=12b926af27cfb8999510e693310815bd11deccb04490f1485e1456b455dc3300，均与Packages一致。
+    - 使用已有mirrors-e2e-debian镜像进行隔离APT下载验收：非root、只读容器根、tmpfs状态、官方密钥只读signed-by，仅配置http://mirrors.zju.edu.cn/sb/nginx bookworm
+      main；禁止HTTP重定向和不安全仓库。apt-get update、apt-get download nginx-extras、dpkg-deb元数据读取均exit0，下载文件与上面的大小/SHA256一致。没有执行安装或包脚本。
+    remaining: bootstrap公网APT bookworm/amd64签名→索引→代表包链和隔离APT下载验收已通过；生产官方源dry-run、真实同步、新快照及切换后复核仍待完成。尚未验证gdnsd、其他suite/架构、依赖安装或运行时行为，不将下载验收泛化为全树或安装验收。
+    signature: 保留官方public.key和签名索引原文；客户端signed-by=/usr/share/keyrings/n.wtf.gpg，禁止trusted=yes或修改签名元数据。当前验证信任锚来自项目官方HTTPS，指纹用于复核后续轮换。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/sb/
+    surveyed_at: '2026-10-02'
+    status: bootstrap-complete
+    note: 初始化已完成；当前配置仍指向此源但暂停，不代表已切到官方。
+  - url: rsync://mirrors.xtom.com/repo/sb/
+    surveyed_at: '2026-10-02'
+    status: candidate-verified-readonly
+    note: N.WTF官方镜像说明指定；2026-10-02工作站非递归根列表exit0。使用默认地址族，代理/DNS环境下未独立证明生产协议栈；等待生产dry-run和真实同步。
+  - url: https://mirror-cdn.xtom.com/sb/nginx/
+    surveyed_at: '2026-10-02'
+    status: reference
+    note: N.WTF官方客户端APT URI，用于签名元数据交叉核对；只覆盖nginx子树，不应替换整个sb根。

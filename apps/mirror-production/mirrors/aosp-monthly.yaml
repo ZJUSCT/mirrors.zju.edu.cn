@@ -1,0 +1,43 @@
+metadata:
+  name: aosp-monthly
+info:
+  description: AOSP（Android 系统源码）镜像每月打包
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/aosp-monthly/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 204Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://source.android.com/docs/setup/download/downloading
+    - https://android.googlesource.com/mirror/manifest
+    - https://mirrors.ustc.edu.cn/help/aosp.html
+    policy:
+    - USTC 帮助明确初始化 tar 定时从 TUNA 下载；这是社区 AOSP 初始化归档，不是 Google 官方月度发行。Google 官方源采用 Repo/Git manifest 和 repo sync。
+    - 已发布根为 aosp-latest.tar 与 aosp-latest.tar.md5；保留一致归档与摘要。MD5 是传输校验而非来源认证，本次没有下载或校验大归档。
+    - 月度是社区打包节奏；24h 为本地轮询设置，不能表述为 Google 的镜像要求。
+  bootstrap:
+    note: USTC 首次同步任务 aosp-monthly-sync-1791057034 于 2026-10-03T20:42:19Z 成功，快照于 2026-10-03T20:42:28Z 发布，Ready=True；自动同步保持暂停，并未完成官方切换。
+    official_cutover_blocker: 官方 manifest 是 Repo/Git 仓库入口，不提供与种子同一产品的月度 tar；tsumugu nginx 实测无法解析 Gitiles 页面。现有四种工具也不执行 Repo/Git
+      同步与归档生成，不能把 Google manifest URL 当作该社区 tar 树的直接增量源。
+    action: 保留成功发布快照和暂停状态，不新增同步类型、不恢复 USTC 定时同步；待来源、现有范围和工具能力均验证后再安排接续。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/aosp-monthly/
+    surveyed_at: '2026-10-03'
+    status: selected
+    note: 已完成的 USTC 首次同步来源；本轮未连接 USTC rsync。
+  - url: https://android.googlesource.com/mirror/manifest
+    surveyed_at: '2026-10-03'
+    status: blocked-by-existing-template
+    note: 官方 manifest 是 Repo/Git 仓库入口，不提供与种子同一产品的月度 tar；tsumugu nginx 实测无法解析 Gitiles 页面。现有四种工具也不执行 Repo/Git 同步与归档生成，不能把 Google
+      manifest URL 当作该社区 tar 树的直接增量源。

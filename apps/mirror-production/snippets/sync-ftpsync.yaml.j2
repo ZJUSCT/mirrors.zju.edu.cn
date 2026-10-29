@@ -1,0 +1,75 @@
+{# spec.sync 的 ftpsync 形态(基缩进 4 空格)。
+   clear-lock 为固定部分:ftpsync 异常终止可能残留 AUIP 标记,所有 ftpsync 镜像必清。 #}
+    podTemplate:
+      spec:
+{% if m.sync.nodeSelector %}
+        # 仅用于 WaitForFirstConsumer PVC 的首次落盘；PV 绑定后应从清单移除
+        nodeSelector:
+{% for key, value in m.sync.nodeSelector.items() %}
+          {{ key | ys }}: {{ value | ys }}
+{% endfor %}
+{% endif %}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: {{ sync_uid }}
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+{% include 'init-sync-volume.yaml.j2' %}
+          # ftpsync 被异常终止时可能残留 AUIP 标记，需清理
+          - name: clear-lock
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [rm, -f, /data/Archive-Update-in-Progress-mirrors.zju.edu.cn]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+        containers:
+          - name: ftpsync
+            image: ghcr.io/zjusct/archvsync:latest
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command: [ftpsync]
+            args: [sync:archive:{{ m.sync.ftpsync.archive }}]
+            env:
+              - name: LOGNAME
+                value: falcon
+              - name: HOME
+                value: /data
+              - name: TMPDIR
+                value: /data/.ftpsync/tmp
+              # 镜像差异变量经环境变量注入;站点级常量在共享的 configs/ftpsync.conf
+              # (ftpsync source 该文件在 env 之后,故常量不得与其重名)
+              - name: RSYNC_HOST
+                value: {{ host }}
+              - name: RSYNC_PATH
+                value: {{ path }}
+              - name: RSYNC_EXTRA
+                value: "{{ ftpsync_extra }}"
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+              # subPath 决定 read_config 要找的文件名(ftpsync-<archive>.conf),
+              # 源文件是共享 ConfigMap ftpsync-conf 里的 ftpsync.conf
+              - name: ftpsync-config
+                mountPath: /etc/ftpsync/ftpsync-{{ m.sync.ftpsync.archive }}.conf
+                subPath: ftpsync.conf
+                readOnly: true
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+              limits: {cpu: "4", memory: 4Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+          - name: ftpsync-config
+            configMap:
+              name: ftpsync-conf

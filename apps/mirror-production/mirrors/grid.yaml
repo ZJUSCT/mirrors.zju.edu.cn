@@ -1,0 +1,42 @@
+metadata:
+  name: grid
+info:
+  description: 清华网格计算相关软件归档
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/GRID/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 336h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 20532Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+  aliases:
+  - /GRID
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://www.grid.org/
+    - https://www.globus.org/
+    policy:
+    - 现有配置仅把 TUNA GRID/ 作为初始化快照；配置中的 GRID-upstream/GRID/ 不是可核实的公开官方主机。
+    - 未找到由项目方公布、可用于替代 TUNA 的稳定 rsync 模块、目录范围或同步政策；不能把搜索结果或镜像状态接口当作授权上游。
+    - TUNA 初始化和一次授权重试均因远端连接重置/rsync code 10/12 失败；无可审计的官方源可继续进行 guarded validation。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/GRID/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-07'
+    note: 初始化及授权重试失败，日志显示远端连接重置。
+  - url: rsync://GRID-upstream/GRID/
+    stack: unknown
+    status: unverified
+    surveyed_at: '2026-10-07'
+    note: 配置占位符，无 DNS/官方归属证据，不得作为生产上游。
+  bootstrap:
+    note: TUNA 初始化失败；未启动新的同步任务，继续保持暂停。

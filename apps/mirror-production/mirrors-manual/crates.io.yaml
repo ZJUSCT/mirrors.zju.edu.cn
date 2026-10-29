@@ -1,0 +1,203 @@
+# comment:
+#   official:
+#     surveyed_at: 2026-09-19
+#     docs:
+#       - https://crates.io/data-access
+#       - https://doc.rust-lang.org/cargo/reference/registry-index.html#index-configuration
+#       - https://doc.rust-lang.org/cargo/reference/source-replacement.html
+#     policy:
+#       - crate 包体可直接从 static.crates.io 下载，当前无访问频率限制。
+#       - 官方包体路径为 /crates/<name>/<name>-<version>.crate。
+#       - 源替换要求镜像包体与 crates.io 内容完全一致。
+#       - crates.io 未规定镜像同步间隔，也未公布完整包体的容量估算。
+#   upstreams:
+#     - url: https://static.crates.io/crates
+#       stack: dual
+#       surveyed_at: 2026-09-19
+#       metrics: IPv4 RTT 约 98–103ms、4.7MiB/s；IPv6 RTT 约 62ms、4.3MiB/s
+#       note: crates.io 官方 CDN；无 rsync，本地选择由官方索引驱动增量下载。
+# TODO: 当前同步工具未启用索引 SHA-256 校验，且不会清理仍存在包名下已删除的旧版本；
+#   完成校验和清理逻辑前，不将 sparse 索引的 dl 切换到本站。
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: crates.io
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Rust 软件包注册表 crates.io 的静态包体
+    upstream: https://static.crates.io/crates
+  storage:
+    retention: 1
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      volumeMode: Filesystem
+      resources:
+        requests:
+          storage: 1Ti
+      volumeName: pvc-80812a69-70f3-46df-835c-fbc669df4ae6
+  sync:
+    interval: 6h
+    retryInterval: 15m
+    # 首轮全量爬取（~600G）需多天多轮，单轮死线充分放宽
+    timeout: 48h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          fsGroup: 65532
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: crates-sync
+            image: docker.io/ustcmirror/crates-io:latest
+            imagePullPolicy: Always
+            # 绕过 ustcmirror base 的 entry（su-exec 在无特权容器内致命失败，
+            # 2026-09-14 排障）；直跑镜像的 SYNC_SCRIPT，输出直达 stdout
+            command: [/bin/bash, /sync-crates.sh]
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 65532
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: false
+            env:
+              # entry.sh 原本 export DEBUG=${DEBUG:-false}，set -u 下脚本裸引用
+              - name: DEBUG
+                value: "false"
+              # GitHub 访问走集群代理（同 homebrew 的模式）
+              - name: HTTP_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: HTTPS_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: NO_PROXY
+                value: localhost,127.0.0.1,::1,10.0.0.0/8,172.26.0.0/16,172.27.0.0/16,fda8:d4b1:99d0:100::/56,fda8:d4b1:99d0:200::/112,.svc,.cluster.local,static.crates.io
+              - name: TO
+                value: /data
+              - name: LOGDIR
+                value: /tmp
+              - name: OWNER
+                value: 65532:65532
+              - name: HOME
+                value: /tmp
+              # 官方源（镜像默认值，显式声明）
+              - name: CRATES_FILES_UPSTREAM
+                value: https://static.crates.io/crates
+              - name: CRATES_JOBS
+                value: "16"
+              # 内部索引的 dl 重写：对爬取无影响，保持官方值
+              - name: CRATES_PROXY
+                value: https://static.crates.io/crates
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: "1", memory: 1Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+  publish:
+    http:
+      replicas: 1
+      podTemplate:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              command: [sh, -ec]
+              args:
+                - |
+                  sed 's/worker_processes  auto;/worker_processes  2;/' /etc/nginx/nginx.conf > /tmp/nginx.conf
+                  exec nginx -c /tmp/nginx.conf -g 'daemon off;'
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /crates.io/
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /crates.io/
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 3
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                # 数据集内 tarball 树位于 crates/ 子目录（旁有内部 index/ 与
+                # state/），subPath 对齐公开路径 /crates.io/<name>/...；
+                # dl 目标 https://mirrors.zju.edu.cn/crates.io 与此对应
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/crates.io
+                  subPath: crates
+                  readOnly: true
+              resources:
+                requests: {cpu: 50m, memory: 64Mi}
+                limits: {cpu: "4", memory: 256Mi}
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              emptyDir: {}

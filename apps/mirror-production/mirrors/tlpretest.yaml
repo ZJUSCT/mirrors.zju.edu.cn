@@ -1,0 +1,48 @@
+metadata:
+  name: tlpretest
+info:
+  description: TeX Live 预发布测试仓库
+  upstream: rsync://tug.org/tlpretest/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+    - --exclude=*.pkg*
+    - --exclude=mactex*
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://tug.org/texlive/pretest.html
+    - rsync://tug.org/tlpretest/README.md
+    policy:
+    - 官方 pretest 文档推荐用 rsync 镜像整个预发布目录，示例使用 -a --delete --exclude="*.pkg*"；并明确要求避免镜像 mactex* 以免与 MacTeX 包重复传输，只有专做
+      MacTeX 时才应下载这些包。已在 rsync.extra_args 配置 *.pkg* 与 mactex* 排除规则。
+    - 官方说明预发布构建每夜执行，通常在哥本哈根当地时间 04:00 前完成，镜像在之后数小时跟进；文档未规定镜像强制轮询间隔，按每日构建采用 24h，若需固定在构建后执行则需另设调度而非假称 interval 自动对齐。
+    - 本次官方模块 README 明确宣布 2026 预发布测试已经结束；当前只有 README.md 和 00_TIME.txt 属正常休眠状态，不能将其当作完整 TeX Live 正式发行仓库，也不应因目录很小判作初始化失败。
+    - 正式安装应使用 CTAN 上的当前 TeX Live；预发布期间应使用该目录自带 install-tl，旧年度安装器不兼容。原目录及文件名必须保持，不得替换为正式仓库。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/tlpretest/
+    stack: ipv6
+    status: bootstrap-complete
+    surveyed_at: '2026-10-02'
+    note: TUNA 首轮同步已成功，仅作本次初始化源。
+  - url: rsync://tug.org/tlpretest/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 生产 IPv4 真实回源与 README 内容哈希校验已成功，IPv6 查询无可用地址。本次重新请求 tug.org 网页在工作站返回 403，已实际阅读本次 rollout/survey/tlpretest-docs.html
+      中成功获取的官方原文，并读取已校验发布的官方 README。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、官方源真实同步、快照发布及 HTTP 文件内容校验均已通过，已恢复自动同步。
+    reported_size: 175K

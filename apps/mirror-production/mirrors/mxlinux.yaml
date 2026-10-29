@@ -1,0 +1,48 @@
+metadata:
+  name: mxlinux
+info:
+  description: MX Linux 软件仓库
+  upstream: rsync://[2602:ff75:7:30c7::1]/workspace/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 356Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://mxlinux.org/wiki/system/repositories/
+    - https://mxlinux.org/download-links/
+    - https://iso.mxrepo.com/
+    policy:
+    - MX/antiX页面本次因站点403无法读取固定同步间隔；建议24h作为本地策略，必须标为提议而非官方要求。
+    - 官方归档主机iso.mxrepo.com/workspace公开rsync列出antix/和mx/；TUNA初始化模块根含相同两类树但采用小写路径，需保留该布局。
+    - ISO/仓库内容包括校验和、签名及Debian包仓库；同步必须保留所有校验/签名及符号链接，不能只挑ISO文件。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/mxlinux/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始同步已成功（mxlinux-sync-1790965858），当前保持 sync-paused。
+  - url: rsync://iso.mxrepo.com/workspace/
+    stack: ipv6
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: 当前本地和线上已选官方域名（-6）；完整 dry-run 成功（66106 文件），随后 mxlinux-sync-1791044285 连接超时 code35。官方域名有两个 AAAA，生产 s1
+      对 2602:ff75:7:30c7::1 的 workspace、antix/、mx/ 列表成功，而 2604:880:50:59::2de7 连接超时 code35；域名随机命中失效地址可解释 IPv6
+      dry-run 成功但随后真实同步连接失败。
+  - url: rsync://[2602:ff75:7:30c7::1]/workspace/
+    stack: ipv6
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: 官方 iso.mxrepo.com 当前 DNS AAAA 成员；s1 对 workspace 根及 antix/mx 子树只读列表均成功，与初始化布局一致。仅建议临时固定端点，尚待完整生产验证，不是已完成切换。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。

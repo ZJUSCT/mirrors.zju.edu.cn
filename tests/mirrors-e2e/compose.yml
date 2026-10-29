@@ -1,0 +1,232 @@
+# 每个子目录一个镜像站的端到端测试；docker compose run --rm <服务名> 即测相应镜像。
+# MIRROR_HOST / PKG 均为运行时变量（默认测试生产域名的 HTTP 服务）。
+services:
+  homebrew:
+    build: ./homebrew
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  debian:
+    build: ./debian
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  pypi:
+    build: ./pypi
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  anthon:
+    build: ./anthon
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  openkylin:
+    build: ./openkylin
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  archlinux:
+    build: ./archlinux
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  ubuntu:
+    build: ./ubuntu
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  fedora:
+    build: ./fedora
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  openeuler:
+    build: ./openeuler
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  rosdistro:
+    build: ./rosdistro
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  cpan:
+    build: ./cpan
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  ctan:
+    build: ./ctan
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  cran:
+    build: ./cran
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  armbian:
+    build: ./armbian
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  centos:
+    build: ./centos
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  centos-vault:
+    build: ./centos-vault
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  centos-stream:
+    build: ./centos-stream
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  rocky:
+    build: ./rocky
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  gentoo:
+    build: ./gentoo
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  qt:
+    build: ./qt
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  msys2:
+    build: ./msys2
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  deepin:
+    build: ./deepin
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  deepin-cd:
+    build: ./deepin-cd
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  elrepo:
+    build: ./elrepo
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  bioconductor:
+    build: ./bioconductor
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  docker-ce:
+    build: ./docker-ce
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  kubernetes:
+    build: ./kubernetes
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  kali:
+    build: ./kali
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  ros2:
+    build: ./ros2
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  rustup:
+    build: ./rustup
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  manjaro:
+    build: ./manjaro
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+      PKG: ${PKG:-}
+    restart: "no"
+  gnu:
+    build: ./gnu
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  llvm-apt:
+    build: ./llvm-apt
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  mozilla:
+    build: ./mozilla
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  linuxmint:
+    build: ./linuxmint
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  proxmox:
+    build: ./proxmox
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  kali-images:
+    build: ./kali-images
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  immortalwrt:
+    build: ./immortalwrt
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  packman:
+    build: ./packman
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  raspberrypi:
+    build: ./raspberrypi
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  raspbian:
+    build: ./raspbian
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  ros:
+    build: ./ros
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"
+  termux:
+    build: ./termux
+    environment:
+      MIRROR_HOST: ${MIRROR_HOST:-mirrors.zju.edu.cn}
+    restart: "no"

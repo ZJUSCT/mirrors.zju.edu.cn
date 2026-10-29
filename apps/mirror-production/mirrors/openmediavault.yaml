@@ -1,0 +1,65 @@
+metadata:
+  name: openmediavault
+info:
+  description: OpenMediaVault 网络存储系统软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/OpenMediaVault/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+  aliases:
+  - /OpenMediaVault
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://docs.openmediavault.org/en/stable/installation/on_debian.html
+    - https://packages.openmediavault.org/public/
+    - https://openmediavault.github.io/packages/
+    - https://openmediavault-plugin-developers.github.io/packages/
+    - https://openmediavault.github.io/packages/dists/synchrony/Release
+    - https://openmediavault-plugin-developers.github.io/packages/debian/dists/synchrony/Release
+    policy:
+    - 已阅读的官方安装/仓库文档未规定第三方镜像同步间隔；建议后续每日（24h）检查一次作为本地低负载策略，非官方要求，当前暂停时不生效。
+    - 官方 OMV 8 安装文档指定 Debian 13、suite synchrony/main，列出 packages.openmediavault.org/public/ 与 packages.openmediavault.io/；官方
+      GitHub Pages 仓库说明也明确提供可添加到 sources.list 的 APT 源。公开下载不要求认证，签名应保持原样供客户端验证。
+    - TUNA openmediavault.sh 聚合三部分并严格映射：packages.openmediavault.org/public -> public/；openmediavault.github.io/packages
+      -> packages/；openmediavault-plugin-developers.github.io/packages/debian -> openmediavault-plugin-developers/，另下载
+      omvextras2026.asc。第三部分属于 OMV Extras 插件社区，不应当描述成 OMV 核心官方仓库。
+    - TUNA 核心仓库选择 synchrony/sandworm/shaitan/usul 及各 -proposed，components main,partner；插件仓库选择 synchrony,sandworm,shaitan-beta,shaitan-testing,shaitan,usul-beta,usul-extras,usul-testing,usul。脚本请求
+      amd64,i386,arm64,armel,armhf，当前 synchrony Release 实际只声明 amd64/arm64。
+    - public/ 有 Apache 目录索引，另两个 GitHub Pages 根是介绍页而非可递归文件列表；但各自 synchrony Release 匿名返回 200。仅将 public/ 改为整个镜像根会破坏三根布局，既有
+      dry-run 已触发超过100项删除限制，应保留该保护。
+    - 需要三上游映射的 APT 索引同步器（保留各自 dists/pool 与 key），或通用模板扩展后逐根实现；当前单根 tsumugu 不能完整表达聚合布局，保持暂停。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/OpenMediaVault/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: TUNA 初始同步已成功；当前 sync-paused，不作为未获授权的长期同步源。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  - url: https://packages.openmediavault.org/public/
+    stack: ipv4
+    status: hold
+    surveyed_at: '2026-10-02'
+    note: OMV 官方公开 APT 源，应落到本地 public/ 子树，不能覆盖镜像根。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  - url: https://openmediavault.github.io/packages/
+    stack: ipv4
+    status: hold
+    surveyed_at: '2026-10-02'
+    note: OMV 官方 GitHub Pages APT 源，应落到 packages/；Release 可用而根不是目录索引。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  - url: https://openmediavault-plugin-developers.github.io/packages/debian/
+    stack: ipv4
+    status: hold
+    surveyed_at: '2026-10-02'
+    note: OMV Extras 社区 APT 源，应落到 openmediavault-plugin-developers/，保留 omvextras2026.asc。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  bootstrap:
+    note: TUNA 初始同步已成功（openmediavault-sync-1790957192）；当前保持 sync-paused。官方文档和现有布局调查已完成；TUNA 是三根 APT 聚合，单根 official
+      public/ 切换会删改路径；GitHub Pages 根也不能目录递归。需多上游 APT 索引同步及明确子目录映射，保持暂停。

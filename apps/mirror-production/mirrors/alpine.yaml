@@ -1,0 +1,31 @@
+metadata:
+  name: alpine
+info:
+  description: 基于 musl 和 BusyBox 的轻量、安全的 Linux 发行版
+  upstream: rsync://rsync.alpinelinux.org/alpine/ # 官方搭建指南指定的主同步源
+sync:
+  type: rsync
+  interval: 1h
+  timeout: 1h
+storage:
+  size: 6Ti
+  volumeName: pvc-151d6743-e81d-4861-a119-cc9f204c82fd
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://wiki.alpinelinux.org/wiki/How_to_setup_a_Alpine_Linux_mirror
+      - https://mirrors.alpinelinux.org/
+    policy:
+      - 官方搭建指南使用 rsync://rsync.alpinelinux.org/alpine/ 作为主同步源，并建议每小时同步一次。
+      - 镜像可通过 HTTP 对外提供文件，并可提供 rsync 服务供其他镜像同步。
+      - 可订阅官方 MQTT 消息触发同步，同时保留每小时完整同步作为兜底。
+  upstreams:
+    - url: rsync://rsync.alpinelinux.org/alpine/
+      stack: dual
+      surveyed_at: 2026-09-18
+      note: 官方搭建指南指定的主同步源；IPv4 和 IPv6 均已验证可用。

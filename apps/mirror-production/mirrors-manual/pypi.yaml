@@ -1,0 +1,262 @@
+# comment:
+#   official:
+#     surveyed_at: 2026-09-19
+#     docs:
+#       - https://docs.pypi.org/api/
+#       - https://packaging.python.org/en/latest/specifications/simple-repository-api/
+#       - https://pypi.org/stats/
+#     policy:
+#       - 软件包安装器和镜像应使用 Simple Repository API；HTML 与 JSON 表示分别由 PEP 503 和 PEP 691 定义。
+#       - 新集成不应使用计划弃用的 XML-RPC API；现有使用者应迁移到 JSON、RSS 或 Index API。
+#       - API 客户端应提供可识别的 User-Agent、遵守 ETag，并避免在数分钟内突发数千次请求。
+#   upstreams:
+#     - url: https://pypi.org/
+#       stack: dual
+#       surveyed_at: 2026-09-08
+#       metrics: IPv4 RTT 约 72ms；IPv6 RTT 约 64ms
+#       note: 项目列表和序列号仍通过 XML-RPC 获取，项目元数据同时使用 JSON API 和 PEP 691；受排除规则影响，本地内容不是完整副本。
+#     - url: https://files.pythonhosted.org/
+#       stack: dual
+#       surveyed_at: 2026-09-08
+#       metrics: IPv4 RTT 约 243ms、35MiB/s；IPv6 RTT 约 64ms、35–88MiB/s
+#       note: 实际软件包文件由 Fastly CDN 提供，IPv6 路径明显优于 IPv4。
+# TODO: 将 Shadowmire 的项目发现从 XML-RPC 迁移至 PEP 691，并为 index.v1_json 实现正确的内容协商。
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: pypi
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Python 软件包索引与发行文件镜像
+    upstream: https://pypi.org
+  storage:
+    retention: 1
+    publishStorageClassName: zfs-hdd-delete-immediate
+    pvcTemplate:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Ti
+      volumeMode: Filesystem
+      volumeName: pvc-a2fd5764-fd7e-402a-93ed-8fefb70e5f0c
+    syncStorageClassName: zfs-hdd-retain-immediate
+    volumeSnapshotClassName: openebs-zfs-snapshot
+  sync:
+    interval: 5m
+    retryInterval: 5m
+    timeout: 2h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: shadowmire
+            image: ghcr.io/zjusct/shadowmire:latest
+            imagePullPolicy: Always
+            env:
+              - name: SHADOWMIRE_WORKERS
+                value: "10"
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command: [python3, /wrapper/prefer-v6.py, /usr/local/bin/shadowmire]
+            args:
+              - --repo
+              - /data/web
+              - sync
+              - --sync-packages
+              # storage-saving excludes, following TUNA's pypi_shadowmire.sh list
+              # (+ blocklist from TUNA's bandersnatch-era pypi.sh: uselesscapitalquiz)
+              - --exclude
+              - '.+-nightly(-|$)'
+              - --exclude
+              - uselesscapitalquiz
+              - --prerelease-exclude
+              - duckdb
+              - --prerelease-exclude
+              - graphscope-client
+              - --prerelease-exclude
+              - lalsuite
+              - --prerelease-exclude
+              - 'gs-(apps|engine|include)'
+              - --prerelease-exclude
+              - 'bigdl-dllib(-spark2|-spark3)?'
+              - --prerelease-exclude
+              - ovito
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: prefer-v6
+                mountPath: /wrapper
+                readOnly: true
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: 500m, memory: 1Gi}
+              limits: {cpu: "4", memory: 8Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+          - name: prefer-v6
+            configMap:
+              name: prefer-v6
+              defaultMode: 0444
+  publish:
+    http:
+      replicas: 2
+      podTemplate:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /pypi/web/
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /pypi/web/
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 3
+              resources:
+                requests: {cpu: "10m", memory: 32Mi}
+                limits: {cpu: "4", memory: 2Gi}
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                # 与 TUNA/USTC/SJTU 相同布局：对外 URL 根是
+                # bandersnatch 根目录，可服务内容位于其 web/ 子目录，即
+                # https://mirrors.zju.edu.cn/pypi/web/simple。根目录上的
+                # 状态文件（generation、todo、.lock 等）随根目录原样暴露，
+                # 与其他站一致，无须过滤。
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/pypi
+                  readOnly: true
+                - name: nginx-locations
+                  mountPath: /etc/nginx/locations
+                  readOnly: true
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              emptyDir: {}
+            - name: nginx-locations
+              configMap:
+                name: pypi-nginx
+---
+# prefer-v6 包装器：requests/urllib3 无 Happy Eyeballs，
+# Pod 的 ULA v6 源使 getaddrinfo（RFC 6724）把 v4 排前、工具被钉在 v4 路径；
+# 包装器把 AF_INET6 稳定排前再运行目标脚本。
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prefer-v6
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  prefer-v6.py: |
+    import runpy
+    import socket
+    import sys
+
+    if len(sys.argv) < 2:
+        raise SystemExit("usage: prefer-v6.py TARGET_SCRIPT [args...]")
+
+    _orig_getaddrinfo = socket.getaddrinfo
+
+    def _prefer_v6(*args, **kwargs):
+        # stable sort: v6 first, order within each family preserved
+        return sorted(
+            _orig_getaddrinfo(*args, **kwargs),
+            key=lambda r: r[0] != socket.AF_INET6,
+        )
+
+    socket.getaddrinfo = _prefer_v6
+
+    target = sys.argv[1]
+    sys.argv = [target] + sys.argv[2:]
+    runpy.run_path(target, run_name="__main__")
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pypi-nginx
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  simple-index.conf: |
+    # pip（PEP 503/691）请求 /simple/<项目>/ 时 Accept 头含 text/html，
+    # 会命中目录列表协商拿到 mirror-front 壳页而非索引文件，导致
+    # "No matching distribution found"。此处绕过协商，直出目录下的
+    # index.html（shadowmire 生成的 simple 索引页）。
+    # 副作用：浏览器访问项目目录看到的是原始索引 HTML 而非门户列表页。
+    location ~ "^/pypi/web/simple/" {
+        try_files $uri $uri/index.html =404;
+    }

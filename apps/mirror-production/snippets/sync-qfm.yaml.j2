@@ -1,0 +1,65 @@
+{# spec.sync 的 quick-fedora-mirror 形态(基缩进 4 空格)。
+   QFM 原生只读取 zsh 配置文件；共享 qfm-conf 负责站点级常量，并显式
+   导入这里注入的 QFM_* 环境变量。 #}
+    podTemplate:
+      spec:
+{% if m.sync.nodeSelector %}
+        # 仅用于 WaitForFirstConsumer PVC 的首次落盘；PV 绑定后应从清单移除
+        nodeSelector:
+{% for key, value in m.sync.nodeSelector.items() %}
+          {{ key | ys }}: {{ value | ys }}
+{% endfor %}
+{% endif %}
+        securityContext:
+          # QFM 的同步用户与发布用户分离，避免预发布内容提前可读
+          fsGroup: {{ sync_uid }}
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+{% include 'init-sync-volume.yaml.j2' %}
+        containers:
+          - name: qfm
+            image: ghcr.io/zjusct/quick-fedora-mirror:latest
+            imagePullPolicy: Always
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: {{ sync_uid }}
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command:
+              - zsh
+              - /usr/local/bin/quick-fedora-mirror
+              - -c
+              - /etc/quick-fedora-mirror/qfm.conf
+            env:
+              # info.upstream 记录逻辑模块；QFM 实际从同一主机的
+              # fedora-buffet 聚合模块按 MODULES 文件列表同步。
+              - name: QFM_REMOTE
+                value: rsync://{{ host }}
+              - name: QFM_MODULE
+                value: {{ m.sync.qfm.module | ys }}
+              - name: QFM_RSYNC_FAMILY
+                value: {{ ("-6" if ipv6 else "-4") | ys }}
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+              - name: qfm-config
+                mountPath: /etc/quick-fedora-mirror
+                readOnly: true
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+              limits: {cpu: "4", memory: 4Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+          - name: qfm-config
+            configMap:
+              name: qfm-conf

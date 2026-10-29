@@ -1,0 +1,45 @@
+metadata:
+  name: immortalwrt
+info:
+  description: ImmortalWrt 固件与软件包仓库
+  upstream: rsync://firmwaremirror@rsync-mirror-china.infra.immortalwrt.org:873/firmware-mirror/
+sync:
+  type: rsync
+  interval: 8h
+  timeout: 8h
+  rsync:
+    password_secret: immortalwrt-rsync
+storage:
+  size: 4Ti
+  volumeName: pvc-5033b66b-2ce6-4195-bba1-7139e4866f34
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-10-29
+    docs:
+      - https://immortalwrt.org/
+      - https://downloads.immortalwrt.org/acknowledgements.html
+    policy:
+      - 依据收到的上游迁移通知，国内 rsync 服务器重新上线，端口为 873；用户名为 firmwaremirror，密码仅通过 Secret 注入。
+      - 选择 firmware-mirror 全量模块，包含快照及 EoL 版本；不添加排除历史版本或快照的规则。
+      - releases-mirror-default 仅含最近三个主要版本；releases-mirror-extend 包含所有正式版本，但不含快照和 18.06。
+      - 迁移通知未指定同步间隔，沿用 8h。
+  upstreams:
+    - url: rsync://firmwaremirror@rsync-mirror-china.infra.immortalwrt.org:873/firmware-mirror/
+      stack: dual
+      surveyed_at: 2026-10-29
+      status: selected
+      note: 已验证双栈 DNS 解析及 873/TCP rsync 握手；尚未验证认证、目录布局、容量及吞吐。配置保留现有 4Ti 数据卷，首次同步前须确认可用空间。
+    - url: rsync://firmwarepublic@rsync-mirror.infra.immortalwrt.org/firmware-public/
+      stack: dual
+      surveyed_at: 2026-09-16
+      metrics: IPv4 RTT 约 290–515ms、单文件约 2.7MB/s
+      note: 原海外公开同步入口，仅保留历史调研记录；迁移后不再选用。
+    - url: rsync://mirrors.nju.edu.cn/immortalwrt/
+      stack: dual
+      surveyed_at: 2026-09-16
+      metrics: IPv4 RTT 约 25ms、单文件约 41.8MB/s
+      note: ImmortalWrt 官方致谢列表收录的完整镜像；匿名访问可用，抽查 releases 与 snapshots 当日新鲜。

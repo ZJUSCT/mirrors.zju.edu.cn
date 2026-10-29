@@ -1,0 +1,95 @@
+metadata:
+  name: raspberry-pi-os-images
+info:
+  description: Raspberry Pi OS（原 Raspbian）的安装镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/raspberry-pi-os-images/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 692Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://downloads.raspberrypi.org/
+    - https://downloads.raspberrypi.org/raspios_arm64/release_notes.txt
+    - https://downloads.raspberrypi.org/os_list_imagingutility_v4.json
+    - https://www.raspberrypi.com/software/operating-systems/
+    - https://www.raspberrypi.com/documentation/computers/getting-started.html
+    policy:
+    - 官方HTTPS目录https://downloads.raspberrypi.org/可用；尚无已验证的官方公开rsync模块。不能把APT仓库的rsync方法套用到系统镜像，现有raspberrypi条目仅是APT仓库，与本条目不同。
+    - USTC种子是官方下载根的过滤子集：12个raspios目录（arm64/armhf、desktop/full/lite、stable/oldstable），加imager/、rpd_x86/和Raspberry_Pi_Education_Manual.pdf。官方根另有46项；直接指向整个根会扩展范围，须采用精确根允许列表，保留images/、archive/及随附元数据、历史版本，不自行精简oldstable/full/lite或PC镜像。
+    - 现有tsumugu 0.20260921.0的apache-f2解析器通过根、代表分支、images/archive与发行叶目录非递归列表；nginx解析器在同类官方页面报No metadata found for <a> element。无需新同步器；现有sync.tsumugu.extra_args可传入exclusion-v2有序允许列表，再排除其余路径。根本身必须允许，目录匹配必须覆盖(/|$)。
+    - 官方release_notes最新条目2026-09-15；官方Imager v4元数据标识stable为Debian Trixie、legacy为有安全更新的Debian Bookworm，两者都有2026-09-15镜像。rpd_x86/images最近目录仍为2022-07-04；这是需保留的历史PC发行，不能据此断言整个项目停更。
+    - 已读目录与发行元数据未规定下游同步频率或强制登记；软件与安装文档页面本轮403，根README为404，因此不宣称已完成全部官方政策核实。24h仅保留为本站暂定周期，不是官方要求；不将发行日期当作同步调度规范。未联系维护者。
+    - 本条目仅镜像既有静态文件。根os_list_imagingutility_v4.json等不在种子范围，下载仅用于核验；其URL指向downloads.raspberrypi.com且含外部系统。无需为发布原始文件重写JSON；若将来提供完整Imager目录服务，应另行设计URL/签名/外部依赖与范围，不在此次自动扩容。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: raspberry-pi-os-images-sync-1791121274
+    succeeded_at: '2026-10-04T16:52:00Z'
+    published_at: '2026-10-04T16:52:10Z'
+    note: 保存的rollout-live.json记录activePVC/activeSnapshot=raspberry-pi-os-images-snap-1791121274，Ready=True、Degraded=False，自动同步暂停；sizeBytes=352579485696，配置692Gi。本轮未查询或修改集群。
+    official_interval_candidate: 24h
+    official_cutover_state: viable-existing-tsumugu-pending-filtered-production-validation
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/raspberry-pi-os-images/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: 当前仍为USTC且暂停；与保存的USTC根列表及当前ZJU公开目录对照，根15项完全一致。本轮未重新同步或切源。
+  - url: https://downloads.raspberrypi.org/
+    surveyed_at: '2026-10-04'
+    status: candidate-verified-readonly
+    note: 官方HTTPS源；apache-f2解析与exclusion-v2允许列表在本机CLI通过，根保留15项、排除46项。尚未验证生产容器网络、全树链接/隐藏文件/大小与删除集，不把本机非递归列表等同正式同步成功。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 限定curl超时与大小，只获取文档、目录、Imager JSON和4组SHA1/SHA256/签名sidecar；tsumugu仅执行非递归list。未拉取镜像体、未执行递归同步、未创建reservation、未修改仓库或集群。证据位于review-raspberry-pi-os-images.evidence/。
+    - 精确根允许列表的保留结果与ZJU公开根名称集合一致；代表层raspios_arm64（8项）、oldstable_full_arm64（3项）、lite_armhf（8项）、rpd_x86（2项）、imager（137项）、arm64/images（28项）、arm64/archive（21项）、rpd_x86/images（11项）名称集合均一致。这不是全树或字节大小一致证明；Apache列表给的是舍入大小。
+    - 四个发行叶目录名称集合均一致：2026-09-15 Trixie arm64 desktop、Bookworm arm64 full、Trixie armhf lite，各8项；2022-07-04 PC目录5项。SHA1、SHA256、sig共12组元数据逐字节相同，3个新版本签名833字节、PC签名488字节。保留bmap/info/sbom/torrent等原始sidecar，不裁剪。
+    - 取得的SHA256是压缩img.xz或ISO文件摘要；Imager JSON中的extract_sha256是解压后的映像摘要，不能直接比较。未下载或读取种子镜像体，未计算其摘要，未建立签名公钥信任或执行签名验证，因此仅确认sidecar一致，不宣称镜像内容、签名有效性或全树完整性已经通过。
+    remaining: 切源前在现有snapshot clone及生产容器中使用同一允许列表核实全树范围、隐藏文件/链接、精确大小、历史归档、容量和删除集；核对生产镜像tsumugu版本及apache-f2/exclusion-v2行为。按官方可信公钥验证本地种子代表镜像签名，并校验SHA256；保持原始元数据字节。只有实际官方源同步成功、新快照Ready及公网抽样完成后再解除暂停。无需开发新同步器，但本次未授权执行生产切换或批量传输。
+  candidate_config:
+    info:
+      upstream: https://downloads.raspberrypi.org/
+    sync:
+      type: tsumugu
+      interval: 24h
+      timeout: 24h
+      tsumugu:
+        parser: apache-f2
+        threads: 4
+        max_delete: 100
+        extra_args:
+        - --exclusion-v2
+        - --include
+        - ^/$
+        - --include
+        - ^/(imager|raspios_arm64|raspios_armhf|raspios_full_arm64|raspios_full_armhf|raspios_lite_arm64|raspios_lite_armhf|raspios_oldstable_arm64|raspios_oldstable_armhf|raspios_oldstable_full_arm64|raspios_oldstable_full_armhf|raspios_oldstable_lite_arm64|raspios_oldstable_lite_armhf|rpd_x86)(/|$)
+        - --include
+        - ^/Raspberry_Pi_Education_Manual\.pdf$
+        - --exclude
+        - ^/
+  scope_allowlist:
+  - Raspberry_Pi_Education_Manual.pdf
+  - imager
+  - raspios_arm64
+  - raspios_armhf
+  - raspios_full_arm64
+  - raspios_full_armhf
+  - raspios_lite_arm64
+  - raspios_lite_armhf
+  - raspios_oldstable_arm64
+  - raspios_oldstable_armhf
+  - raspios_oldstable_full_arm64
+  - raspios_oldstable_full_armhf
+  - raspios_oldstable_lite_arm64
+  - raspios_oldstable_lite_armhf
+  - rpd_x86

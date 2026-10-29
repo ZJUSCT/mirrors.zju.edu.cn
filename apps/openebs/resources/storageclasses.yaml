@@ -1,0 +1,87 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: zfs-hdd-delete-immediate
+provisioner: zfs.csi.openebs.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
+parameters:
+  poolname: openebs-hdd/openebs
+  fstype: zfs
+  thinprovision: "yes"
+  quotatype: refquota
+  shared: "yes"
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: openebs.io/nodeid
+        values:
+          - s3.mirrors.zjusct.io
+          - s2.mirrors.zjusct.io
+          - s1.mirrors.zjusct.io
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: zfs-hdd-retain-immediate
+provisioner: zfs.csi.openebs.io
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
+parameters:
+  poolname: openebs-hdd/openebs
+  fstype: zfs
+  thinprovision: "yes"
+  quotatype: refquota
+  shared: "yes"
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: openebs.io/nodeid
+        values:
+          - s3.mirrors.zjusct.io
+          - s2.mirrors.zjusct.io
+          - s1.mirrors.zjusct.io
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: zfs-hdd-delete-wffc
+provisioner: zfs.csi.openebs.io
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  poolname: openebs-hdd/openebs
+  fstype: zfs
+  thinprovision: "yes"
+  quotatype: refquota
+  shared: "yes"
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: openebs.io/nodeid
+        values:
+          - s3.mirrors.zjusct.io
+          - s2.mirrors.zjusct.io
+          - s1.mirrors.zjusct.io
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: zfs-hdd-retain-wffc
+provisioner: zfs.csi.openebs.io
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  poolname: openebs-hdd/openebs
+  fstype: zfs
+  thinprovision: "yes"
+  quotatype: refquota
+  shared: "yes"
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: openebs.io/nodeid
+        values:
+          - s3.mirrors.zjusct.io
+          - s2.mirrors.zjusct.io
+          - s1.mirrors.zjusct.io

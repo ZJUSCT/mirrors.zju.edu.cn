@@ -1,0 +1,59 @@
+metadata:
+  name: jenkins
+info:
+  description: 用 Java 编写的持续集成框架
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/jenkins/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 364Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://www.jenkins.io/download/mirrors/
+    - https://archives.jenkins.io/rsync-jenkins-mirrors.filter
+    - https://github.com/jenkins-infra/infra-reports/blob/main/jenkins-infra-data/get-jenkins-io-data.json
+    policy:
+    - 官网指定 rsync://archives.jenkins.io 为 reference；本次确认精确模块 rsync://archives.jenkins.io/jenkins/ 可列。无需用户名密码，但官网明确要求提供 rsync
+      客户端出口 IP 以限制只允许镜像站访问。这是源访问政策，不只是公共镜像列表登记；目录可读不能替代登记。公开 get-jenkins-io-data.json 未见 ZJU/Zhejiang 条目，但不据此排除私下登记，需确认生产实际出口及既有授权。
+    - 官方推荐差分同步至少每小时一次（recommend，不是硬性最低频率）；建议候选 interval=1h。官方过滤文件每30分钟生成更新，不代表本站必须每30分钟同步；每次同步开始前取得并验证完整最新过滤文件。当前24h为暂停的USTC初始化配置，不能直接作为长期官方同步方案。
+    - 应按官方 --include-from=rsync-jenkins-mirrors.filter、--delete-during、--delete-excluded、--prune-empty-dirs 同步官方精选树，模块内容直接落到/jenkins/。当前过滤文件含
+      plugins/**、art/**、podcast/**、TIME、latest链接、版本排除、包扩展名、目录遍历和最终排除规则；必须保留规则原顺序，不自制“最近一年”的mtime过滤，也不能直接无过滤同步整个archives模块。
+    - 官网要求镜像HTTP服务使用有效HTTPS并将HTTP重定向到HTTPS；加入官方分发网络还需可扫描的rsync服务，提供与HTTP相同数据、管理员邮箱及出口IP。扫描端IP由 reports.jenkins.io/infrastructure/v2/index.json
+      的 get.jenkins.io.outbound_ips 提供；不能把HTTP发布成功等同于完成官方入网要求。
+    - 官网容量参考为至少300Gb存约一年、全量约600Gb，属于文档估计而非本次容量测量。USTC成功快照181061812224字节约168.63GiB，卷364Gi，不能据此证明官方过滤树或无过滤全量可容纳；切源前需同过滤完整dry-run、增删集和后端可用空间审阅。
+    - 现有rsync模板直接command=[rsync]，仅支持追加参数及密码Secret；init容器只初始化卷owner，没有动态过滤文件下载、校验、原子替换、失败终止或额外挂载机制。单加--include-from参数无法取得安全新过滤文件；ftpsync/qfm/tsumugu现有配置也不能自动等价实现此rsync过滤树。可在既有rsync类型中补齐安全过滤准备能力，无需引入第五种同步工具，但本次未修改模板。
+    - 过滤下载需先验证成功状态、完整性/合理结构，再在同一任务中使用不可变版本；失败、空文件或截断时应退出且不执行删除，不可将本次静态过滤文件永久固定。此次HTTPS 200仍以curl28超时，仅收到1097728/2726738字节，说明只检查HTTP状态或非空不足。随后单文件rsync有界下载exit0，取得完整2726738字节、52653行。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: jenkins-sync-1791080350
+    succeeded_at: '2026-10-04T10:04:25Z'
+    published_at: '2026-10-04T10:04:36Z'
+    official_interval_candidate: 1h
+    note: USTC首次同步与快照jenkins-snap-1791080350发布成功，Ready=True、Degraded=False，自动同步暂停；本次只依据既有rollout-live.json记录状态，没有重拉USTC、重试生产任务或修改集群。尚未完成官方切源。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/jenkins/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: 已完成的一次性初始化源，仍暂停；本轮未连接USTC。
+  - url: rsync://archives.jenkins.io/jenkins/
+    surveyed_at: '2026-10-04'
+    status: candidate-blocked-registration-and-filter-preparation
+    note: 官方reference，工作站有界非递归列表及单个过滤文件下载exit0。待确认生产出口IP登记并补齐安全动态过滤准备；未执行生产dry-run或真实切源，不能标记为已选官方长期源。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 官方镜像指南HTTP200并已阅读全文；明确区分至少每小时的推荐、30分钟的上游过滤生成周期以及出口IP访问限制。
+    - 官方rsync根非递归列表exit0，含debian/rpm/war/windows及stable/rc目录、plugins/art/podcast、update-center和updates→update-center。根全量与过滤后的发布范围不同。
+    - 完整过滤文件由官方rsync单文件下载，SHA256=83170b48e62ef9f1af05dc05c6dc8ea4d134e3f8cdeb0eb5cad7a155022845d1，仅为本次证据标识，不是签名或永久信任锚。HTTPS部分文件保留为失败证据，不可用于同步。
+    - 本次未验证生产出口登记、整树范围/容量、删除集、包签名或公网包内容；rsync可列和取得过滤文件不能证明官方全树同步/验收通过。
+    remaining: 确认出口登记；在现有rsync类型实现失败即停止的过滤准备；先做同过滤完整dry-run，审核范围、删除与空间，随后真实同步、新快照发布、包签名/校验和与公网抽样验收，再按1h恢复自动同步。此阶段保持暂停。

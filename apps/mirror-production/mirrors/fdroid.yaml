@@ -1,0 +1,48 @@
+metadata:
+  name: fdroid
+info:
+  description: F-Droid 自由 Android 应用仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/fdroid/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 336h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 10260Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://f-droid.org/docs/Building_the_Server/
+    - https://f-droid.org/docs/Included_Build_Metadata/
+    - https://f-droid.org/repo/
+    - https://f-droid.org/archive/
+    policy:
+    - F-Droid 官方服务器文档描述由 fdroidserver 根据 build metadata 构建仓库，发布 index-v1.jar/index.xml、APK、签名和图标等派生文件；官方网页仓库是
+      HTTPS 发布树，没有公开 rsync 模块或稳定的镜像拉取协议。
+    - 仓库索引是签名元数据，客户端必须验证 repo key、索引版本和 APK 签名；仅递归同步文件不能替代 fdroidserver 的索引一致性和签名校验。
+    - repo 与 archive 是不同范围，archive 保存已归档版本；同步范围、删除策略和索引生成必须由专用 fdroidserver 流程明确，通用 rsync 模板无法安全表达。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/fdroid/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-07'
+    note: TUNA 初始化及一次授权重试均因远端连接重置失败（rsync code 10）；不再重复重试。
+  - url: https://f-droid.org/repo/
+    stack: unknown
+    status: candidate
+    surveyed_at: '2026-10-07'
+    note: 官方 HTTPS 发布入口；尚未进行生产同步，需专用索引/签名验收。
+  - url: https://f-droid.org/archive/
+    stack: unknown
+    status: candidate
+    surveyed_at: '2026-10-07'
+    note: 官方归档入口，范围独立于 repo。
+  bootstrap:
+    note: TUNA 初始化失败且重试后仍为远端连接重置；快照保持暂停，未改变集群配置。

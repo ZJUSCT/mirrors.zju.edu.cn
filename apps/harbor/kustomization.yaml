@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: harbor
+resources:
+  - resources/namespace.yaml
+  - resources/httproute-portal.yaml
+  - resources/sealedsecret-harbor.yaml
+  - resources/sealedsecret-harbor-token-key.yaml
+  - resources/sealedsecret-registry-gate-secrets.yaml
+  - resources/sealedsecret-registry-gate-postgresql.yaml
+
+configMapGenerator:
+  # registry-gate anonymous pull whitelist, mounted by the chart at
+  # /etc/registry-gate/whitelist/ (hot-reloads on change).
+  # allows.txt is vendored from DaoCloud/public-image-mirror allows.txt
+  # (https://github.com/DaoCloud/public-image-mirror/blob/main/allows.txt);
+  # extra.list holds our own audited additions, same format.
+  - name: registry-gate-whitelist
+    files:
+      - allows.txt=configs/allows.txt
+      - extra.list=configs/extra.list
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: registry-gate
+        app.kubernetes.io/component: gate
+
+helmCharts:
+  - name: harbor
+    # upstream publishes no OCI chart
+    # https://github.com/goharbor/harbor-helm/issues/2265
+    repo: https://helm.goharbor.io
+    releaseName: harbor
+    namespace: harbor
+    valuesFile: values/harbor-1.19.2.yaml
+    version: 1.19.2
+  - name: registry-gate
+    repo: oci://ghcr.io/zjusct/charts
+    releaseName: registry-gate
+    namespace: harbor
+    valuesFile: values/registry-gate-0.4.1.yaml
+    version: 0.4.1

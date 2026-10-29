@@ -1,0 +1,41 @@
+metadata:
+  name: cran
+info:
+  description: R 软件与扩展包的综合归档网络
+  upstream: rsync://cran.r-project.org/CRAN/ # CRAN Mirror HOWTO 指定的 WU Wien 官方主站
+sync:
+  type: rsync
+  ipv6: false
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 1Ti
+  volumeName: pvc-159cdad8-c6d4-47cc-9ee3-cea135e5d3ac
+publish:
+  aliases:
+    - /CRAN
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://cran.r-project.org/
+      - https://cran.r-project.org/mirror-howto.html
+      - https://cran.r-project.org/mirrors.html
+    policy:
+      - 镜像应递归同步完整 CRAN 目录；每周至少同步两次，建议每 1–2 天一次，且每天不得超过两次。
+      - 同步必须使用 --delete；官方出于安全考虑推荐通过 SSH 使用 rsync。
+      - 浙江大学镜像已列入 CRAN 官方镜像列表。
+  upstreams:
+    - url: rsync://cran.r-project.org/CRAN/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 211ms、HTTPS 下载约 8.5MiB/s
+      note: WU Wien 的 CRAN 官方主站；rsync 提供 CRAN 模块，无 MOTD。
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/CRAN/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4/IPv6 RTT 约 30ms、HTTPS 下载约 51–57MiB/s
+      note: CRAN 官方列表中的下游镜像，速度较快，但未选作上游。

@@ -1,0 +1,62 @@
+metadata:
+  name: wine-builds
+info:
+  description: 在类 Unix 系统上运行 Windows 应用的 Wine 软件包
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/wine-builds/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 244Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://dl.winehq.org/wine-builds/
+    - https://gitlab.winehq.org/wine/wine/-/wikis/Debian-Ubuntu
+    - https://gitlab.winehq.org/wine/wine/-/wikis/Fedora
+    policy:
+    - 已发布范围为 debian/、fedora/、ubuntu/ 与 Release.key、winehq.key；官方根另有 android/macosx/mageia，接续必须通过明确过滤保留当前范围，不能无过滤复制整个根。
+    - 保留既有发行版、架构、历史包及 stable/devel/staging 分支；不能按仅当前支持发行版的脚本缩小范围，也不能全局删 i386。保留官方签名元数据、包、密钥和 sources/repo 文件，不改写或重签。
+    - 本机 tsumugu 0.20260921.0 的 apache-f2 已实际通过官方根、Debian/Ubuntu dists 和 pool、Fedora 44 repodata 与 RPM 目录解析；默认 nginx 失败。现有
+      tsumugu 模板可设置 parser 与范围过滤，无需新同步类型。
+    - 官方 Debian trixie 与 Ubuntu noble InRelease 的 gpgv 校验通过，签名密钥 D43F640145369C51D786DDEA76F1A20FF987672F；trixie/amd64 Packages.gz
+      摘要与签名索引匹配。此为样本验证，未全面校验种子或 RPM。
+    - 未发现官方固定镜像周期；24h 是当前本地配置，旧建议 6h 也不是官方要求。
+  bootstrap:
+    note: USTC 首次同步 wine-builds-sync-1791061271 于 2026-10-03T21:58:49Z 成功，快照 wine-builds-snap-1791061271 于 2026-10-03T21:58:57Z
+      发布，Ready=True，自动同步暂停。官方接续已有现有工具内的可行候选，但本轮未实施切换。
+    official_cutover_status: candidate-validated-pending-volume-preflight
+    official_cutover_requirements: 使用 tsumugu/apache-f2 与已测试 v2 白名单保留三平台及两个根密钥；正式交接前核验生产二进制、工作卷完整 dry-run/删除集、范围内容量变化、元数据与包一致性。不得将列表/签名样本通过记为已完成生产切换。
+    action: 将官方候选交给交接执行流程；预检和官方同步成功发布前保留既有快照及暂停状态，不重跑 USTC。
+    candidate_sync:
+      type: tsumugu
+      parser: apache-f2
+      threads: 4
+      max_delete: 100
+      extra_args:
+      - --exclusion-v2
+      - --include
+      - ^/$
+      - --include
+      - ^/(debian|fedora|ubuntu)(/|$)
+      - --include
+      - ^/(Release[.]key|winehq[.]key)$
+      - --exclude
+      - .
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/wine-builds/
+    surveyed_at: '2026-10-03'
+    status: selected
+    note: 仅指已完成的首次同步源；本轮未访问 USTC rsync。
+  - url: https://dl.winehq.org/wine-builds/
+    surveyed_at: '2026-10-03'
+    status: candidate-validated
+    note: 现有 tsumugu/apache-f2 目录实测通过，范围过滤与 APT 签名样本验证完成；仍需工作卷全树预检及正式同步发布。必须保持 debian/fedora/ubuntu 与两个根密钥子集。

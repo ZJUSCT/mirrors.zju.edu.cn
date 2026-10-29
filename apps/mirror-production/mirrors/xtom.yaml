@@ -1,0 +1,71 @@
+metadata:
+  name: xtom
+info:
+  description: 由 xTom 维护的开源软件集合
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/xtom/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://repo.xtom.com/
+    - https://repo.xtom.com/README.md
+    - https://repo.xtom.com/xtom.key
+    - https://repo.xtom.com/rpm/xtom.repo
+    policy:
+    - 官方README定义xTom自有APT/RPM软件包仓库，示例包rdap；APT为/deb、suite=stable、component=main，RPM为/rpm/el$releasever/$basearch/。不是N.WTF的sb仓库，也不是xTom全部第三方镜像。
+    - 精确rsync://rsync.repo.xtom.com/repo/最初来自USTC元数据，本轮由项目域名daemon直接证实：模块repo描述“All Repositories included”及packages@xtom.com，另有deb/rpm模块；repo根包含README.md、xtom.key、deb/、rpm/，与官网和ZJU/xtom/公网根一致。官网README本身没有给rsync命令，不能把该URI误写为README原文。
+    - 选完整repo/模块直接同步目标根，保留deb/rpm与根密钥/README；不用只含deb或rpm的子module替换完整xtom目标。现有rsync模板足够，不需新类型或变换。
+    - sb在mirrors.xtom.com/repo/sb/，与本项rsync.repo.xtom.com/repo/是不同主机上的不同数据树；本项无sb子目录，不能以subset alias去重。
+    - 未发现官方同步频率或必须登记白名单要求；interval/timeout均24h为本站候选选择。本轮工作站默认地址族成功，不能由此声明生产IPv4/IPv6双栈均通。
+    - 官方APT说明使用signed-by密钥；RPM官方xtom.repo启用gpgcheck=1，gpgkey=https://repo.xtom.com/xtom.key。更换下载baseurl为本站时仍保留密钥与签名校验，不改成gpgcheck=0。
+    - 2026-10-03 生产节点通过 IPv6 连到官方 rsync.repo.xtom.com/repo/，但服务器明确拒绝 --dry-run (-n)。这不是尚未找到入口或连通性问题；在删除集无法审阅前保持暂停，不跳过预检直接用
+      --delete 真实同步，也不通过更换参数绕过上游限制。
+  bootstrap:
+    note: USTC 初始化/快照发布完成，现有源与暂停状态保持不变。2026-10-03 官方 IPv6 dry-run 在已发布快照克隆上执行，服务器拒绝 --dry-run，exit12；没有修改工作PVC、执行真实官方同步或发布新快照，故保持
+      hold。
+  validation:
+    observed_at: '2026-10-03'
+    completed:
+    - 运行记录xtom-sync-1790956904于2026-10-02T16:03:24Z成功、16:03:32Z发布，Ready=True；sync-paused=true。
+    - 2026-10-02工作站逐个执行官方daemon模块列表与repo/根列表，均exit0；官方HTTP README/密钥可取，ZJU公网.mirror-index根含相同四项。没有USTC rsync请求，没有生产同步操作。
+    - 官方HTTPS https://repo.xtom.com/xtom.key指纹6A2AA6C90062DF0B68A457347A34888888888888；gpgv验证公网/xtom/deb/dists/stable/InRelease成功，签名时间2026-08-19T05:38:07Z。
+    - 该公网InRelease与官方同路径完全一致；main/binary-amd64/Packages.gz为430字节，SHA256=87e5b58af152d609c725de4d397651b22a9b587068228140742e9916b74ddb18，匹配已验签InRelease，列出rdap
+      1.0.7-1。
+    - 2026-10-02公网包级核验：由已验签stable/amd64索引选择rdap 1.0.7-1，/xtom/deb/pool/main/r/rdap/rdap_1.0.7_amd64.deb为2458920字节，SHA256=493f5234a66ff7e496fada75efba61153f0348266ecf8e5e3e35f3d081d65b3a，均与Packages一致。
+    - 使用已有mirrors-e2e-debian镜像隔离APT下载验收：非root、只读根、tmpfs状态、官方密钥只读signed-by，仅配置http://mirrors.zju.edu.cn/xtom/deb
+      stable main；禁HTTP重定向和不安全仓库。apt-get update、apt-get download rdap、dpkg-deb元数据读取均exit0，下载大小/SHA256一致。未安装或执行rdap。
+    - 2026-10-02公网RPM EL9/x86_64验收：官方HTTPS xtom.key指纹6A2AA6C90062DF0B68A457347A34888888888888不变；gpgv验证repodata/repomd.xml.asc成功，公网repomd及asc分别与官方HTTPS同路径逐字节一致。
+    - 已验签repomd列出的primary.xml.gz（1503字节，SHA256=32ba5648040ed6b73856541b2f064fdd2f6e6bf5ac8863e33af711f6189bafa6）与解压后的11833字节/SHA256均匹配；据primary下载Packages/rdap-1.0.7-1.x86_64.rpm，2640520字节，SHA256=27e134ae425c7274cb2f5b1d6fe34a8d0995082ce4ca4a8f3770e0ef53e3dd66，匹配签名元数据链。
+    - RPM4.20.1在项目独立--dbpath中仅导入官方xTom公钥，rpmkeys --checksig --verbose返回exit0：Header V4 EdDSA/SHA512 Signature
+      OK、Header SHA256/SHA1及Payload SHA256 digest均OK。未使用--nosignature/--nodigest，是gpgcheck=1对应的包签名验收；未执行DNF安装或RPM包脚本。
+    - 2026-10-03T23:05:11Z：并发位空出后，以只读 activePVC=xtom-snap-1790956904（VolumeSnapshot克隆）在生产检查Pod执行 rsync -aH -6
+      --safe-links --delete --delete-excluded --dry-run rsync://rsync.repo.xtom.com/repo/ /snapshot/；服务器明确回复“configured
+      to refuse --dry-run (-n)”，exit12。未获取可审阅的删除集。检查Pod已删除，并发预留已释放。
+    remaining: 当前具体阻塞为官方服务器拒绝 --dry-run，不能在未审阅差异/删除集时直接切源。已有USTC快照的APT stable/amd64索引、下载客户端和代表deb，以及RPM EL9/x86_64签名元数据链与rdap包签名均通过；这些不能替代官方真实同步及新快照验收。保持现有源和暂停，需另行确定合规可比较的官方路径/流程后再恢复切源；其他发行版/架构及安装运行时未覆盖。
+    signature: 公钥来自官方HTTPS，后续轮换复核指纹；APT使用独立keyring和signed-by，RPM保留gpgcheck=1。当前仅验证stable/amd64索引链，未声称全架构所有包均已验证。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/xtom/
+    surveyed_at: '2026-10-02'
+    status: bootstrap-complete
+    note: 初始化已完成；现有配置仍指向此源且暂停。
+  - url: rsync://rsync.repo.xtom.com/repo/
+    surveyed_at: '2026-10-03'
+    status: hold-dry-run-refused
+    note: 官方模块/根已验证；2026-10-03生产IPv6 dry-run被服务器显式拒绝(exit12)，删除集未审阅，未切源。
+    stack: ipv6
+  - url: https://repo.xtom.com/
+    surveyed_at: '2026-10-02'
+    status: reference
+    note: 本轮官网根、README和密钥均HTTP200，早先403不再作为“无官方源”的阻塞；用于APT/RPM布局和密钥认证依据。

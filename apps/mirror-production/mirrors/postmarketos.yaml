@@ -1,0 +1,52 @@
+metadata:
+  name: postmarketos
+info:
+  description: 面向移动设备、基于 Alpine Linux 的 Linux 发行版（现名 Nura）
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/postmarketos/ # 仅首次初始化；完成后切换 comment.upstreams 中的官方源
+sync:
+  type: rsync
+  # USTC 初始化期间按每日一次；官方源日常周期见下方注释。
+  interval: 24h
+  timeout: 24h
+  # WaitForFirstConsumer 首次落盘到 s1；PVC 绑定后可移除此选择器。
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 128Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://nura.eco/mirrors/
+    - https://wiki.postmarketos.org/wiki/Infrastructure
+    policy:
+    - 项目现名 Nura，官方镜像页列出 rsync；候选 rsync://mirror.postmarketos.org/postmarketos/。
+    - 有界根列表成功并显示 master 软链接、main/、extra-repos/ 及 v20.05 至 v26.06 版本树；切换时必须保留 symlink、目录层级和历史版本，不把 Nura 改名重写到发布路径。
+    - 未查到官方固定同步周期；4h 是本站本地排程候选，不是官方要求。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: postmarketos-sync-1790953371
+    succeeded_at: '2026-10-02T18:00:24Z'
+    published_at: '2026-10-02T18:00:32Z'
+    note: USTC bootstrap source postmarketos-sync-1790953371 于 2026-10-02T18:00:24Z UTC 成功，快照发布于 2026-10-02T18:00:32Z UTC；mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。此
+      URL 只记录首次初始化来源，不表示已切换到官方源。
+    official_cutover: 未执行；须先按下列候选源完成范围、删除集、新鲜度和完整性验收。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/postmarketos/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 仅作为本次首次同步种子；该镜像的 USTC bootstrap rsync 已成功，自动增量仍暂停。
+  - url: rsync://mirror.postmarketos.org/postmarketos/
+    surveyed_at: '2026-10-03'
+    status: candidate-unverified
+    note: 官方根列表可读并包含 master、main、extra-repos 和版本树；尚未做生产 dry-run/真实同步，仍保持 USTC 快照暂停。
+  verification:
+    surveyed_at: '2026-10-03'
+    checks:
+    - 官方 Nura 页面 HTTP 200（postmarketos 入口重定向到 nura.eco）；rsync 根列表 exit 0，master 类型为 symlink（本次根列表未输出目标）。
+    caveats:
+    - 官方文档未给固定同步周期；4h 仅为本站候选。

@@ -1,0 +1,51 @@
+metadata:
+  name: blackarch
+info:
+  description: 面向渗透测试与安全研究的 Arch Linux 衍生发行版
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/blackarch/ # 仅首次初始化；完成后切换 comment.upstreams 中的官方源
+sync:
+  type: rsync
+  # USTC 初始化期间按每日一次；官方源日常周期见下方注释。
+  interval: 24h
+  timeout: 24h
+  # WaitForFirstConsumer 首次落盘到 s1；PVC 绑定后可移除此选择器。
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 200Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://blackarch.org/downloads.html#mirror-list
+    policy:
+    - 官方镜像页把 rsync://blackarch.org/blackarch/ 列为官方镜像入口；有界 --list-only（exit 0）显示 lastupdate、blackarch/、iso/、ova/、torrent/ 五项顶层内容。
+    - USTC 首次树缺少 torrent/；切换候选源前必须保留官方完整顶层范围和安全链接，不能让当前快照的缺项掩盖删除差异。
+    - 未查到官方固定同步周期；6h 是本站本地排程候选，不是官方要求。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: blackarch-sync-1790957622
+    succeeded_at: '2026-10-02T18:12:09Z'
+    published_at: '2026-10-02T18:12:18Z'
+    note: USTC bootstrap source blackarch-sync-1790957622 于 2026-10-02T18:12:09Z UTC 成功，快照发布于 2026-10-02T18:12:18Z UTC；mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。此
+      URL 只记录首次初始化来源，不表示已切换到官方源。
+    official_cutover: 未执行；须先按下列候选源完成范围、删除集、新鲜度和完整性验收。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/blackarch/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 仅作为本次首次同步种子；该镜像的 USTC bootstrap rsync 已成功，自动增量仍暂停。
+  - url: rsync://blackarch.org/blackarch/
+    surveyed_at: '2026-10-03'
+    status: candidate-unverified
+    note: 官方 daemon 可列出完整根；尚未从该源执行生产 dry-run/真实同步，因此不宣称官方切换。
+  verification:
+    surveyed_at: '2026-10-03'
+    checks:
+    - 官方根列表探测成功（2026-10-03）；lastupdate 时间为 2026-09-28，目录含 blackarch、iso、ova、torrent。
+    caveats:
+    - 官方页面未规定镜像轮询周期；当前 6h 只是本地候选。

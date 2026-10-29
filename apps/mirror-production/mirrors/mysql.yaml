@@ -1,0 +1,52 @@
+metadata:
+  name: mysql
+info:
+  description: MySQL 数据库的官方软件包仓库
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/mysql-repo/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 2316Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://repo.mysql.com/
+    - https://dev.mysql.com/doc/mysql-yum-repo-quick-guide/en/
+    - https://dev.mysql.com/doc/mysql-apt-repo-quick-guide/en/
+    policy:
+    - 范围为USTC mysql-repo原树的apt/yum/yumw、密钥和release安装包，本站保持/mysql/路径；不能用TUNA较小选定组件范围替换该约1TiB种子并造成删除或残留。
+    - 本轮官方HTTPS根HTTP200，仍列apt/、yum/、yumw/和RPM-GPG-KEY-mysql-2025；目录可见只是tsumugu候选依据，未验证解析器或完整递归/链接语义。没有证据支持rsync/ftpsync/qfm官方入口。
+    - 官方Yum快速指南HTTP200，配置要求gpgcheck=1并引用RPM-GPG-KEY-mysql-2025；密钥更新不能通过禁用验签绕过。APT指南本轮TLS EOF，未据此宣称APT文档已复核；后续需验证APT签名元数据与索引摘要、RPM包签名及代表文件内容。
+    - 保留原始签名和包内容，客户端仓库URL按本站前缀配置，不修改已签名元数据。6h为既有本地候选，当前bootstrap间隔24h；本轮未发现专门镜像注册/周期要求，不据网页可下载推断已获上游政策确认。
+  bootstrap:
+    note: hourly-live.json确认USTC初始化成功，匹配快照及PVC mysql-snap-1791246891 已发布且Ready；自动同步仍暂停。本轮文档复核不等同公网内容或官方切源验收。
+    official_interval_candidate: 6h
+    status: succeeded-and-published-paused
+    job: mysql-sync-1791246891
+    succeeded_at: '2026-10-06T08:50:42Z'
+    published_at: '2026-10-06T08:50:53Z'
+    official_cutover_blocker: 官方HTTPS根存在，但现有tsumugu对完整apt/yum/yumw及根release包的解析、历史范围、链接与完整删除集尚未验收；禁止直接套用较小的TUNA组件脚本。需完整范围核对、签名/代表包摘要、正式官方同步与匹配发布验收。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/mysql-repo/
+    surveyed_at: '2026-10-07'
+    status: bootstrap-complete
+    note: 初始化成功并发布；仍为USTC种子源且暂停，本轮无额外USTC请求。
+  - url: https://repo.mysql.com/
+    surveyed_at: '2026-10-02'
+    note: 官方或项目认可的后续调查入口；只有验证协议、范围、签名和完整性后才能切换。
+  verification:
+    surveyed_at: '2026-10-07'
+    checks:
+    - 初始化及发布时间来自hourly-live.json，保留匹配快照/PVC和Ready条件证据于review-remaining-success.evidence/bootstrap-status.json。
+    - 本轮仅复核官方网页，HTTP结果及原文在review-remaining-success.evidence；未发起rsync、包传输或集群变更。
+    remaining: 官方HTTPS根存在，但现有tsumugu对完整apt/yum/yumw及根release包的解析、历史范围、链接与完整删除集尚未验收；禁止直接套用较小的TUNA组件脚本。需完整范围核对、签名/代表包摘要、正式官方同步与匹配发布验收。
+      官方同步成功且匹配快照/PVC Ready、发布内容验证后才能取消暂停。

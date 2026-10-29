@@ -1,0 +1,203 @@
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: debian-cdimage
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Debian 安装、Live、云及测试构建镜像归档
+    upstream: rsync://cdimage.debian.org/cdimage/
+  sync:
+    interval: 6h
+    retryInterval: 15m
+    timeout: 72h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: rsync
+            image: ghcr.io/zjusct/rsync:latest
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command: [rsync]
+            args:
+              - -aH
+              - "-6"
+              - --no-o
+              - --no-g
+              - --stats
+              - -h
+              - --itemize-changes
+              - --partial-dir=.rsync-partial
+              - --filter=P .rsync-partial/
+              - --exclude=.~tmp~/
+              - --delete
+              - --delete-excluded
+              - --safe-links
+              - --timeout=120
+              - --contimeout=120
+              - --block-size=8192
+              - --exclude=/.*/
+              - --filter=-sr /cloud/**/.*/
+              - --filter=-sr /cloud/stretch/***
+              - --filter=-sr /cloud/stretch-backports/***
+              - --filter=-sr /ports/debian-installer/2024-01-30/alpha/***
+              - --filter=-sr /ports/debian-installer/2024-01-30/hppa/***
+              - --filter=-sr /ports/debian-installer/2024-01-30/ia64/***
+              - --filter=-sr /ports/debian-installer/2024-01-30/m68k/***
+              - --filter=-sr /ports/debian-installer/2024-01-30/powerpc/***
+              - --filter=-sr /ports/debian-installer/2024-01-30/ppc64/***
+              - --filter=-sr /ports/debian-installer/2024-01-30/sh4/***
+              - --filter=-sr /ports/debian-installer/2024-01-30/sparc64/***
+              - --filter=-sr /ports/***
+              - --filter=-sr /trixie_di_rc1/***
+              - --filter=-sr /trixie_di_rc2/***
+              - --filter=-sr /unofficial/***
+              - --filter=-sr /weekly-builds/***
+              - rsync://cdimage.debian.org/cdimage/
+              - /data/
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+              limits: {cpu: "4", memory: 4Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+  storage:
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    pvcTemplate:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 80Ti
+      volumeMode: Filesystem
+      volumeName: pvc-7c31ac0f-bbe7-4e05-82b0-0b392695b054
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    retention: 1
+  publish:
+    aliases:
+      - path: /debian-nonfree
+        subset:
+          subpath: unofficial/non-free
+          cname: debian-nonfree
+          description: Debian 含非自由固件组件的安装镜像
+          upstream: 'rsync://cdimage.debian.org/cdimage/unofficial/non-free/'
+      - path: /debian-cd
+        subset:
+          subpath: release
+          cname: debian-cd
+          description: Debian 稳定版官方安装与 Live 镜像
+          upstream: 'rsync://cdimage.debian.org/debian-cd/'
+    http:
+      replicas: 1
+      podTemplate:
+        metadata:
+          annotations:
+            reloader.stakater.com/auto: "true"
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              startupProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 2
+                timeoutSeconds: 2
+                failureThreshold: 30
+              readinessProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 6
+              resources:
+                requests: {cpu: "10m", memory: 32Mi}
+                limits: {cpu: "4", memory: 256Mi}
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/debian-cdimage
+                  readOnly: true
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              # 目录缓存上限 512Mi，额外空间用于正在填充的响应及其他临时文件。
+              emptyDir:
+                sizeLimit: 1Gi

@@ -1,0 +1,54 @@
+metadata:
+  name: kicad
+info:
+  description: KiCad 电子设计自动化软件发布文件
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/kicad/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 996Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.kicad.org/download/
+    - https://downloads.kicad.org/kicad/
+    - https://downloads.kicad.org/kicad/linux
+    - https://gitlab.com/kicad
+    policy:
+    - KiCad 官方下载入口按 Windows、macOS、Linux、Docker 分发，并将 stable、nightlies、testing 分开；下载站的实际目录和对象由 downloads.kicad.org
+      应用提供。
+    - TUNA kicad 根实际包含 appimage、archive、docs、doxygen、doxygen-python、libraries、nightly、osx、osx_backup、windows 与
+      favicon；这是一套历史与多平台聚合树。官方下载站公开页面未提供该聚合树的匿名 rsync/HTTP 镜像规范，也没有公开 S3 列表权限（kicad-downloads.s3.amazonaws.com
+      返回 403）。
+    - 未找到官方镜像同步间隔、删除策略或 S3 清单授权说明；计划中的 24h 只能作为暂停期间保守值，不能据此恢复自动同步。
+    - 当前 Falcon rsync 模板无法可靠表达 S3 对象清单、分页、版本删除或 downloads.kicad.org 的 stable/nightly/testing 路径映射；应先取得官方 S3/API
+      镜像说明，或实现专用 S3 同步器并逐项核验签名/校验文件。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/kicad/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 首轮约 621G 数据同步完成；根列表见 evidence/kicad/tuna-root.rsync4.txt，包含历史、文档、库和多平台目录。
+  - url: s3://kicad-downloads/
+    stack: dual
+    status: candidate-auth-or-listing-unknown
+    surveyed_at: '2026-10-03'
+    note: TUNA 状态接口给出的候选桶；匿名 HTTPS/S3 listing 返回 403，未确认对象布局、授权和删除语义。
+  - url: https://downloads.kicad.org/kicad/
+    stack: dual
+    status: official-reference
+    surveyed_at: '2026-10-03'
+    note: 官方下载应用入口；stable/nightlies/testing 以网页路由公开，不是已确认可递归镜像的单一根。
+  bootstrap:
+    note: 'TUNA 首轮初始化 Job kicad-sync-1790996019 已完成数据同步，但当前处于官方研究门禁并保持 sync-paused。PublishDeploymentFailed: Deployment
+      kicad-publish-http: ProgressDeadlineExceeded: ReplicaSet "kicad-publish-http-6d4f944878" has timed out progressing.'
+    reported_size: 621G

@@ -1,0 +1,33 @@
+metadata:
+  name: openeuler
+info:
+  description: 面向服务器、云、边缘与嵌入式场景的 openEuler 软件仓库
+  upstream: rsync://root@repo.openeuler.openatom.cn/openeuler/ # openEuler 官方指定的完整仓库上源
+sync:
+  type: rsync
+  ipv6: false
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 14Ti
+  volumeName: pvc-f5d7fcc8-6b8a-4e4b-b57a-ce508212214e
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.openeuler.org/
+      - https://www.openeuler.openatom.cn/en/mirror/list/
+    policy:
+      - openEuler 支持 Arm、x86、RISC-V、LoongArch、PowerPC 和 SW-64 等架构，面向服务器、云、边缘与嵌入式场景。
+      - 官方指定从 repo.openeuler.openatom.cn::openeuler 同步完整仓库，当前估计约 10TB。
+      - 官方未说明建议的同步间隔；镜像事务可通过 mirrors@openeuler.sh 联系。
+  upstreams:
+    - url: rsync://root@repo.openeuler.openatom.cn/openeuler/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 35ms、8–23MiB/s
+      note: 官方 rsync 上源；仅提供 openeuler 模块，无额外 MOTD 或访问限制。

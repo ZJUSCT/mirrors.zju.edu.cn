@@ -1,0 +1,41 @@
+metadata:
+  name: gnu-alpha
+info:
+  description: GNU 测试版软件发布归档
+  upstream: rsync://ftp.gnu.org/alpha/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 196Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.gnu.org/prep/ftp.html
+    - https://ftp.gnu.org/README
+    - rsync://ftp.gnu.org/alpha/
+    policy:
+    - GNU FTP README未给出固定镜像周期；建议24h作为Alpha开发快照的低负载本地周期。官方 rsync MOTD/列表含 mirror-updated-timestamp.txt，更新状态应作为成功判定依据。
+    - ftp.gnu.org/alpha 是 GNU Alpha 开发版本归档，包含大量项目目录、符号链接及时间戳文件；TUNA初始化日志共7079项、121.54G，与该模块的根布局兼容。
+    - 官方 README 建议使用 HTTPS 代替FTP；本镜像选择公开 rsync，生产同步仍应使用IPv6（工作站rsync -6列表成功），保留符号链接。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/gnu-alpha/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始同步已成功（gnu-alpha-sync-1790961642），当前保持 sync-paused。
+  - url: rsync://ftp.gnu.org/alpha/
+    stack: ipv6
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: 官方模块，rsync -6 --list-only 成功；根含mirror-updated-timestamp.txt及项目目录。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。

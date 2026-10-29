@@ -1,0 +1,34 @@
+metadata:
+  name: msys2
+info:
+  description: MSYS2 软件包、源码包与安装程序
+  upstream: rsync://repo.msys2.org/builds/ # MSYS2 官方主服务器
+sync:
+  type: rsync
+  ipv6: false
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 2Ti
+  volumeName: pvc-03f85ff5-1a9c-457c-aaae-ba4233142c5a
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.msys2.org/
+      - https://www.msys2.org/dev/mirrors/
+      - https://www.msys2.org/docs/mirrors/
+    policy:
+      - 官方主服务器包含 pacman 数据库与软件包、对应源码包和安装程序，完整仓库当前约 725GiB。
+      - Tier 1 镜像须从官方主服务器至少每日同步一次，并提供充足的 1Gbit/s 带宽、HTTPS 和 rsync 服务。
+      - 镜像登记需向 MSYS2 网站仓库提交 GitHub issue；Tier 2 仅要求定期同步。
+  upstreams:
+    - url: rsync://repo.msys2.org/builds/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 259ms、5.9MiB/s
+      note: 官方指定的匿名 rsync 上源；主机名仅解析 IPv4，仅提供 builds 模块，无额外 MOTD 或访问限制。

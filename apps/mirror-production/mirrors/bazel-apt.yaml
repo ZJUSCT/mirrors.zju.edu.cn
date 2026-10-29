@@ -1,0 +1,47 @@
+metadata:
+  name: bazel-apt
+info:
+  description: Bazel 构建工具 APT 软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/bazel-apt/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 16Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://bazel.build/install/ubuntu
+    - https://cloud.google.com/storage/docs/xml-api/get-bucket-list
+    - https://storage.googleapis.com/bazel-apt/dists/stable/Release
+    policy:
+    - 已阅读的官方安装/仓库文档未规定第三方镜像同步间隔；建议后续每日（24h）检查一次作为本地低负载策略，非官方要求，当前暂停时不生效。
+    - 官方安装文档指定 HTTPS APT 根 https://storage.googleapis.com/bazel-apt，suite stable、component jdk1.8、architecture
+      amd64；jdk1.8 只是兼容历史客户端的组件名称，不是 JDK 版本要求。官方未提供 arm64 APT 包。
+    - TUNA bazel-apt.sh 用 apt-sync.py --delete 镜像 stable/jdk1.8/amd64，保留 dists/ 和 pool/；需要按 Release/Packages 引用下载相应软件包和校验和，不能把全部桶对象自动视为相同镜像范围。
+    - 匿名 GET 官方 Release 与桶根均返回 200；桶根是 Google Cloud Storage XML ListBucketResult，普通目录 URL /dists/stable/ 返回 404
+      NoSuchKey。对象枚举需 prefix/delimiter 和分页，按 IsTruncated/NextMarker 或 continuation-token 继续。未发现 rsync 入口；公开对象此次读取无须凭证。
+    - 现有 tsumugu 解析器没有 GCS XML 对象列表支持，s3-indexbuilder 解析的是静态 HTML 而非 XML API；ftpsync 也依赖 rsync 服务。需要引入 APT 索引同步器或新增
+      GCS XML 解析器并限制相同范围；保持暂停。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/bazel-apt/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: TUNA 初始同步已成功；当前 sync-paused，不作为未获授权的长期同步源。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  - url: https://storage.googleapis.com/bazel-apt/
+    stack: ipv4
+    status: hold
+    surveyed_at: '2026-10-02'
+    note: 官方 APT 已确认可匿名访问；GCS XML 枚举和普通路径 404 与现有目录解析器不兼容。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  bootstrap:
+    note: TUNA 初始同步已成功（bazel-apt-sync-1790957235）；当前保持 sync-paused。官方文档和现有布局调查已完成；官方 APT 可用且范围已确认，但 GCS 根返回 XML、目录请求返回
+      404；现有四类模板不能直接完成同范围同步，需 APT 索引同步器或 GCS XML 枚举支持。

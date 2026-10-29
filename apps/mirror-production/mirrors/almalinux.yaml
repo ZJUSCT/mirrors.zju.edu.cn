@@ -1,0 +1,32 @@
+metadata:
+  name: almalinux
+info:
+  description: RHEL 二进制兼容的 Linux 发行版
+  upstream: rsync://rsync.repo.almalinux.org/almalinux/ # 官方指定的同步入口
+sync:
+  type: rsync
+  interval: 3h
+  timeout: 3h
+storage:
+  size: 3Ti
+  volumeName: pvc-fd5b8c0d-5af6-4d7a-9c8f-1b15e6d5cbde
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://wiki.almalinux.org/Mirrors.html
+      - https://github.com/AlmaLinux/mirrors
+    policy:
+      - 官方提供 rsync://rsync.repo.almalinux.org/almalinux/ 作为同步源，并通过 GeoDNS 将请求导向不同地区的 Tier 0 镜像。
+      - 官方建议每 3 小时同步一次。
+      - 公共镜像必须至少提供 HTTP 或 HTTPS 服务。
+  upstreams:
+    - url: rsync://rsync.repo.almalinux.org/almalinux/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 207ms；IPv6 RTT 约 193ms
+      note: 官方同步入口，通过 GeoDNS 导向 Atlanta、Seattle、Frankfurt 或 Tokyo 的 Tier 0 镜像。

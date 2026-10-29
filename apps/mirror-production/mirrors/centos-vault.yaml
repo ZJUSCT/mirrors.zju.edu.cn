@@ -1,0 +1,38 @@
+metadata:
+  name: centos-vault
+info:
+  description: CentOS Linux 已停止维护版本的永久归档
+  upstream: rsync://archive.kernel.org/centos-vault/ # CentOS 官方 Vault 页面列出的外部镜像
+sync:
+  type: rsync
+  ipv6: false
+  interval: 720h
+  timeout: 24h
+storage:
+  size: 5Ti
+  volumeName: pvc-ca24f1d5-e5e1-4bb7-8619-3d0b087fc151
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://vault.centos.org/
+      - https://www.centos.org/centos-linux-eol/
+    policy:
+      - Vault 保存从主镜像移除的 CentOS Linux 历史版本快照，仅供查阅和获取归档版本，不再提供安全更新。
+      - 官方 Vault 不提供 rsync，并明确说明其列出的外部 rsync 镜像不受 CentOS Infra 监控。
+      - 官方未规定归档镜像的同步间隔。
+  upstreams:
+    - url: rsync://archive.kernel.org/centos-vault/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 271ms、HTTPS 下载约 7.4MiB/s
+      note: CentOS Vault 页面列出的外部镜像；rsync 提供 centos-vault 模块，归档内容完整。
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/centos-vault/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4/IPv6 RTT 约 30ms、HTTPS 下载约 65–68MiB/s
+      note: 当前上游速度较快，但不在 CentOS Vault 页面列出的外部 rsync 镜像中，且生成的时间戳元数据较旧。

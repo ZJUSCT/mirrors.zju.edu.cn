@@ -1,0 +1,16 @@
+# Mimir 的对象存储 bucket（blocks/ruler/alertmanager 共用单桶，values 显式配置独立 key 前缀）。
+# apply 后 rook 会生成：
+#   - Secret        kube-prometheus-stack/mimir       (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY)
+#   - ConfigMap     kube-prometheus-stack/mimir       (BUCKET_HOST / BUCKET_PORT / BUCKET_NAME)
+#   - StorageClass: ceph-bucket -> rook-ceph 的 RGW（ConfigMap 发布集群内 HTTP Service 地址）
+# mimir values 通过 global.extraEnvFrom 引用该 Secret 和 ConfigMap，凭据不落 git；
+# S3 endpoint 则在 values 中独立指定为外部 HTTPS 地址。
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  name: mimir
+  namespace: kube-prometheus-stack
+spec:
+  # 固定 bucket 名（而非 generateBucketName 的随机后缀），便于后续在 values 里引用
+  bucketName: mimir
+  storageClassName: ceph-bucket

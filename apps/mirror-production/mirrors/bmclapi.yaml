@@ -1,0 +1,32 @@
+metadata:
+  name: bmclapi
+info:
+  description: BMCLAPI 的 Minecraft Maven 依赖仓库
+  upstream: rsync://s3p.933.moe/bmclapi/maven/ # 已白名单认证
+sync:
+  type: rsync
+  ipv6: false
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 150Gi
+  volumeName: pvc-209aa2e5-b60c-450a-9cb3-8775b3025cc1
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://bmclapi2.bangbang93.com/
+      - https://github.com/bangbang93/openbmclapi
+    policy:
+      - OpenBMCLAPI 节点会自动同步所需文件；全量节点初次同步可使用官方文档列出的认证 rsync 种子。
+      - 未找到针对 BMCLAPI Maven 仓库的公共镜像政策或同步间隔要求。
+  upstreams:
+    - url: rsync://s3p.933.moe/bmclapi/maven/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 31ms
+      note: rsync 提供 bmclapi 和 bmclapi-pwd 模块；需 IP 白名单或用户名密码，当前地址无权限测试吞吐量。

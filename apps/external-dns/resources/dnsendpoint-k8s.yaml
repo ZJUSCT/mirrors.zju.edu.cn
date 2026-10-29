@@ -1,0 +1,11 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: k8s
+spec:
+  endpoints:
+    - dnsName: k8s.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.236.98

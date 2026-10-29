@@ -1,0 +1,42 @@
+metadata:
+  name: fzug
+info:
+  description: Fedora 中文用户组软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/fzug/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://zh.fedoracommunity.org/2023/10/18/fzug-repo-going-away.html
+    - https://zh.fedoracommunity.org/repo/
+    policy:
+    - FZUG 官方于 2023-10-18 发布「Fedora 中文社区软件源下线公告」：因缺乏维护，无法及时提供尤其是安全更新，即日起下线该软件源；此决定不影响 Fedora 官方源。
+    - 历史软件源页面列出中文用户附加软件及 TUNA 镜像支持；它是历史使用文档，不能推翻后发布的明确下线公告。
+    - TUNA 本次初始化仅保留 free/、nonfree/ 等仓库骨架与 repodata，140 个普通文件、总计约 119.52 KB；没有可作为活跃源恢复的官方软件包更新流。
+    - 已阅读官方下线公告与历史仓库说明，未找到仍有效的官方同步间隔要求；不应继续轮询退役上传入口。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/fzug/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 已完成的一次性 TUNA 初始化来源；当前暂停自动同步。
+  - url: rsync://fzug-upload.tuna.tsinghua.edu.cn/fzug/
+    stack: dual
+    status: retired
+    surveyed_at: '2026-10-02'
+    note: TUNA 状态中的历史上传入口；官方社区已经明确宣布软件源下线。
+  bootstrap:
+    note: 已完成 TUNA 初始化，当前保持 sync-paused；FZUG 已明确于 2023-10-18 下线软件源；保留初始化得到的历史元数据并暂停，待决定保留或撤销。 保留现有初始化数据并等待最终处理，不自动恢复同步。
+    reported_size: 119.52K

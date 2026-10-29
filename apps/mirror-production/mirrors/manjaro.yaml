@@ -1,0 +1,44 @@
+metadata:
+  name: manjaro
+info:
+  description: Manjaro Linux 软件包仓库
+  upstream: rsync://ftp.tsukuba.wide.ad.jp/manjaro/ # 官方推荐列表中的亚洲 rsync 镜像；当前状态正常且 IPv6 路径较优
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 1Ti
+  volumeName: pvc-ca0b2ef6-9dc7-4cba-9c9b-ab7f0909dcdb
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://manjaro.org/
+      - https://wiki.manjaro.org/index.php?title=Manjaro_Mirrors
+      - https://repo.manjaro.org/
+      - https://gitlab.manjaro.org/tools/maintenance-tools/boxit/-/blob/master/manjaroreposync
+    policy:
+      - 官方要求镜像每 6 小时同步一次，并建议从网络位置最近的公开 rsync 服务同步。
+      - 直接从 repo.manjaro.org 同步需要向 Manjaro 提交同步服务器的静态 IP 以加入白名单。
+      - 官方同步脚本使用 --delete-after、--delay-updates 和 --safe-links，并通过锁文件避免任务重叠。
+      - 镜像运维者应持续监控同步任务，并关注官方发布的仓库变更通知。
+  upstreams:
+    - url: rsync://ftp.tsukuba.wide.ad.jp/manjaro/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 273ms；IPv6 RTT 约 171ms，HTTPS 单文件下载约 16.5MiB/s
+      note: 官方推荐列表中的日本同步源；当前状态正常，MOTD 提供 tsukuba-ftp-servers@tsukuba.wide.ad.jp 作为联系地址。
+    - url: rsync://mirrors.ocf.berkeley.edu/manjaro/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 204ms；IPv6 RTT 约 188ms，HTTPS 单文件下载约 14.1MiB/s
+      note: 原上游；官方状态列表收录且检查时内容新鲜，但不在镜像运维文档列出的同步源中。
+    - url: rsync://repo.manjaro.org/repos/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      note: 官方直接同步源；当前出口未加入白名单，访问被拒绝。

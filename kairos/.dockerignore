@@ -1,0 +1,4 @@
+*
+!Dockerfile
+!grub.cfg
+!grub-boot-speedup.yaml

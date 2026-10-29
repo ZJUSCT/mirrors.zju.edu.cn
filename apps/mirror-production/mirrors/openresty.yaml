@@ -1,0 +1,68 @@
+metadata:
+  name: openresty
+info:
+  description: 基于 Nginx 与 Lua 的高性能 Web 平台
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/openresty/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 288Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://openresty.org/en/linux-packages.html
+    - https://openresty.org/package/
+    policy:
+    - 官方Linux Packages文档给出 https://openresty.org/package/ 下的APT、RPM、APK仓库和密钥。镜像根应为package/内容直接映射本站/openresty/，不能改成openresty.org/download/源码发布树，也不能额外嵌套package/。
+    - 官方根有19个平台/用途目录：alinux、almalinux、alpine、amazon、arm64、centos、ctyunos、debian、download、fedora、kylin、mariner、opensuse、oracle、rhel、rocky、sles、tlinux、ubuntu；还含Alpine
+      RSA公钥、pubkey.gpg、pubkey2.gpg、pubkey2.gpg.old。arm64下有独立debian/ubuntu仓库，不应合并到x86路径。
+    - APT Debian component为openresty，Ubuntu为main；官方分别给出签名钥与仓库路径。RPM/APK也有独立元数据/签名机制。保持索引、包、签名和旧钥原文，不重签名，不用trusted=yes，不能把更新的pubkey2.gpg自动替代所有仓库的旧钥。
+    - 未找到公开rsync模块或镜像固定轮询/登记前置要求；6h仅为本地排程候选。没有rsync并不构成四类工具全部不支持：本轮已经实测现有tsumugu nginx解析器可枚举官方树。
+    - 现有tsumugu模板支持parser=nginx，无需新增类型/脚本。默认HTTP递归可发现APT池、RPM repodata及APK文件；不用fallback忽略目录、忽略404或信任HTML时间戳来掩盖缺失。已有树的历史/平台范围仍需完整差异审核。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: openresty-sync-1791078322
+    succeeded_at: '2026-10-04T03:54:14Z'
+    published_at: '2026-10-04T03:54:22Z'
+    note: USTC首次同步与快照发布成功，Ready=True、Degraded=False，自动同步暂停；本轮只作官方文档/解析器/元数据校验，没有生产切源。
+    official_interval_candidate: 6h
+    official_cutover_state: viable-existing-tsumugu-pending-production-validation
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/openresty/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: USTC初始化种子，当前配置仍指向此源且暂停；不代表官方增量已运行。
+  - url: https://openresty.org/package/
+    surveyed_at: '2026-10-04'
+    status: candidate-verified-tsumugu-nginx
+    note: 现有tsumugu 0.20260921.0的nginx parser通过根、19个一级目录及12个深层目录list检查；无需新同步工具。未遍历全树、未执行sync或生产容器验证。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 工作站tsumugu list --parser nginx --upstream-base /package/在官方根、全部19个一级目录及代表APT/RPM/APK深层目录exit0；深层包括Debian bookworm元数据/amd64索引、包池openresty目录、Ubuntu
+      noble、arm64 Debian、CentOS9 x86_64/repodata、Alpine v3.18 main/x86_64。
+    - 早先试探Alpine v3.20目录返回404，因为官方alpine/仅列v3.7至v3.18；改用实际列出的v3.18后exit0。记录这个不存在路径，不把404视为parser失败或跳过实际错误。
+    - 官方Debian bookworm InRelease用文档pubkey.gpg验签成功，RSA主钥指纹E52218E7087897DC6DEA6D6D97DB7443D5EDEB74；pubkey2.gpg无法验证该签名（No public
+      key）。信任锚来自项目官方HTTPS，未作带外认证。
+    - 已验签InRelease所列openresty/binary-amd64/Packages.gz大小46782字节、SHA256=d9a19b083246577308bfc0360a818ef6f8e39ba8f18dcd866c43ed226c411c53，与下载索引匹配；未下载样例DEB、验证RPM/APK签名或执行安装。
+    remaining: 使用现有tsumugu模板在生产环境对已发布snapshot clone完成全树预检、版本/平台/链接/删除集及容量差异审核；保留默认max_delete保护，不盲目提高删除阈值。复核生产工具版本、APT/RPM/APK代表包完整性，再真实官方同步、对应新快照Ready和公网抽样后解除暂停。当前阻塞是这些实际生产验收未完成，不是现有工具不支持或等待未发现的登记许可。
+  candidate_config:
+    info:
+      upstream: https://openresty.org/package/
+    sync:
+      type: tsumugu
+      interval: 6h
+      timeout: 24h
+      tsumugu:
+        parser: nginx
+        threads: 4
+        max_delete: 100

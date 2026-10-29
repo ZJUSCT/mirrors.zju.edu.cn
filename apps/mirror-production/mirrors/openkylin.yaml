@@ -1,0 +1,35 @@
+metadata:
+  name: openkylin
+info:
+  description: openKylin 开源操作系统软件包仓库
+  upstream: rsync://openkylin@ftp.factory.openkylin.top/openkylin/ # 261020：archive.openkylin.top 已置于 CDN（w.cdngslb.com）之后，不转发 873 端口，改用工厂主机；其余镜像站已同样迁移
+sync:
+  type: rsync
+  ipv6: false
+  interval: 12h
+  timeout: 12h
+  rsync:
+    password_secret: openkylin-rsync
+storage:
+  size: 450Gi
+  volumeName: pvc-03069452-ea8b-4655-9dbc-4f432a7650e5
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.openkylin.top/
+      - https://www.openkylin.top/downloads/mirrors-cn.html
+    policy:
+      - 官方将软件包官方源仓库与系统镜像官方镜像仓库分开发布。
+      - 软件包仓库应从 archive.openkylin.top::openkylin 同步，并需联系 openKylin 社区获取密码。
+      - 官方未说明建议的同步间隔。
+  upstreams:
+    - url: rsync://openkylin@ftp.factory.openkylin.top/openkylin/
+      stack: ipv4
+      surveyed_at: 2026-10-20
+      metrics: IPv4 可连；现有 openkylin-rsync 密码认证通过；dry-run 全树 164,017 文件 / 333.1GB
+      note: 与 releases 模块同一台工厂主机（39.106.176.109，无 CDN），社区其他镜像站已迁移至此。原官方文档地址 archive.openkylin.top 已置于 CDN 之后，TCP 873 不通。

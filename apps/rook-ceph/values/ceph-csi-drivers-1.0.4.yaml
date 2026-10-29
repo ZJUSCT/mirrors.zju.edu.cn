@@ -1,0 +1,477 @@
+# Configuration for Ceph Connections
+cephConnections:
+  - # -- Name for the Ceph connection (default: "")
+    name: ""
+    # -- Ceph monitors (key-value pairs, typically IP addresses of the Ceph monitors) (default: {})
+    monitors: {}
+    # -- Number of RBD mirror daemons (default: 1)
+    rbdMirrorDaemonCount: 1
+    # -- Labels to be used for CRUSH location selection (default: [])
+    # Leave empty to disable read affinity. When set, it must be a non-empty list of node label keys, e.g. ["topology.kubernetes.io/zone"].
+    crushLocationLabels: []
+# Configuration for Client Profiles
+clientProfiles:
+  - # -- Name of the client profile (default: "")
+    name: ""
+    cephConnection:
+      # -- Reference to the Ceph connection for this profile (default: "")
+      name: ""
+    cephFs:
+      # -- Mount options for CephFS with FUSE (default: {})
+      fuseMountOptions: {}
+      # -- Mount options for CephFS with the kernel (default: {})
+      kernelMountOptions: {}
+      # -- Sub-volume group for the CephFS client (default: "")
+      subVolumeGroup: ""
+    rbd:
+      # -- Namespace for RADOS block devices (default: "")
+      radosNamespace: ""
+    nvmeof:
+      # -- Namespace for RADOS block devices (default: "")
+      radosNamespace: ""
+# Operator configuration section
+operatorConfig:
+  # -- Name of the operator config (default: "ceph-csi-operator-config")
+  name: ceph-csi-operator-config
+  # -- Namespace for the operator configuration (default: "")
+  namespace: ""
+  # -- Flag to indicate if the config should be created (default: true)
+  create: true
+  driverSpecDefaults:
+    log:
+      # -- Log verbosity level (0-5) (default: 0)
+      verbosity: 0
+      rotation:
+        # -- Enable log rotation (default: true)
+        enabled: true
+        # -- Maximum number of log files to keep (default: 7)
+        maxFiles: 7
+        # -- Maximum size of each log file (default: "10G")
+        maxLogSize: "10G"
+        # -- Periodicity for log rotation (options: hourly, daily, weekly, monthly) (default: "daily")
+        periodicity: "daily"
+        # -- Default log directory path (default: "")
+        logHostPath: ""
+    imageSet:
+      # -- ConfigMap reference to the image set for the driver (default: "")
+      # rook-ceph chart 按 csi.* 镜像参数渲染的 ImageSet ConfigMap，必须引用：
+      # 否则 operator 使用其内置默认客户端无法解码 rook ceph 生成的 cephx key，
+      # 所有 rados 连接失败
+      name: rook-csi-operator-image-set-configmap
+    # -- Cluster name identifier (default: "")
+    clusterName: ""
+    # -- Flag to enable fencing (default: false)
+    enableFencing: false
+    # -- gRPC timeout in seconds (default: 30)
+    grpcTimeout: 30
+    # -- Snapshot policy (options: none, volumeGroupSnapshot, volumeSnapshot) (default: "none")
+    snapshotPolicy: "none"
+    # -- Flag to generate OMap info (default: false)
+    generateOMapInfo: false
+    # -- File system group policy (e.g., "None", "ReadWriteOnceWithFSType") (default: "File")
+    fsGroupPolicy: "File"
+    encryption:
+      configMapRef:
+        # -- Name of the ConfigMap for encryption settings (default: "")
+        name: ""
+    # -- Flag indicating whether attachment is required (default: true)
+    attachRequired: true
+    # -- Flag to deploy CSI Addons (default: false)
+    deployCsiAddons: false
+    # -- CephFS client type (options: autodetect, kernel) (default: "kernel")
+    cephFsClientType: "kernel"
+    # -- Kernel mount options (default: {})
+    kernelMountOptions: {}
+    # -- FUSE mount options (default: {})
+    fuseMountOptions: {}
+    # Node Plugin Configuration
+    nodePlugin:
+      # -- Pod's priority class name (default: "")
+      priorityClassName: ""
+      # -- kubelet directory path (default: "/var/lib/kubelet")
+      kubeletDirPath: "/var/lib/kubelet"
+      # -- Custom labels for the pod (default: {})
+      labels: {}
+      # -- Custom annotations for the pod (default: {})
+      annotations: {}
+      # -- Affinity settings for the pod (default: {})
+      affinity: {}
+      # -- Daemonset update strategy (default: {})
+      updateStrategy: {}
+      # -- List of tolerations for the pod (default: [])
+      tolerations: []
+      # -- List of volumes attached to the pod (default: [])
+      volumes: []
+      # -- Image pull policy (default: "IfNotPresent")
+      imagePullPolicy: "IfNotPresent"
+      # -- Extra arguments for node plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-rbdplugin, driver-registrar, csi-addons (default: {})
+      containerExtraArgs: {}
+    # Controller Plugin Configuration
+    controllerPlugin:
+      # -- Flag to use host network for the controller plugin (default: false)
+      hostNetwork: false
+      # -- Number of replicas for the controller plugin (default: 1)
+      replicas: 1
+      # -- Resource requirements for controller plugin containers (default: {})
+      resources: {}
+      # -- Deployment strategy for the controller plugin (default: {})
+      deploymentStrategy: {}
+      # -- Flag to indicate if the container should be privileged (default: false)
+      privileged: false
+      # -- List of tolerations for the controller plugin (default: [])
+      tolerations: []
+      # -- Extra arguments for controller plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-provisioner, csi-attacher, csi-resizer, csi-snapshotter (default: {})
+      containerExtraArgs: {}
+      # -- Affinity settings for the pod (default: {})
+      affinity: {}
+      # -- Image pull policy (default: "IfNotPresent")
+      imagePullPolicy: "IfNotPresent"
+# Drivers configuration
+# rook-ceph-cluster chart 渲染的 StorageClass/VolumeSnapshotClass provisioner 固定为
+# <namespace>.<type>.csi.ceph.com，使用 chart 默认裸名会导致
+# 新建 ceph PVC 与快照永久 Pending，参见
+# https://rook.io/docs/rook/v1.20/Helm-Charts/csi-drivers-chart/
+drivers:
+  # RBD driver configuration
+  rbd:
+    # -- CSI driver name for RBD (default: "rbd.csi.ceph.com")
+    name: "rook-ceph.rbd.csi.ceph.com"
+    # -- Enable the RBD driver (default: true)
+    enabled: true
+    log:
+      # -- Log verbosity level (0-5) (default: 0)
+      verbosity: 0
+      rotation:
+        # -- Enable log rotation (default: true)
+        enabled: true
+        # -- Maximum number of log files to keep (default: 7)
+        maxFiles: 7
+        # -- Maximum size of each log file (default: "10G")
+        maxLogSize: "10G"
+        # -- Periodicity for log rotation (options: hourly, daily, weekly, monthly) (default: "daily")
+        periodicity: "daily"
+        # -- Default log directory path (default: "")
+        logHostPath: ""
+    imageSet:
+      # -- ConfigMap reference to the image set for the driver (default: "")
+      name: ""
+    # -- Cluster name identifier (default: "")
+    clusterName: ""
+    # -- Flag to enable fencing (default: false)
+    enableFencing: false
+    # -- gRPC timeout in seconds (default: 30)
+    grpcTimeout: 30
+    # -- Snapshot policy (options: none, volumeGroupSnapshot, volumeSnapshot) (default: "none")
+    snapshotPolicy: "none"
+    # -- Flag to generate OMap info (default: false)
+    generateOMapInfo: false
+    # -- File system group policy (e.g., "None", "ReadWriteOnceWithFSType") (default: "File")
+    fsGroupPolicy: "File"
+    encryption:
+      configMapRef:
+        # -- Name of the ConfigMap for encryption settings (default: "")
+        name: ""
+    # -- Flag indicating whether attachment is required (default: true)
+    attachRequired: true
+    # -- Flag to deploy CSI Addons (default: false)
+    deployCsiAddons: false
+    # -- CephFS client type (options: autodetect, kernel) (default: "kernel")
+    cephFsClientType: "kernel"
+    # -- Kernel mount options (default: {})
+    kernelMountOptions: {}
+    # -- FUSE mount options (default: {})
+    fuseMountOptions: {}
+    # Node Plugin Configuration
+    nodePlugin:
+      # -- Pod's priority class name (default: "")
+      priorityClassName: ""
+      # -- Custom labels for the pod (default: {})
+      labels: {}
+      # -- Custom annotations for the pod (default: {})
+      annotations: {}
+      # -- Affinity settings for the pod (default: {})
+      affinity: {}
+      # -- List of tolerations for the pod (default: [])
+      tolerations: []
+      # -- List of volumes attached to the pod (default: [])
+      volumes: []
+      # -- Image pull policy (default: "IfNotPresent")
+      imagePullPolicy: "IfNotPresent"
+      # -- Extra arguments for node plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-rbdplugin, driver-registrar, csi-addons (default: {})
+      containerExtraArgs: {}
+    # Controller Plugin Configuration
+    controllerPlugin:
+      # -- Flag to use host network for the controller plugin (default: false)
+      hostNetwork: false
+      # -- Number of replicas for the controller plugin (default: 1)
+      replicas: 1
+      # -- Resource requirements for controller plugin containers (default: {})
+      resources: {}
+      # -- Deployment strategy for the controller plugin (default: {})
+      deploymentStrategy: {}
+      # -- Flag to indicate if the container should be privileged (default: false)
+      privileged: false
+      # -- List of tolerations for the controller plugin (default: [])
+      tolerations: []
+      # -- Extra arguments for controller plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-provisioner, csi-attacher, csi-resizer, csi-snapshotter (default: {})
+      containerExtraArgs: {}
+  # NVMe-oF driver configuration (backed by RBD)
+  nvmeof:
+    # -- CSI driver name for NVMe-oF (default: "nvmeof.csi.ceph.com")
+    name: "rook-ceph.nvmeof.csi.ceph.com"
+    # -- Enable the NVMe-oF driver (default: true)
+    enabled: true
+    log:
+      # -- Log verbosity level (0-5) (default: 0)
+      verbosity: 0
+      rotation:
+        # -- Enable log rotation (default: true)
+        enabled: true
+        # -- Maximum number of log files to keep (default: 7)
+        maxFiles: 7
+        # -- Maximum size of each log file (default: "10G")
+        maxLogSize: "10G"
+        # -- Periodicity for log rotation (options: hourly, daily, weekly, monthly) (default: "daily")
+        periodicity: "daily"
+        # -- Default log directory path (default: "")
+        logHostPath: ""
+    imageSet:
+      # -- ConfigMap reference to the image set for the driver (default: "")
+      name: ""
+    # -- Cluster name identifier (default: "")
+    clusterName: ""
+    # -- Flag to enable fencing (default: false)
+    enableFencing: false
+    # -- gRPC timeout in seconds (default: 30)
+    grpcTimeout: 30
+    # -- Snapshot policy (options: none, volumeGroupSnapshot, volumeSnapshot) (default: "none")
+    snapshotPolicy: "none"
+    # -- Flag to generate OMap info (default: false)
+    generateOMapInfo: false
+    # -- File system group policy (e.g., "None", "ReadWriteOnceWithFSType") (default: "File")
+    fsGroupPolicy: "File"
+    encryption:
+      configMapRef:
+        # -- Name of the ConfigMap for encryption settings (default: "")
+        name: ""
+    # -- Flag indicating whether attachment is required (default: true)
+    attachRequired: true
+    # -- Flag to deploy CSI Addons (default: false)
+    deployCsiAddons: false
+    # -- CephFS client type (options: autodetect, kernel) (default: "kernel")
+    cephFsClientType: "kernel"
+    # -- Kernel mount options (default: {})
+    kernelMountOptions: {}
+    # -- FUSE mount options (default: {})
+    fuseMountOptions: {}
+    # Node Plugin Configuration
+    nodePlugin:
+      # -- Pod's priority class name (default: "")
+      priorityClassName: ""
+      # -- Custom labels for the pod (default: {})
+      labels: {}
+      # -- Custom annotations for the pod (default: {})
+      annotations: {}
+      # -- Affinity settings for the pod (default: {})
+      affinity: {}
+      # -- List of tolerations for the pod (default: [])
+      tolerations: []
+      # -- List of volumes attached to the pod (default: [])
+      volumes: []
+      # -- Image pull policy (default: "IfNotPresent")
+      imagePullPolicy: "IfNotPresent"
+      # -- Extra arguments for node plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-rbdplugin, driver-registrar, csi-addons (default: {})
+      containerExtraArgs: {}
+    # Controller Plugin Configuration
+    controllerPlugin:
+      # -- Flag to use host network for the controller plugin (default: false)
+      hostNetwork: false
+      # -- Number of replicas for the controller plugin (default: 1)
+      replicas: 1
+      # -- Resource requirements for controller plugin containers (default: {})
+      resources: {}
+      # -- Deployment strategy for the controller plugin (default: {})
+      deploymentStrategy: {}
+      # -- Flag to indicate if the container should be privileged (default: false)
+      privileged: false
+      # -- List of tolerations for the controller plugin (default: [])
+      tolerations: []
+      # -- Extra arguments for controller plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-provisioner, csi-attacher, csi-resizer, csi-snapshotter (default: {})
+      containerExtraArgs: {}
+  # CephFS driver configuration
+  cephfs:
+    # -- CSI driver name for CephFS (default: "cephfs.csi.ceph.com")
+    name: "rook-ceph.cephfs.csi.ceph.com"
+    # -- Enable the CephFS driver (default: true)
+    enabled: true
+    log:
+      # -- Log verbosity level (0-5) (default: 0)
+      verbosity: 0
+      rotation:
+        # -- Enable log rotation (default: true)
+        enabled: true
+        # -- Maximum number of log files to keep (default: 7)
+        maxFiles: 7
+        # -- Maximum size of each log file (default: "10G")
+        maxLogSize: "10G"
+        # -- Periodicity for log rotation (options: hourly, daily, weekly, monthly) (default: "daily")
+        periodicity: "daily"
+        # -- Default log directory path (default: "")
+        logHostPath: ""
+    imageSet:
+      # -- ConfigMap reference to the image set for the driver (default: "")
+      name: ""
+    # -- Cluster name identifier (default: "")
+    clusterName: ""
+    # -- Flag to enable fencing (default: false)
+    enableFencing: false
+    # -- gRPC timeout in seconds (default: 30)
+    grpcTimeout: 30
+    # -- Snapshot policy (options: none, volumeGroupSnapshot, volumeSnapshot) (default: "volumeSnapshot")
+    snapshotPolicy: "volumeSnapshot"
+    # -- Flag to generate OMap info (default: false)
+    generateOMapInfo: false
+    # -- File system group policy (e.g., "None", "ReadWriteOnceWithFSType") (default: "File")
+    fsGroupPolicy: "File"
+    encryption:
+      configMapRef:
+        # -- Name of the ConfigMap for encryption settings (default: "")
+        name: ""
+    # -- Flag indicating whether attachment is required (default: true)
+    attachRequired: true
+    # -- Flag to deploy CSI Addons (default: false)
+    deployCsiAddons: false
+    # -- CephFS client type (options: autodetect, kernel) (default: "kernel")
+    cephFsClientType: "kernel"
+    # -- Kernel mount options (default: {})
+    kernelMountOptions: {}
+    # -- FUSE mount options (default: {})
+    fuseMountOptions: {}
+    # Node Plugin Configuration
+    nodePlugin:
+      # -- Pod's priority class name (default: "")
+      priorityClassName: ""
+      # -- Custom labels for the pod (default: {})
+      labels: {}
+      # -- Custom annotations for the pod (default: {})
+      annotations: {}
+      # -- Affinity settings for the pod (default: {})
+      affinity: {}
+      # -- List of tolerations for the pod (default: [])
+      tolerations: []
+      # -- List of volumes attached to the pod (default: [])
+      volumes: []
+      # -- Image pull policy (default: "IfNotPresent")
+      imagePullPolicy: "IfNotPresent"
+      # -- Extra arguments for node plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-rbdplugin, driver-registrar, csi-addons (default: {})
+      containerExtraArgs: {}
+    # Controller Plugin Configuration
+    controllerPlugin:
+      # -- Flag to use host network for the controller plugin (default: false)
+      hostNetwork: false
+      # -- Number of replicas for the controller plugin (default: 1)
+      replicas: 1
+      # -- Resource requirements for controller plugin containers (default: {})
+      resources: {}
+      # -- Deployment strategy for the controller plugin (default: {})
+      deploymentStrategy: {}
+      # -- Flag to indicate if the container should be privileged (default: false)
+      privileged: false
+      # -- List of tolerations for the controller plugin (default: [])
+      tolerations: []
+      # -- Extra arguments for controller plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-provisioner, csi-attacher, csi-resizer, csi-snapshotter (default: {})
+      containerExtraArgs: {}
+  # NFS driver configuration
+  nfs:
+    # -- CSI driver name for NFS (default: "nfs.csi.ceph.com")
+    name: "rook-ceph.nfs.csi.ceph.com"
+    # -- Enable the NFS driver (default: true)
+    enabled: true
+    log:
+      # -- Log verbosity level (0-5) (default: 0)
+      verbosity: 0
+      rotation:
+        # -- Enable log rotation (default: true)
+        enabled: true
+        # -- Maximum number of log files to keep (default: 7)
+        maxFiles: 7
+        # -- Maximum size of each log file (default: "10G")
+        maxLogSize: "10G"
+        # -- Periodicity for log rotation (options: hourly, daily, weekly, monthly) (default: "daily")
+        periodicity: "daily"
+        # -- Default log directory path (default: "")
+        logHostPath: ""
+    imageSet:
+      # -- ConfigMap reference to the image set for the driver (default: "")
+      name: ""
+    # -- Cluster name identifier (default: "")
+    clusterName: ""
+    # -- Flag to enable fencing (default: false)
+    enableFencing: false
+    # -- gRPC timeout in seconds (default: 30)
+    grpcTimeout: 30
+    # -- Snapshot policy (options: none, volumeGroupSnapshot, volumeSnapshot) (default: "volumeSnapshot")
+    snapshotPolicy: "volumeSnapshot"
+    # -- Flag to generate OMap info (default: false)
+    generateOMapInfo: false
+    # -- File system group policy (e.g., "None", "ReadWriteOnceWithFSType") (default: "File")
+    fsGroupPolicy: "File"
+    encryption:
+      configMapRef:
+        # -- Name of the ConfigMap for encryption settings (default: "")
+        name: ""
+    # -- Flag indicating whether attachment is required (default: true)
+    attachRequired: true
+    # -- Flag to deploy CSI Addons (default: false)
+    deployCsiAddons: false
+    # -- CephFS client type (options: autodetect, kernel) (default: "kernel")
+    cephFsClientType: "kernel"
+    # -- Kernel mount options (default: {})
+    kernelMountOptions: {}
+    # -- FUSE mount options (default: {})
+    fuseMountOptions: {}
+    # Node Plugin Configuration
+    nodePlugin:
+      # -- Service account name for the pod (default: "")
+      serviceAccountName: ""
+      # -- Pod's priority class name (default: "")
+      priorityClassName: ""
+      # -- Custom labels for the pod (default: {})
+      labels: {}
+      # -- Custom annotations for the pod (default: {})
+      annotations: {}
+      # -- Affinity settings for the pod (default: {})
+      affinity: {}
+      # -- List of tolerations for the pod (default: [])
+      tolerations: []
+      # -- List of volumes attached to the pod (default: [])
+      volumes: []
+      # -- Image pull policy (default: "IfNotPresent")
+      imagePullPolicy: "IfNotPresent"
+      # -- Extra arguments for node plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-rbdplugin, driver-registrar, csi-addons (default: {})
+      containerExtraArgs: {}
+    # Controller Plugin Configuration
+    controllerPlugin:
+      # -- Flag to use host network for the controller plugin (default: false)
+      hostNetwork: false
+      # -- Number of replicas for the controller plugin (default: 1)
+      replicas: 1
+      # -- Resource requirements for controller plugin containers (default: {})
+      resources: {}
+      # -- Deployment strategy for the controller plugin (default: {})
+      deploymentStrategy: {}
+      # -- Flag to indicate if the container should be privileged (default: false)
+      privileged: false
+      # -- List of tolerations for the controller plugin (default: [])
+      tolerations: []
+      # -- Extra arguments for controller plugin containers. Key: container name, Value: list of CLI arguments. Examples: csi-provisioner, csi-attacher, csi-resizer, csi-snapshotter (default: {})
+      containerExtraArgs: {}
+# -- List of pull secret names that will be added to all serviceaccounts (default: [])
+imagePullSecrets: []
+# OpenShift configuration
+openshift:
+  # -- Enable OpenShift-specific resources (ClusterRoleBindings for SCC) (default: false)
+  enabled: false
+  # -- Name of the SCC ClusterRole created by the operator chart (default: "ceph-csi-operator-scc-user")
+  # This should match the ClusterRole name from the operator chart: {{ operator-release-name }}-scc-user
+  sccClusterRoleName: "ceph-csi-operator-scc-user"

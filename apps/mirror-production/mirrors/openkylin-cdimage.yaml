@@ -1,0 +1,36 @@
+metadata:
+  name: openkylin-cdimage
+info:
+  description: openKylin 开源操作系统多架构安装镜像
+  upstream: rsync://openkylin@ftp.factory.openkylin.top/releases/ # openKylin 官方指定的系统镜像上源
+sync:
+  type: rsync
+  ipv6: false
+  interval: 12h
+  timeout: 12h
+  rsync:
+    password_secret: openkylin-rsync
+storage:
+  size: 350Gi
+  volumeName: pvc-6a5aa477-bab9-4c47-9f51-43b1701d333f
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.openkylin.top/
+      - https://www.openkylin.top/downloads/
+      - https://www.openkylin.top/downloads/mirrors-cn.html
+    policy:
+      - 官方将系统镜像官方镜像仓库与软件包官方源仓库分开发布。
+      - 系统镜像应从 ftp.factory.openkylin.top::releases 同步，并需联系 openKylin 社区获取密码。
+      - 官方未说明建议的同步间隔。
+  upstreams:
+    - url: rsync://openkylin@ftp.factory.openkylin.top/releases/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 39–51ms
+      note: 官方认证 rsync 上源；仅公开模块列表，访问内容需使用官方提供的密码。

@@ -1,0 +1,51 @@
+metadata:
+  name: solus
+info:
+  description: Solus Linux 软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/solus/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 336h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 2984Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://help.getsol.us/docs/user/package-management/repo-management
+    - https://getsol.us/download/
+    - https://packages.getsol.us/
+    - https://cdn.getsol.us/repo/
+    - https://mirrors.tuna.tsinghua.edu.cn/help/solus/
+    policy:
+    - 官方当前仓库文档指定 Polaris 为稳定源、Unstable 为测试源，索引分别位于 https://cdn.getsol.us/repo/polaris/eopkg-index.xml.xz 与 unstable
+      同路径；TUNA 帮助仍使用 shannon，不能将其当作当前稳定分支依据。
+    - 原候选文档 /docs/user/quick-start/mirrors/ 现返回 Page Not Found；已改读当前官方仓库管理与下载文档。所读页面未规定外部镜像注册、rsync 同步频率或传输参数，24h
+      为本地策略。
+    - 项目自营 packages.getsol.us 的 soluspackages 模块支持匿名 IPv4、IPv6 列目录；根包含 polaris、shannon、unstable。三分支 eopkg-index.xml.xz.sha256sum
+      在项目 packages 主机、官方 CDN 和 TUNA 上逐项一致，Polaris 根的包目录及索引文件布局一致，可用现有 rsync 模板同步软件仓库。
+    - TUNA 根另有 images/4.0、4.1、4.2、4.3，共46个普通文件，官方 soluspackages 根完全没有 images。直接将整个镜像切换该模块并执行 --delete 会删除历史 ISO；不能将此范围差异视为例行包更新。
+    - 官方当前 ISO 下载入口指向 downloads.getsol.us/isos/2026-04-18/ 及 torrents/，按日期组织，与 TUNA 的 images/<版本>/ 历史目录并不等价；未找到覆盖
+      TUNA 历史 images 树的官方同步源。
+    - 因此当前保持暂停。可由最终处理选择保留 images 为静态归档并在 rsync 明确设置接收端删除保护、仅更新三分支，或单独设计 ISO 同步与目录映射；在范围策略落实前不批准整根切源。后续仍需完整 dry-run、删除审阅、实际同步和
+      HTTP 索引/包下载验证。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/solus/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-04'
+    note: 初始化 solus-sync-1791038403 已成功；根含三分支软件仓库及额外历史 images 树。
+  - url: rsync://packages.getsol.us/soluspackages/
+    stack: dual
+    status: candidate
+    surveyed_at: '2026-10-04'
+    note: 匿名双栈列目录成功；软件包布局与官方 CDN 索引摘要吻合，但缺失 TUNA 的 images 树，整根切换暂不通过。
+  bootstrap:
+    note: 初始化成功，保持暂停；需明确处理 TUNA 独有的历史 images 目录，防止切源自动删除46个 ISO及辅助文件。

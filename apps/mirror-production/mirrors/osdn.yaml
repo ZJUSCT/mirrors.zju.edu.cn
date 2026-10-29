@@ -1,0 +1,41 @@
+metadata:
+  name: osdn
+info:
+  description: OSDN 托管项目发布归档
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/osdn/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 624Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://osdn.net/
+    - https://mirrors.dotsrc.org/osdn/
+    - https://osdn.net/projects/
+    policy:
+    - OSDN公开页面及Dotsrc目录未提供可核验的官方同步周期；建议24h仅作为本地策略。
+    - OSDN是SourceForge式项目托管/下载归档，TUNA范围包含多个项目路径（bootstrap 4194文件、388.29G），不是单一发行版仓库；没有找到OSDN官方主站rsync模块或维护者镜像同步规范。
+    - mirrors.dotsrc.org/osdn 的rsync根可连接，但MOTD说明暂时关闭索引且公开状态资料显示历史/可能过期；不可把第三方可达等同于官方当前上游。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/osdn/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始同步已成功（osdn-sync-1790975638），当前保持 sync-paused。
+  - url: rsync://mirrors.dotsrc.org/osdn/
+    stack: dual
+    status: candidate
+    surveyed_at: '2026-10-03'
+    note: 第三方Dotsrc rsync根可列目录；MOTD显示索引临时关闭，未证明OSDN官方维护。
+  bootstrap:
+    note: TUNA 初始同步已成功（osdn-sync-1790975638）；当前仍暂停。未确认OSDN官方维护的全量上游；Dotsrc虽有rsync但状态资料提示索引关闭/内容可能过期，缺少官方背书和范围清单。

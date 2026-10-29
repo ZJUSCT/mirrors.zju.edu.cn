@@ -1,0 +1,52 @@
+metadata:
+  name: xanmod
+info:
+  description: XanMod Linux 内核软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/xanmod/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 92Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://xanmod.org/
+    - https://dl.xanmod.org/archive.key
+    - https://deb.xanmod.org/dists/bookworm/Release
+    - https://wiki.debian.org/DebianRepository/Format
+    policy:
+    - XanMod 官方页面定义其为面向 Debian 系发行版 amd64 的 APT 仓库，支持 bookworm、trixie、forky、sid、noble、plucky 等 suite，并列出 linux-metadata、linux-image、linux-headers、llvm、dkms、scx-scheds、NVIDIA
+      等组件。
+    - 官方安装方式通过 apt sources.list 使用 deb.xanmod.org，并要求 archive.key 签名；仓库根及 /dists/ 不提供可浏览 HTML 索引，已知 suite 的 Release
+      文件可直接读取。
+    - TUNA 初始化日志为 1,396 项、1,308 普通文件、约 35.58G，内容是 dists suite 索引与 pool 包树；与 APT 仓库语义吻合，但属于索引驱动下载，不是普通目录镜像。
+    - 官方未规定镜像同步间隔；APT Release/Packages 更新应驱动同步。当前 24h 仅为暂定值，不应在缺少索引同步器时恢复。
+    - 现有 Falcon 模板没有可验证的 APT/S3 索引驱动方式；直接请求 deb.xanmod.org 根或 dists/ 返回 404，不能据此误判仓库不存在。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/xanmod/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 首轮初始化已成功；仅作为已完成初始化来源，当前保持暂停。
+  - url: https://deb.xanmod.org/
+    stack: dual
+    status: blocked
+    surveyed_at: '2026-10-03'
+    note: 官方仓库服务；根、dists/ 和 pool/ 不提供目录枚举，但 suite Release（如 dists/bookworm/Release）可读取。需索引驱动同步。
+  - url: https://dl.xanmod.org/archive.key
+    stack: dual
+    status: required
+    surveyed_at: '2026-10-03'
+    note: 官方 APT 签名公钥，必须随仓库发布并供客户端验证。
+  bootstrap:
+    note: TUNA 初始化已成功完成，当前保持 sync-paused；存在已记录的工具、范围或协议阻塞，保持暂停。
+    reported_size: 55.3G

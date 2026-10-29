@@ -1,0 +1,108 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: mirror-production
+resources:
+  - resources/namespace.yaml
+  - resources/gateway.yaml
+  - resources/securitypolicy.yaml
+  - resources/certificate.yaml
+  - resources/sealedsecret-falcon-github-oauth.yaml
+  - resources/sealedsecret-grafana-credentials.yaml
+  # - resources/httproute-argocd-webhook.yaml
+  # Mirror 和相关资源
+  - mirrors-generated/
+  - mirrors-manual/
+  # 静态投递（活动页面等），见 delivery/README.md
+  - delivery/
+  - resources/sealedsecret-anolis-rsync.yaml
+  - resources/sealedsecret-archlinuxcn-rsync.yaml
+  - resources/sealedsecret-immortalwrt-rsync.yaml
+  - resources/sealedsecret-openkylin-rsync.yaml
+
+configMapGenerator:
+  # 同步 PVC 首次创建时由 root 持有；在同步前仅修正根目录 owner。
+  - name: sync-volume-init
+    files:
+      - init-sync-volume.sh=configs/init-sync-volume.sh
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: falcon
+        app.kubernetes.io/component: sync
+  - name: nginx-conf
+    files:
+      - nginx.conf=configs/nginx.conf
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: falcon
+        app.kubernetes.io/component: publish-http
+  # ftpsync 站点级常量 (镜像差异 RSYNC_HOST/PATH/EXTRA 由 podTemplate 环境变量注入)
+  - name: ftpsync-conf
+    files:
+      - ftpsync.conf=configs/ftpsync.conf
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: falcon
+        app.kubernetes.io/component: sync
+  # QFM 站点级常量；镜像差异 QFM_REMOTE/MODULE/RSYNC_FAMILY 由环境变量注入
+  - name: qfm-conf
+    files:
+      - qfm.conf=configs/qfm.conf
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: falcon
+        app.kubernetes.io/component: sync
+  - name: mirror-gateway-traffic-dashboard
+    files:
+      - mirror-gateway-traffic.json=dashboards/mirror-gateway-traffic.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        grafana_dashboard: "1"
+      annotations:
+        k8s-sidecar-target-directory: /tmp/dashboards/Infrastructure
+
+helmCharts:
+  - name: falcon
+    repo: oci://ghcr.io/zjusct/charts
+    version: 0.1.14
+    includeCRDs: true
+    releaseName: falcon
+    namespace: mirror-production
+    valuesFile: values/falcon-0.1.14.yaml
+  - name: mirror-front
+    repo: oci://ghcr.io/zjusct/charts
+    version: 0.2.0
+    releaseName: mirror-front
+    namespace: mirror-production
+    valuesFile: values/mirror-front-0.2.0.yaml
+
+# Hackage：固定快照安全验收前只同步；验收后只移除publish删除操作，保留暂停。
+patches:
+- target: &id001
+    group: mirrors.zjusct.io
+    version: v1alpha1
+    kind: Mirror
+    name: hackage
+  patch: "- op: remove\n  path: /spec/publish\n"
+- target: *id001
+  patch: "apiVersion: mirrors.zjusct.io/v1alpha1\nkind: Mirror\nmetadata:\n  name: hackage\n  annotations:\n   \
+    \ mirrors.zjusct.io/sync-paused: 'true'\n"
+
+# TurnKey Linux：固定快照安全验收前只同步；验收后只移除publish删除操作，保留暂停。
+- target:
+    group: mirrors.zjusct.io
+    version: v1alpha1
+    kind: Mirror
+    name: turnkeylinux
+  patch: "- op: remove\n  path: /spec/publish\n"
+- target:
+    group: mirrors.zjusct.io
+    version: v1alpha1
+    kind: Mirror
+    name: turnkeylinux
+  patch: "apiVersion: mirrors.zjusct.io/v1alpha1\nkind: Mirror\nmetadata:\n  name: turnkeylinux\n  annotations:\n\
+    \    mirrors.zjusct.io/sync-paused: 'true'\n"

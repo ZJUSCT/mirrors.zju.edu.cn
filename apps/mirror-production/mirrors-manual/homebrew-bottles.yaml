@@ -1,0 +1,224 @@
+# comment:
+#   official:
+#     surveyed_at: 2026-09-19
+#     docs:
+#       - https://docs.brew.sh/Bottles
+#       - https://docs.brew.sh/Manpage
+#       - https://formulae.brew.sh/docs/api/
+#     policy:
+#       - homebrew/core bottles 是由 Homebrew 构建并发布到 GitHub Packages（ghcr.io）的 gzip 压缩 tar 包。
+#       - HOMEBREW_API_DOMAIN 用于切换 JSON API 镜像；HOMEBREW_BOTTLE_DOMAIN 用于切换 bottles 与 manifests，并在镜像缺失时回退官方源。
+#       - HOMEBREW_ARTIFACT_DOMAIN 会重写所有下载地址，而非仅 bottles；官方未规定镜像同步周期、历史版本保留策略或存储规模。
+#   upstreams:
+#     - url: https://formulae.brew.sh/api/
+#       stack: dual
+#       surveyed_at: 2026-09-19
+#       metrics: IPv4 RTT 约 217ms；IPv6 HTTPS 建连约 116ms
+#       note: Homebrew 官方 JSON API；用于元数据和当前 bottle 清单。
+#     - url: https://ghcr.io/v2/homebrew/core/
+#       stack: ipv4
+#       surveyed_at: 2026-09-19
+#       metrics: IPv4 RTT 约 99ms
+#       note: Homebrew/core 官方 OCI registry；用于同步当前 bottle 内容。
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: homebrew-bottles
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Homebrew/core 当前 bottles 与 Homebrew JSON API 元数据镜像
+    upstream: https://ghcr.io/v2/homebrew/core/
+  storage:
+    retention: 1
+    syncStorageClassName: zfs-hdd-retain-immediate
+    publishStorageClassName: zfs-hdd-delete-immediate
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      volumeMode: Filesystem
+      resources:
+        requests:
+          storage: 1Ti
+      volumeName: pvc-3f765b80-c901-4d93-ae6d-3de6c7ba1a31
+  sync:
+    interval: 3h
+    retryInterval: 15m
+    timeout: 3h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: homebrew-bottles
+            image: docker.io/ustcmirror/homebrew-bottles:latest
+            imagePullPolicy: Always
+            command: [bash, /sync.sh]
+            env:
+              - name: TO
+                value: /data
+              - name: HOMEBREW_BOTTLES_JOBS
+                value: "8"
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: 500m, memory: 1Gi}
+              limits: {cpu: "4", memory: 4Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+  publish:
+    http:
+      replicas: 2
+      podTemplate:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /homebrew-bottles/
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /homebrew-bottles/
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 3
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/homebrew-bottles
+                  readOnly: true
+                - name: nginx-locations
+                  mountPath: /etc/nginx/locations
+                  readOnly: true
+              resources:
+                requests: {cpu: "10m", memory: 32Mi}
+                limits: {cpu: "4", memory: 2Gi}
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              emptyDir: {}
+            - name: nginx-locations
+              configMap:
+                name: homebrew-bottles-nginx
+---
+# 挂载到 /etc/nginx/locations，由共享主配置(nginx-conf)server 块的
+# include 钩子并入；只能包含裸 location 块。
+# 原理：brew(>=6) 的 bottle blob/manifest 请求可通过
+# HOMEBREW_BOTTLE_DOMAIN（flat 模式，/<name>/manifests/<tag>）重写。
+# HOMEBREW_ARTIFACT_DOMAIN 也会产生 OCI 形态请求，但它会重写非 bottle
+# 内容，因此不建议用于本不完整 artifact 镜像。同步侧
+# （ustcmirror/homebrew-bottles）落盘为
+# blob -> .by-hash/<hex>、index -> api/manifests/<pkg>_<tag>.json，含 @ 的包名
+# 在 ghcr 路径中写作 /（openssl@3 -> openssl/3）。以下按 URL 形态逆映射。
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homebrew-bottles-nginx
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  gzip.conf: |
+    # api/*.json 有同步侧预生成的 .gz 旁文件，直出省流量；
+    # bottle 的 .tar.gz 无 .gz 旁文件（gzip_static 查找 *.tar.gz.gz），不受影响；
+    # 重写后的 api/manifests/... URI 会重新匹配 location 并命中此块
+    location ~ "^/homebrew-bottles/api/" {
+        gzip_static on;
+        try_files $uri =404;
+    }
+  # 正则含 { } 时必须整体加引号，否则 { 被当作配置块分隔符
+  oci-rewrite.conf: |
+    # OCI 模式 index，包名含 @（openssl/3 -> openssl@3）
+    location ~ "^/homebrew-bottles/v2/homebrew/core/([^/]+)/([^/]+)/manifests/([^/]+)$" {
+        rewrite "^/homebrew-bottles/v2/homebrew/core/([^/]+)/([^/]+)/manifests/([^/]+)$" /homebrew-bottles/api/manifests/$1@$2_$3.json last;
+    }
+    # OCI 模式 index，普通包名
+    location ~ "^/homebrew-bottles/v2/homebrew/core/([^/]+)/manifests/([^/]+)$" {
+        rewrite "^/homebrew-bottles/v2/homebrew/core/([^/]+)/manifests/([^/]+)$" /homebrew-bottles/api/manifests/$1_$2.json last;
+    }
+    # flat 模式 index，包名含 @；(?!api/) 防止重写产物再次命中本规则（循环 500）
+    location ~ "^/homebrew-bottles/(?!api/)([^/]+)/([^/]+)/manifests/([^/]+)$" {
+        rewrite "^/homebrew-bottles/([^/]+)/([^/]+)/manifests/([^/]+)$" /homebrew-bottles/api/manifests/$1@$2_$3.json last;
+    }
+    # flat 模式 index，普通包名（实测 brew 6 的请求形态：/<name>/manifests/<tag>）
+    location ~ "^/homebrew-bottles/(?!api/)([^/]+)/manifests/([^/]+)$" {
+        rewrite "^/homebrew-bottles/([^/]+)/manifests/([^/]+)$" /homebrew-bottles/api/manifests/$1_$2.json last;
+    }
+    # OCI blob（两种模式共用）：sha256:<hex> -> .by-hash/<hex>
+    location ~ "^/homebrew-bottles/v2/homebrew/core/.+/blobs/sha256:([0-9a-f]{64})$" {
+        rewrite "^/homebrew-bottles/v2/homebrew/core/.+/blobs/sha256:([0-9a-f]{64})$" /homebrew-bottles/.by-hash/$1 last;
+    }

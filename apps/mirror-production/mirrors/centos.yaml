@@ -1,0 +1,52 @@
+metadata:
+  name: centos
+info:
+  description: CentOS Linux 历史下载入口
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/centos/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.centos.org/centos-linux/
+    - https://www.centos.org/centos-linux-eol/
+    - https://www.centos.org/download/mirrors/
+    - https://vault.centos.org/
+    policy:
+    - CentOS Linux 7 已于 2024-06-30 结束维护，CentOS Linux 8 已于 2021-12-31 结束维护；官方说明结束维护的内容移至 vault.centos.org，归档树不再获得安全更新。
+    - 当前官方镜像接入文档仅提供 rsync.stream.centos.org 的 CentOS-Stream-All、CentOS-Stream-nosrc、CentOS-Stream-nodebug 模块，不能用
+      Stream 树替换 CentOS Linux 历史入口。
+    - 已阅读官方 EOL、镜像接入及 Vault 说明，未找到针对该历史入口的官方同步间隔要求；现有 24h 仅为本站配置，当前暂停。
+    - TUNA 初始化实际仅 219 个普通文件、22 个符号链接，总文件大小约 2.67 MB；版本目录仅保留 deprecated readme 与旧入口文件，不是完整 RPM 归档。
+    - 官方 Vault 提供 2.1 至 8.5.2111、8-stream 及 altarch 等历史树；与现有 centos-vault 重叠，完整 Vault 与本次 4Gi 入口卷范围不同。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/centos/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 已完成的一次性 TUNA 初始化来源；当前暂停自动同步。
+  - url: rsync://msync.centos.org/CentOS/
+    stack: ipv4
+    status: retired
+    surveyed_at: '2026-10-02'
+    note: 历史 CentOS Linux 主镜像入口；当前官方镜像接入文档已改为 CentOS Stream，不能当作受维护 Linux 软件仓库。
+  - url: https://vault.centos.org/
+    stack: ipv4
+    status: available
+    surveyed_at: '2026-10-02'
+    note: 已确认官方历史归档及目录列表，未作为本入口的替换源；完整归档应由现有 centos-vault 承担。
+  bootstrap:
+    note: 已完成 TUNA 初始化，当前保持 sync-paused；该镜像仅为已退役 CentOS Linux 的历史入口；需先确定与现有 centos-vault 的别名及归档边界，不能自动切为完整 Vault
+      或 CentOS Stream。 保留现有初始化数据并等待最终处理，不自动恢复同步。
+    reported_size: 2.96M

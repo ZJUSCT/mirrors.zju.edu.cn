@@ -1,0 +1,73 @@
+metadata:
+  name: kodi
+info:
+  description: 开源的多媒体播放器，原名 XBMC
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/xbmc/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 512Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-05'
+    docs:
+    - https://mirrors.kodi.tv/
+    - https://kodi.wiki/view/Mirrors
+    - https://kodi.wiki/view/Mirrorlist
+    - https://kodi.tv/about/sponsors/
+    policy:
+    - USTC原模块为xbmc，本站HTTP前缀为/kodi/；两者名称差异不改变内容层级，不能把USTC rsync模块写成kodi。2026-10-05官方HTTP根列8目录（addons、demo-files、nightlies、releases、screenshots、snapshots、test-builds、tools）及lastupdate；它是文件下载/镜像选择入口，不能由此推断完整rsync模块范围。
+    - 2026-09-30既有证据显示rsync.kodi.tv daemon列main（Main Kodi File Repository）及euro（Main Kodi File Repository - Non-USA）；本机两个模块均Access
+      denied，生产s3的main IPv4/IPv6也exit5拒绝。本轮未重探rsync，不将旧拒绝冒充当前实测；无官方访问授权或配置变化证据，仍不能切源。不能为绕过拒绝改出口、地域模块或协议。
+    - 2026-10-05尝试官方wiki Mirrors/Mirrorlist及kodi.tv sponsors页面均HTTP403，无法核实当前登记/白名单流程、main/euro地域及内容规则、容量要求或强制同步周期。6h是本地候选，不是官方要求；未发送邮件或提交登记。需取得官方维护方公开政策或授权资料后再决定后续。
+    - 官方HTTP根比已发布种子少apt、build-deps、docs、project、sparklefeeds及timestamp.txt。前5目录直接HTTP访问能列，但根不可发现；sparklefeeds目录仅列父目录，已知sparkleupdate_nightly.xml却可直接下载。addons/omega官方HTML和正确parser均不列addons.xml、addons.xml.gz，两个索引实际可直接下载。不能把未列出当作废弃或可删除。
+    - HTTP文件请求会由官方mirrors.kodi.tv选择第三方镜像；本轮样例分别落在UTwente、TUNA、RWTH。官方入口的下载字节比较并不等于已经直接读取rsync主站，也不能证明main/euro同范围或认证了发行签名。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: kodi-sync-1791159184
+    succeeded_at: '2026-10-05T00:18:53Z'
+    published_at: '2026-10-05T00:19:04Z'
+    note: 单次原USTC源补同步成功；保持暂停，官方接续受访问/政策/布局证据阻塞。
+    official_interval_candidate: 6h
+    official_cutover_state: hold-access-policy-and-incomplete-http-listing
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/xbmc/
+    surveyed_at: '2026-10-05'
+    status: bootstrap-complete
+    note: 当前原源，保持暂停。
+  - url: rsync://rsync.kodi.tv/main/
+    surveyed_at: '2026-09-30'
+    status: access-denied-production-dual-stack
+    note: 有日期的既有证据；本轮不重探，不具备当前授权/完整树证据。
+  - url: rsync://rsync.kodi.tv/euro/
+    surveyed_at: '2026-09-30'
+    status: access-denied-local
+    note: 模块描述Non-USA；没有main/euro等价证据，不替换以绕过限制。
+  - url: https://mirrors.kodi.tv/
+    surveyed_at: '2026-10-05'
+    status: parser-viable-listing-incomplete
+    note: 现有fancy-index可解析可见目录，但关键索引及5根分支不被递归发现，不能直接切源。
+  verification:
+    surveyed_at: '2026-10-05'
+    checks:
+    - 唯一原源补同步kodi-sync-1791159184真实rsync exit0；lastSuccessfulSyncAt=2026-10-05T00:18:53Z，lastAttempt finishedAt=00:18:56Z，00:19:04Z发布。activeSnapshot/activePVC均为kodi-snap-1791159184，Snapshot
+      readyToUse、PVC dataSource及Ready observedGeneration匹配，Degraded=False。原xbmc源/kodi-sync工作卷/暂停状态保持。
+    - 首轮exit24（6个nightlies源文件消失）没有被当成功；唯一补同步已消费。补同步93923项，新增12文件、删除0，传输14文件/113.47M、总树285.06G。512Gi配置是既有上限，不代表官方完整范围容量已验证。
+    - 公网根13目录及lastupdate/timestamp.txt可列；addons/omega、releases/source、releases/android/arm64-v8a、sparklefeeds、docs代表目录可读。官方入口选择镜像与本站的addons.xml.gz、sparkleupdate_nightly.xml、lastupdate及resource.language.en_au-11.0.71.zip逐字节相同。
+    - addons.xml.gz为1892492字节，SHA256=c2d1fae3be4e6a31a6997223edc34c20404416b3f78a4bf5a9615b18f4b1cf56，解压XML含2327 addon条目；RSS解析通过。语言包ZIP105209字节，SHA256=806b9b04437cf568d3da872f031db056f09c9f3d94fa7f6b7853da615442cd3c，4条目CRC通过，addon.xml的id/version与索引一致。无全树验证、安装或密码学发行签名保证。
+    - 现有tsumugu 0.20260921.0默认nginx parser对官方根解析失败（格式不符）；fancy-index parser在根及8个代表目录list均exit0，并与HTML实际条目相符。addons/omega本站2329条目，官方列表2326，差异为addons.xml、addons.xml.gz、plugin.video.popcorntimes；不为这个未解释差异自动删除。sparklefeeds官方解析0文件与页面一致，不是parser漏读。
+    tools:
+      rsync: 现有rsync模板能够表达标准模块、原层级和safe-links；访问拒绝/模块范围未核实是阻塞，并非工具缺能力。取得官方授权和main/euro准确选择后，先对固定快照进行只读dry-run及链接/删除/容量审核，再评估真实增量。保留exit24失败处理，不用忽略vanished自动发布。
+      ftpsync: 本站现有ftpsync模板是Debian archvsync两阶段归档同步；Kodi根是跨平台发布、插件、nightlies等混合树。没有官方指定Debian归档协议的证据；改用ftpsync不能解决rsync访问控制或识别完整树范围，不作为替代候选。
+      qfm: 本站QFM固定fedora-buffet及MODULES文件列表协议，用于Fedora归档。Kodi没有该协议证据，不能把main/euro填入QFM以得到完整镜像。
+      tsumugu: 现有fancy-index解析器无需新增工具即可解析可见HTML，但根与子目录有已证实的重要隐藏条目。朴素递归会遗漏APT/build-deps等5分支以及关键addons.xml(.gz)/更新feed，并可能触发删除；单独--include不能发现未列出的文件。当前没有官方完整清单/受支持多根+关键文件映射，不能安全接续整棵种子树。不是“四工具全部不支持”，而是授权、发现完整性和布局证据不充分；不把HTTP当作绕过rsync拒绝的通道。
+    remaining: 保持原USTC源暂停。先取得官方同步访问/登记说明、main/euro地域与内容范围和完整清单；目前不自动联系他人。对HTTP候选必须先解决官方列表隐藏目录/关键索引、redirector及多根映射问题，不能仅凭list
+      exit0切换。后续任一远端全树预检/真实同步先通过共享max_concurrent=5 admission；如使用tsumugu，预检只在固定已发布快照的一次性可写恢复卷上执行，因dry-run可能写链接，禁止工作PVC、发布PVC或只读克隆。完成范围/链接/删除/容量审核和真实官方同步、对应快照Ready、公网验收后才可解除暂停。

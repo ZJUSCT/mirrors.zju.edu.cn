@@ -1,0 +1,36 @@
+metadata:
+  name: elrepo
+info:
+  description: ELRepo 企业级 Linux 软件包仓库
+  upstream: rsync://hkg.mirror.rackspace.com/elrepo/ # 官方列表中的香港 rsync 镜像，内容完整且更新正常
+sync:
+  type: rsync
+  ipv6: false
+  interval: 12h
+  timeout: 12h
+storage:
+  size: 300Gi
+  volumeName: pvc-8ca8b303-e28a-43ed-b1af-f27912745eca
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://elrepo.org/
+      - https://elrepo.org/wiki/doku.php?id=download
+    policy:
+      - ELRepo 为 Red Hat Enterprise Linux 及其衍生发行版提供软件包，仓库分为 elrepo、extras、kernel 与 testing 等频道。
+      - 官方下载页列出可供镜像同步的公共 rsync 服务，但未规定同步间隔、存储规模或登记流程。
+  upstreams:
+    - url: rsync://hkg.mirror.rackspace.com/elrepo/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 48ms、HTTP 单文件约 21MiB/s
+      note: 官方镜像与公共 rsync 列表中的香港节点；包含当前仓库及 archive 历史归档，timestamp.txt 更新正常。
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/elrepo/
+      stack: dual
+      surveyed_at: 2026-09-18
+      note: 仍可匿名访问，但已在官方活动镜像列表中被划除，仅残留于标有 FIXME 的旧 rsync 清单。

@@ -1,0 +1,40 @@
+metadata:
+  name: postgresql
+info:
+  description: PostgreSQL 源码、工具及 PGDG 软件仓库
+  upstream: https://download.postgresql.org/pub/
+sync:
+  type: tsumugu
+  interval: 6h
+  timeout: 6h
+  tsumugu:
+    parser: nginx
+    threads: 16
+    max_delete: 5000
+    extra_args:
+      - --timezone
+      - "0"
+      - --exclusion-v2
+      # SRPM 子树使用 S3 索引，其余目录使用 nginx 索引。
+      - --parser-match
+      - 's3-indexbuilder:/repos/yum/srpms/testing/'
+      - --parser-match
+      - 's3-indexbuilder:/repos/zypp/srpms/.+'
+      # 官方三处历史 SRPM 目录重定向至已失效上游；其余错误照常失败。
+      - --exclude
+      - '^/repos/zypp/srpms/(9\.5|9\.6|10)/'
+      # PostgreSQL 上游 SRPM 子树（dnf-srpms/zypp-srpms）的目录索引由 s3indexbuilder 周期性重建且被 CloudFront 长缓存，滞后于 repodata 的实际更新（实测最长约 19 小时），滞后窗口内索引持续列出已删除的哈希文件，镜像按索引下载必然 404。
+      - --ignore-nonexist
+storage:
+  size: 2Ti
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-28
+    docs:
+      - https://www.postgresql.org/ftp/
+    policy:
+      - 官方已停止 rsync 服务，通过 HTTP(S) 同步完整 pub 树（包括 repos）。https://www.postgresql.org/message-id/CA%2BOCxoz3p4LqyE4aNb3M8gs2GND25ET%3DEMQ-KSrZ%2BB1WRSdT4Q%40mail.gmail.com

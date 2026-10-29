@@ -1,0 +1,53 @@
+metadata:
+  name: deb-multimedia
+info:
+  description: 面向 Debian 的第三方多媒体软件包仓库
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/deb-multimedia/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 44Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://www.deb-multimedia.org/debian-m
+    - https://www.deb-multimedia.org/
+    policy:
+    - Deb Multimedia 官方镜像页直接给出 rsync URI `rsync://www.deb-multimedia.org/deb` 与 debmirror 示例，范围为 stable/testing/unstable/experimental、main/non-free，多架构。
+    - 官方 rsync 根列表于 2026-10-03 04:00:03 显示 dists、pool、CSS、jigdo、project、zzz-dists；与 USTC 20.56 GiB 树形态相符，可作为官方增量候选。
+    - 官方说明仓库约 16 GB（2024-07-25），要求使用 deb-multimedia-keyring，并通过 gpgv/apt 验证 Release；2026 页面推荐 deb822 `.sources`
+      与 Signed-By。
+    - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
+    - 2026-10-04 03:54 UTC，在生产IPv6检查Pod中对官方精确模块执行rsync dry-run；服务器显式拒绝 --dry-run (-n)，exit12。官方入口已确认且可连接，阻塞在无法审阅完整差异/删除集；不绕过该限制执行真实
+      --delete 同步。
+  bootstrap:
+    note: USTC首次同步于2026-10-03T06:55:35Z成功，发布于06:55:53Z；仍发布deb-multimedia-snap-1791008131并保持sync-paused=true。2026-10-04官方IPv6预检只读挂载已发布VolumeSnapshot克隆，被daemon拒绝--dry-run；未挂载工作PVC、切源或发起真实官方同步。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/deb-multimedia/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 首次同步源；站点报告容量 20.56 GiB，不是实际占用保证。
+  - url: rsync://www.deb-multimedia.org/deb/
+    surveyed_at: '2026-10-04'
+    note: 官方入口与生产IPv6连接已确认；服务器显式拒绝--dry-run，exit12，未取得完整范围/删除集。保持USTC源与暂停，等待允许完成预检的官方流程。
+    status: hold-dry-run-refused
+    stack: ipv6
+  validation:
+    observed_at: '2026-10-04'
+    completed:
+    - 2026-10-03已有bootstrap证据：官方keyring公钥A401FF99368FA1F98152DE755C808C2B65558117验证公网trixie InRelease成功，且公网与官方HTTPS内容相同；本轮仅查阅历史记录。
+    - 已有签名SHA256→main/binary-amd64/Packages.xz（135880字节，SHA256=d1e036eb2060996989f1a1e469ea645bf48327e00fcffc438b8ce8ec2103f002）→libmagickwand-dev
+      DEB（1148字节，SHA256=29bfc8a1233d917084a7ff2b1a7f6b279d8af694501d4e046f5f7ec2814a4d5e）链通过。该样例为dummy包，不能作为原生程序安装/运行验收。
+    - 2026-10-04白天并发位空出后，只读挂载deb-multimedia-snap-1791008131（VolumeSnapshot克隆）执行官方IPv6 dry-run；服务器回复configured
+      to refuse --dry-run (-n)，exit12，未得到可审阅的删除集。
+    - 当前Mirror仍使用USTC源，暂停且无currentSync；仍发布原bootstrap快照。检查Pod已清理，helper finally释放reservation至0。
+    remaining: 官方daemon拒绝--dry-run。先确定允许完成范围/删除集比较的官方路径或流程，再进行真实官方同步、新快照Ready与公网签名/包下载验收。revalidate-official-deb-multimedia.py已准备原生ffmpeg包与隔离APT验证，但尚未执行。历史bootstrap验签不等于官方切源完成，不宣称全仓库或运行时验证。

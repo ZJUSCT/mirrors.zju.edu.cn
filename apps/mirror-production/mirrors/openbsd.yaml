@@ -1,0 +1,54 @@
+metadata:
+  name: openbsd
+info:
+  description: OpenBSD 操作系统与软件包
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/OpenBSD/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 336h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 2280Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+  aliases:
+  - /OpenBSD
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://www.openbsd.org/ftp.html
+    - https://www.ocf.berkeley.edu/docs/services/mirrors/
+    policy:
+    - 官方 ftp.html 明确列出 Berkeley OCF rsync://mirrors.ocf.berkeley.edu/openbsd，OCF 自身说明允许公众使用 rsync；本次匿名 IPv4、IPv6
+      根目录均成功。不得直接同步 ftp.openbsd.org；官方要求使用 second-level mirror、避免链式镜像，公开镜像列表未单独标注 OCF 的层级，不能声称已获指定 master 或 tier1
+      身份。
+    - 官方列名条件要求所有架构的系统与软件包、至少最近两个二进制发行版、一周内更新的 snapshots 及 LibreSSL/OpenBGPD/OpenIKED/OpenNTPD/OpenSSH/patches/rpki-client/syspatch
+      等关联目录；HTTP/FTP 需提供 /pub/OpenBSD/ 路径。若申请列名需联系 mirrors-discuss 并订阅 mirrors-announce；本次未发邮件。24h 是本地策略，文档未规定固定轮询周期。
+    - 官方强烈建议 --delete-delay --delay-updates 以减少 snapshot 软件包更新中的用户故障，可选 --fuzzy。实际启用前须核对本地模板参数、瞬时空间及快照发布机制；不可忽略非零
+      rsync 状态。
+    - TUNA 模块名大小写敏感，正确为 OpenBSD；当前双方根均包含历史 7.7、7.8、7.9、snapshots 和关联目录，根层未见 TUNA 独有发行版。snapshots/ftplist 双方均为
+      ../ftplist 的相对符号链接，应保留链接而非展开。
+    - 但范围并不等价：TUNA 7.9 缺 alpha/hppa/landisk/luna88k/macppc/octeon/sparc64；OCF 7.9/packages 和 snapshots/packages
+      另含 mips64/powerpc/sparc64。TUNA 7.7/alpha 虽有目录但为空，OCF 该目录有23个普通文件；不能仅比较一级目录名认定范围相符。整根切换会扩充架构和软件包，需完整 dry-run
+      量化容量及范围，或明确可审核的过滤策略。
+    - OCF 根及 snapshots 暴露 .~tmp~ 暂存目录，根 .~tmp~/ 实测 Permission denied、rsync 23。后续同步需显式排除所有层级 .~tmp~/ 后再验证，不能放行
+      code23 或把暂存目录当发布内容。
+    - 初始化 openbsd-sync-1791063712 已成功，现保持暂停：须落实架构范围、临时目录过滤及上游层级策略后再做生产完整 dry-run、删除审核、真实同步与HTTP校验；不以抽查成功直接恢复自动同步。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/OpenBSD/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-04'
+    note: 初始化已成功；TUNA 内容为裁剪架构的 OpenBSD 树，不是完整全架构集合。
+  - url: rsync://mirrors.ocf.berkeley.edu/openbsd/
+    stack: dual
+    status: candidate
+    surveyed_at: '2026-10-04'
+    note: 官方列出的公开镜像，双栈匿名可读；比 TUNA 多若干架构，且有不可读 .~tmp~ 临时目录，尚不能无条件整根切换。
+  bootstrap:
+    note: 初始化成功；保持暂停，等待明确架构范围、排除上游临时目录并通过完整验证。

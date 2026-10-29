@@ -1,0 +1,55 @@
+{# HTTP(S) 目录镜像；删除保护与异常退出由 tsumugu 负责，成功后 Falcon 才发布快照。 #}
+{% set options = m.sync.tsumugu | default({}) %}
+    podTemplate:
+      spec:
+{% if m.sync.nodeSelector %}
+        # 仅用于首次落盘；绑定后由 PVC 的 nodeAffinity 保持位置
+        nodeSelector:
+{% for key, value in m.sync.nodeSelector.items() %}
+          {{ key | ys }}: {{ value | ys }}
+{% endfor %}
+{% endif %}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: {{ sync_uid }}
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+{% include 'init-sync-volume.yaml.j2' %}
+        containers:
+          - name: tsumugu
+            image: ghcr.io/zjusct/tsumugu:latest
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command: [tsumugu]
+            args:
+              - sync
+              - --parser
+              - {{ options.parser | default('nginx') | ys }}
+              - --threads
+              - {{ options.threads | default(4) | string | ys }}
+              - --max-delete
+              - {{ options.max_delete | default(100) | string | ys }}
+{% for arg in options.extra_args | default([]) %}
+              - {{ arg | ys }}
+{% endfor %}
+              - {{ m.info.upstream | ys }}
+              - /data/
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: tmp
+                mountPath: /tmp
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+              limits: {cpu: "4", memory: 4Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}

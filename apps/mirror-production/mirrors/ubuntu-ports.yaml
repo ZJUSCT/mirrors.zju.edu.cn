@@ -1,0 +1,36 @@
+metadata:
+  name: ubuntu-ports
+info:
+  description: Ubuntu 非 x86 架构软件包仓库
+  upstream: rsync://rsync.ports.ubuntu.com/ubuntu-ports/ # Canonical 自营的 Ubuntu Ports 同步入口
+sync:
+  type: ftpsync
+  interval: 6h
+  timeout: 6h
+  ftpsync:
+    archive: ubuntu-ports
+storage:
+  size: 7Ti
+  volumeName: pvc-2d5a6c95-6946-489a-8969-ed35e16cb363
+publish:
+  http:
+    tier: hot
+    replicas: 2
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://ports.ubuntu.com/
+      - https://canonical-ubuntu-project.readthedocs-hosted.com/release-team/mirrors/
+      - https://canonical-ubuntu-project.readthedocs-hosted.com/release-team/mirror-scripts/
+      - https://launchpad.net/ubuntu/+archivemirrors
+    policy:
+      - Ubuntu Ports 属于 Archive 镜像，应每 6 小时同步一次并使用 two-stage sync。
+      - 当前仓库提供 arm64、armhf、ppc64el、riscv64 与 s390x 架构软件包。
+      - 官方未指定必须使用 ftpsync；关键要求是保证两阶段同步语义。
+  upstreams:
+    - url: rsync://rsync.ports.ubuntu.com/ubuntu-ports/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 300ms；IPv6 RTT 约 267–306ms
+      note: Canonical 自营的 Ubuntu Ports 同步入口；IPv4 和 IPv6 均已验证，MOTD 提醒镜像方善意使用服务。

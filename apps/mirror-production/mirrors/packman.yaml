@@ -1,0 +1,33 @@
+metadata:
+  name: packman
+info:
+  description: Packman 第三方软件包仓库
+  # upstream: rsync://ftp.halifax.rwth-aachen.de/packman/ # 260921：该镜像存在 AUIP 标记，应使用 ftpsync，但 packman 应该不是这样的；也不想换 ftpsync
+  upstream: rsync://mirror.karneval.cz/packman/ # 260921：参考 CERNET 其他镜像站上游
+sync:
+  type: rsync
+  interval: 1h
+  timeout: 1h
+storage:
+  size: 300Gi
+  volumeName: pvc-cf6c44dc-a099-4a7c-81d9-807c343f6a5f
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - http://packman.links2linux.org/
+      - http://packman.links2linux.org/mirrors
+    policy:
+      - Packman 提供发行版未收录或版本较旧的软件包；当前仓库内容以 openSUSE 软件包为主。
+      - 官方主 rsync 服务仅允许已授权用户访问；公开同步可使用官方镜像页列出的 rsync 镜像。
+      - 官方镜像页标注 RWTH Aachen 每小时更新；未查到面向所有镜像的统一同步间隔要求。
+  upstreams:
+    - url: rsync://ftp.halifax.rwth-aachen.de/packman/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 221ms；IPv6 RTT 约 252ms；约 6.8MiB/s
+      note: 官方镜像页收录的双栈 rsync 镜像；页面标注每小时更新，MOTD 禁用压缩与校验和选项。

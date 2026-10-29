@@ -1,0 +1,48 @@
+metadata:
+  name: arch4edu
+info:
+  description: 面向科研和教育的 Arch Linux 软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/arch4edu/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 64Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://github.com/arch4edu/arch4edu
+    - https://github.com/arch4edu/arch4edu/wiki/Create-a-mirror-site-of-arch4edu
+    - https://github.com/arch4edu/arch4edu/wiki/Add-arch4edu-to-your-Archlinux
+    - https://arch4edu.org/
+    policy:
+    - 官方 Create a mirror site 页面给出的完整命令明确使用 rsync://mirrors.tuna.tsinghua.edu.cn/arch4edu，并要求 -rtlivH --delete-after
+      --delay-updates --safe-links --max-delete=1000；不支持符号链接的文件系统才排除 any。
+    - 官方 Add 页面要求使用 mirror site、导入 arch4edu key 7931B6D628C8D3BA，并在 pacman.conf 添加 [arch4edu] Server；TUNA 根实际包含
+      aarch64、any、x86_64、lastupdate，和该仓库发布布局一致。
+    - 官方文档没有规定镜像轮询间隔；24h 是本站保守周期。候选 arch4edu-upload.tuna.tsinghua.edu.cn 是上传端，IPv4/IPv6 均 timeout，不应作为读取上游。
+    - rsync 参数中的 symlink 保留、delete-after、max-delete=1000 是官方约束；Falcon 当前 rsync 首轮已完成，但恢复前应使用同等语义进行只读 dry-run。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/arch4edu/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: 官方镜像指南明确指定的同步源；当前 ZJU 配置即此 URL，TUNA 首轮 39.26G 已完成。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  - url: rsync://arch4edu-upload.tuna.tsinghua.edu.cn/arch4edu/
+    stack: dual
+    status: unavailable-upload-endpoint
+    surveyed_at: '2026-10-03'
+    note: TUNA 状态数据中的候选上传端；本次 IPv4/IPv6 list-only 均 timeout，不作为读取源。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
+    reported_size: 39.27G

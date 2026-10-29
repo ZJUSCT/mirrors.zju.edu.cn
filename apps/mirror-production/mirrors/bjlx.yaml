@@ -1,0 +1,52 @@
+metadata:
+  name: bjlx
+info:
+  description: 北京龙芯用户俱乐部维护的 Debian 补充软件源
+  upstream: rsync://rsync.anheng.com.cn/bjlx/ # USTC 初始化后切回原始发布源
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 16Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.anheng.com.cn/bjlx/mirrors.html
+    - https://www.anheng.com.cn/bjlx/bjlx.sources
+    - https://www.anheng.com.cn/bjlx/bjlx.asc
+    - https://www.anheng.com.cn/bjlx/bjlx.key
+    - https://www.anheng.com.cn/bjlx/bjlx2025.asc
+    policy:
+    - 发布者在 mirrors.html 明确将 rsync://rsync.anheng.com.cn/bjlx 称为原始 rsync 发布；这是北京龙芯用户俱乐部维护的 Debian 补充源，不限于龙芯架构。
+    - 以 bjlx 模块根为镜像根，保留 dists/、pool/、key/、conf/、db/、patch/ 与原始密钥、示例配置；不增加一层 bjlx/，不转换或重签名仓库。
+    - 发布页给出原始源和维护者联系方式，未规定同步周期；当前 interval/timeout 均为 6h，是本站运维选择，不是上游要求。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/bjlx/
+    surveyed_at: '2026-10-02'
+    status: bootstrap-complete
+    note: 仅作首次初始化种子；2026-10-02 初始化及快照发布完成，日常同步已切到原始发布源。
+  - url: rsync://rsync.anheng.com.cn/bjlx/
+    surveyed_at: '2026-10-02'
+    status: selected
+    stack: ipv6
+    note: 生产采用 rsync -6；切源 dry-run 的新增、删除、普通文件传输均为 0。真实官方任务 bjlx-sync-1790954842 于 2026-10-02T15:27:32Z 成功，官方快照于 15:27:41Z
+      发布，Ready=True；已解除暂停，按 6h 自动同步。
+  bootstrap:
+    note: USTC 初始化、官方差异审阅、真实官方同步和发布校验均已完成。dry-run 检查 1628 项（含 2 个软链接），未发现需转移层级或删除的差异；该结果是 rsync 常规比较，不是整树逐文件哈希验证。
+  verification:
+    surveyed_at: '2026-10-02'
+    checks:
+    - trixie InRelease 的 RSA 签名已验证，签名子钥指纹 373DDE7FE8EAA4015172ADC7283D5031ABF44836；随后验证 main/binary-amd64/Packages.gz 的 SHA256
+      及样例 pcb_4.3.0.20250610-1_all.deb 的 SHA256。此为签名→索引→包的校验链，不宣称已完成 apt 安装测试。
+    - 官方 bjlx.key、官方 bjlx.asc 与公开 ZJU bjlx.key/bjlx.asc 均为 5771 字节，SHA256 均为 83a9949710d1fb7e00a4cb2cb1af0114a28db65cab31fcd3699f5037cd296f36，能够验证上述元数据；未发现默认密钥别名损坏。
+    caveats:
+    - 独立发布的 bjlx2025.asc 是新 Ed25519 密钥 C4277F1B7991F53ABE697995EDF8358B1BE20DCA，不能单独验证当前 trixie 的旧 RSA 签名；不要仅因文件名较新就以它替换当前有效的
+      bjlx.asc/bjlx.key。
+    - 上游 bjlx.sources 的 URIs 仍指向 USTC；使用本站时客户端应改为 https://mirrors.zju.edu.cn/bjlx/。mirrors.html 的旧示例写成 src/src-src 且目录误写为
+      /etc/apt/sources.d/，不能原样复制；APT 应使用 deb/deb-src 或合法 deb822，文件放 /etc/apt/sources.list.d/。镜像保留原文件，不在同步时改写。

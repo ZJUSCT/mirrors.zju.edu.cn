@@ -1,0 +1,33 @@
+metadata:
+  name: rocky
+info:
+  description: 社区驱动的企业级 Linux 发行版
+  upstream: rsync://msync.rockylinux.org/rocky-linux/ # Rocky Linux 官方生产仓库模块
+sync:
+  type: rsync
+  interval: 4h
+  timeout: 4h
+storage:
+  size: 4Ti
+  volumeName: pvc-fddfa2ed-75e9-492e-9738-94240a46ecd0
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://docs.rockylinux.org/guides/mirror_management/add_mirror_manager/
+      - https://github.com/rocky-linux/rocky-tools/blob/main/mirror/mirrorsync.sh
+      - https://mirrors.rockylinux.org/mirrormanager/
+    policy:
+      - 官方主同步源为 msync.rockylinux.org::rocky-linux；首次全量同步及私有镜像宜选择邻近的官方公共镜像。
+      - 官方建议错开整点、每日同步约六次；仅在先检查 fullfiletimelist-rocky 并按需同步时才可每小时检查。
+      - 公共镜像应全天候运行，带宽至少 1Gbit/s，优先提供 IPv4/IPv6 双栈；不得使用动态 DNS 或 Anycast CDN。
+  upstreams:
+    - url: rsync://msync.rockylinux.org/rocky-linux/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 266–274ms、4.5MiB/s；IPv6 rsync 已验证可用
+      note: Rocky Linux 官方生产仓库模块；MOTD 说明服务面向镜像合作伙伴，项目保留调整访问控制的权利。

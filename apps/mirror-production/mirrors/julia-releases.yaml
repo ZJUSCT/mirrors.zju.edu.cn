@@ -1,0 +1,53 @@
+metadata:
+  name: julia-releases
+info:
+  description: Julia 二进制程序镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/julia-releases/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 812Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://julialang.org/downloads/manual-downloads/
+    - https://julialang-s3.julialang.org/
+    policy:
+    - USTC发布范围沿用bin/、juliaup/、src/，保留历史发行、校验和和.asc签名；不是Julia PkgServer，也不是julia-storage。根范围依据既有9月30日枚举，当前根单页不能重新证明全树。
+    - 官方manual-downloads列出SHA256校验和及GPG签名。本轮页面所示稳定发行1.13.1；版本展示不能替代全历史范围枚举或文件完整性验证。
+    - 官方HTTPS根返回原生S3 ListBucketResult XML，MaxKeys=1000且IsTruncated=true；必须正确处理分页和对象键，不能把首1000项当完整树后启用删除。
+    - 本地tsumugu的s3indexbuilder解析器处理HTML table，并非通用S3 XML分页器；当前尚无rsync/ftpsync/qfm/tsumugu整树同步能力证明。不能因名称含S3就判为可用，不能擅自引入S3专用新同步器。
+    - 24h为本地候选，未在所读官方下载页发现固定镜像同步周期或可确认的官方rsync端点。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: julia-releases-sync-1791164571
+    succeeded_at: '2026-10-05T13:00:10Z'
+    published_at: '2026-10-05T13:00:21Z'
+    note: hourly-live.json确认USTC初始化成功且匹配快照已发布；仍暂停，未执行官方切源。
+    official_interval_candidate: 24h
+    official_cutover_blocker: 官方根为分页S3 XML；允许的既有同步器尚未证明可完整枚举与同步该范围。保持暂停：继续寻找官方认可且现有工具可处理的等价入口；若无，则需要用户决定扩大工具范围或保留中间源。不得对截断列表启用删除。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/julia-releases/
+    surveyed_at: '2026-10-07'
+    status: bootstrap-complete
+    note: 成功发布并暂停；本轮未向USTC发起请求。
+  - url: https://julialang-s3.julialang.org/
+    surveyed_at: '2026-10-07'
+    status: documented-candidate-not-cut-over
+    note: 官方根为分页S3 XML；允许的既有同步器尚未证明可完整枚举与同步该范围。保持暂停：继续寻找官方认可且现有工具可处理的等价入口；若无，则需要用户决定扩大工具范围或保留中间源。不得对截断列表启用删除。
+  verification:
+    surveyed_at: '2026-10-07'
+    checks:
+    - 官方manual-downloads和HTTPS根均HTTP200；原文保存review-backlog.evidence/julia-*.html，根明确IsTruncated=true。
+    - 只读取文档和根列表，并检查本地tsumugu parser/s3indexbuilder.rs；未分页下载整桶、未下载发行文件、未验证签名。
+    - 成功发布状态依据hourly-live.json；本轮没有集群修改、传输预留或公网发布验收。
+    remaining: 官方根为分页S3 XML；允许的既有同步器尚未证明可完整枚举与同步该范围。保持暂停：继续寻找官方认可且现有工具可处理的等价入口；若无，则需要用户决定扩大工具范围或保留中间源。不得对截断列表启用删除。

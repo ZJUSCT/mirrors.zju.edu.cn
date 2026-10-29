@@ -1,0 +1,74 @@
+metadata:
+  name: sagemath
+info:
+  description: 构建在 NumPy, SciPy 等工具之上的开源数学软件系统
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/sagemath/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 488Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://www.sagemath.org/download.html
+    - https://www.sagemath.org/mirrors.html
+    - https://www.sagemath.org/download-source.html
+    - https://www.sagemath.org/download-latest.html
+    - https://www.mirrorservice.org/
+    policy:
+    - 官方入口实际为mirrors.html（复数），本轮HTTP 200；旧mirror.html为404。download.html和mirrors.html均明确列出Mirrorservice Network, United Kingdom，其HTTP根映射到实测可读的rsync://rsync.mirrorservice.org/www.sagemath.org/。这是项目列名认可的第三方镜像，不宣称为项目主站或一级源。
+    - mirrors.html邀请新镜像联系项目；已读公开文档和daemon MOTD未规定匿名拉取必须先登记、IP白名单或固定轮询频率。未联系任何维护者。24h保留为本站周期；网站脚本每10分钟更新镜像选择页，不是下游同步要求。
+    - 种子范围是devel/、spkg/、src/、zzz/及根文件；Kent根另有linux/、livecd/、osx/、ova/、solaris/、win/六个历史平台目录，必须排除这些额外目录并先审核同过滤条件全树差异。HTTP目录列表不显示隐藏文件，不能据此认定种子缺少.htaccess。
+    - src/稳定源代码及标准依赖包与devel/测试版仍在更新；官方页面说明开发版约每1至2周发布。Linux预编译发行已停发，旧macOS镜像二进制不再支持，当前推荐外部macOS发布、conda-forge或WSL；这些外部服务不纳入本镜像。保留种子spkg/{experimental,huge,optional,standard,upstream}及旧元数据，不把旧目录时间当成整体停更，也不额外抓取old.files.sagemath.org外链归档。
+    - 官方网页版本标签仍写10.9，实际候选源与种子已有10.10；双方zzz/timestamp.html仍写2022-05-18与9.6，不能作为当前新鲜度验收。src/README.txt同样是旧版构建说明，不能当作当前镜像规范。
+    - 现有rsync模板及rsync.extra_args足够表达源和范围；保留标准同步/删除保护及链接语义，不照搬旧官网部署脚本的-KL。Sage发行树不等于全部开发Git仓库。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: sagemath-sync-1791107976
+    succeeded_at: '2026-10-04T13:22:15Z'
+    published_at: '2026-10-04T13:22:25Z'
+    note: 现有rollout-live.json记录首次USTC同步与发布成功，activePVC/activeSnapshot=sagemath-snap-1791107976，Ready=True、Degraded=False，自动同步暂停。sizeBytes=250365345792，配置488Gi；本轮只读调查，未重新查询集群或切源。
+    official_interval_candidate: 24h
+    official_cutover_state: viable-existing-rsync-pending-filtered-production-validation
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/sagemath/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: 当前配置仍为USTC且暂停；本轮没有访问USTC或重新同步。
+  - url: rsync://rsync.mirrorservice.org/www.sagemath.org/
+    surveyed_at: '2026-10-04'
+    status: candidate-verified-readonly
+    note: 官方列名认可的Kent镜像；根、src/、src/meta/、spkg/非递归列表均exit0。与种子相比多六个历史平台目录，不能不加过滤直接切换。尚未验证生产容器网络及模板默认IPv6。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 限定超时/文件大小的官方网页、HTTP元数据与4个非递归rsync列表均留证；没有拉取tar包、执行递归全树同步、创建reservation或修改部署仓库/集群。官网源码参考提交643b1f76e2ca8146a0bf778d5b50c1515d2a7f52。
+    - ZJU公开.mirror-index与Kent rsync比较：src/和spkg/本层名称集合及公开普通文件大小一致；src/sage-10.10.tar.gz均为1627724288字节（2026-09-28），devel网页列11.0.beta1（2026-10-03）。这只是代表元数据一致，不是全树或内容校验。
+    - src页面给10.10的MD5=30557ee2b2c5e6d3924b240485025c13；取得33889字节torrent元数据，内含长度1627724288、1048576字节分片和1553个SHA1分片摘要。未下载包体，未验证分片；MD5/无签名torrent不能代替可信签名。所列src/与src/meta/未见10.10独立签名或强哈希sidecar，不将有限范围观察扩大为全项目无签名。
+    - 早先构造的/sagemath/src/.mirror-index/与/spkg/.mirror-index/是错误API路径，返回404；按仓库nginx规则改为/sagemath/.mirror-index/src/与/spkg/后均200，不是种子目录缺失。
+    - 双方zzz/timestamp.html字节一致但停在2022年；依据实际版本文件及近期索引判断维护活动，不依据这个陈旧标记或网页10.9字样断言镜像过期。
+    remaining: 切源前在现有snapshot clone上按六个根排除规则完成生产网络/IPv6可达性、全树非破坏差异（含删除集、隐藏文件、链接、历史spkg、容量）审核；保留既有范围且勿新增外链归档。对已有种子样本作本地内容摘要/可用校验元数据检查并说明可信度限制；再由真实官方源同步job、新快照Ready与公网抽样完成验收后解除暂停。当前是生产完整性与范围验收未完成，不是工具不支持或已发现登记禁令。
+  candidate_config:
+    info:
+      upstream: rsync://rsync.mirrorservice.org/www.sagemath.org/
+    sync:
+      type: rsync
+      interval: 24h
+      timeout: 24h
+      rsync:
+        extra_args:
+        - --exclude=/linux/
+        - --exclude=/livecd/
+        - --exclude=/osx/
+        - --exclude=/ova/
+        - --exclude=/solaris/
+        - --exclude=/win/

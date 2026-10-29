@@ -1,0 +1,41 @@
+metadata:
+  name: elvish
+info:
+  description: Elvish 命令行 Shell 发布文件
+  upstream: rsync://rsync.elv.sh/elvish/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://elv.sh/get/
+    - https://elv.sh/get/all-binaries.html
+    - https://dl.elv.sh/INDEX
+    policy:
+    - 官方安装页提供官方站 dl.elv.sh 和 TUNA 两种下载位置；all-binaries 文档明确路径为 {os}-{arch}/elvish-{version}.{ext}，Windows 为 zip，其余系统为
+      tar.gz，历史版本已停止支持。
+    - 项目域名下 rsync.elv.sh 的 elvish 模块提供同一架构目录及 INDEX；TUNA 数据与官方 rsync 完整 dry-run 为 934 项、0 新增、0 删除、0 文件传输，既有真实回源和发布验收已成功。
+    - 已读官方安装/二进制文档未规定镜像同步间隔，也未给出专门的 rsync 运营协议；采用每日 24h 保守轮询以减少负担，不把该频率表述为官方要求。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/elvish/
+    stack: ipv6
+    status: bootstrap-complete
+    surveyed_at: '2026-10-02'
+    note: TUNA 首轮同步已成功，仅作本次初始化源。
+  - url: rsync://rsync.elv.sh/elvish/
+    stack: ipv6
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 生产 IPv6 rsync 已验证；完整 dry-run 为 2,498,911,046 字节且无差异，官方实际同步和 HTTP 文件哈希校验成功。官方文档确认二进制布局；公开 rsync 模块由项目自营域名提供。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、官方源真实同步、快照发布及 HTTP 文件内容校验均已通过，已恢复自动同步。
+    reported_size: 2.35G

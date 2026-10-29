@@ -1,0 +1,36 @@
+metadata:
+  name: debian
+info:
+  description: Debian 发行版软件包主仓库
+  upstream: rsync://mirror.xtom.com.hk/debian/ # 官方香港镜像，直接从 Debian 内部同步代理更新
+sync:
+  type: ftpsync
+  interval: 6h
+  timeout: 6h
+  ftpsync:
+    archive: debian
+storage:
+  size: 3Ti
+  volumeName: pvc-ecd70beb-6152-44cc-b3bf-037d1f2051d6
+publish:
+  http:
+    tier: hot
+    replicas: 3
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.debian.org/mirror/ftpmirror
+      - https://www.debian.org/mirror/push_mirroring
+      - https://www.debian.org/mirror/submit
+      - https://mirror-master.debian.org/status/mirror-status.html
+    policy:
+      - 官方要求使用 ftpsync 或满足其规范的两阶段同步，不能使用单次 rsync。
+      - 主仓库每日更新四次；非推送镜像每 24 小时至少同步四次，并应依据上游 trace 时间安排同步。
+      - 上游应选择网络邻近的单一 rsync 主机，不应使用国家别名、DNS 轮询或 CDN。
+  upstreams:
+    - url: rsync://mirror.xtom.com.hk/debian/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 68ms；IPv6 RTT 约 63ms
+      note: Debian 官方列表中的香港镜像；trace 显示其直接从 Debian 内部同步代理更新，当前状态评分为 100。

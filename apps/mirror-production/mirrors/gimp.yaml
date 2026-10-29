@@ -1,0 +1,58 @@
+metadata:
+  name: gimp
+info:
+  description: GIMP 图像处理软件的源码与发布文件
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/gimp/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 156Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.gimp.org/donating/sponsors.html#official-mirrors
+    - https://gitlab.gnome.org/Infrastructure/gimp-web/-/raw/master/.gitlab/issue_templates/New_Mirror.md
+    - https://download.gimp.org/gimp/
+    - https://www.gimp.org/downloads/
+    policy:
+    - GIMP 官方赞助页要求申请正式镜像以获取 rsync 凭据；New_Mirror 模板明确交换 master 凭据，并要求提供 rsync 或 FTP 健康检查入口。本次不申请、不联系项目，也没有获得 master URI/凭据。
+    - University of Kent UK Mirror Service 在官方镜像表内；rsync://rsync.mirrorservice.org/ftp.gimp.org/pub/gimp/ 是项目认可的第三方镜像，不是项目自营
+      master。只读列表 exit0，路径必须保留 ftp.gimp.org/pub/gimp/，不能扩大到 pub/。
+    - 官方公开 HTTPS https://download.gimp.org/gimp/ 根及 v3.2/、v3.2/linux/ 均通过现有 tsumugu list --parser nginx（exit0）；现有 tsumugu
+      模板有可验证候选，不能因 master 需凭据就写成所有现有工具不支持。该候选尚未完成全树遍历、范围/删除集和生产同步验收。
+    - 根包含历史版本 v0.99–v3.2、help/fonts/plug-ins 等及 AppImage zsync；不是只镜像最新版本。保留校验和、版本 marker 和历史发布结构，不把官网下载按钮或包管理器渠道替换成整个归档。
+    - 公开文件下载会由 MirrorBits 跳到合作镜像：本次 v3.2/SHA256SUMS 最终到 https://mirror.nju.edu.cn/gimp/gimp/v3.2/SHA256SUMS。生产候选须核对现有工具重定向行为、镜像选择和内容一致性，不能把成功响应当项目自营传输证明。
+    - 官方下载安装页给 SHA256；已取 v3.2/SHA256SUMS，尚未下载/认证代表 tarball。未发现官方固定轮询周期；24h 当前配置、先前6h建议均属本站选择。
+  bootstrap:
+    note: USTC 初始化 job gimp-sync-1791047460 于 2026-10-03T17:53:53Z 成功，2026-10-03T17:54:02Z 发布，activeSnapshot=gimp-snap-1791047460；当前
+      sync-paused=true。官方切源尚未执行。
+    official_interval_candidate: 24h
+  validation:
+    observed_at: '2026-10-03'
+    completed:
+    - 2026-10-03 只读 rsync 第三方根列表 exit0；tsumugu nginx 对官方根、v3.2/、v3.2/linux/ 均 exit0，没有执行整树同步。
+    - 公网 /gimp/v3.2/SHA256SUMS 与官方入口经 NJU 重定向得到的文件逐字节相同：600字节，SHA256=690cc92a33818bb0bd12cf6a5b6a6080689c40a938a80001afaaa2a1914ad60f；这是元数据比对，不是
+      tarball 签名或全树验证。
+    remaining: master rsync 凭据尚无；HTTPS 现有模板候选需继续完成全树范围、重定向和删除集审阅、生产真实同步、新快照以及代表发布物SHA256验收，不能把本轮parser成功写成已切源。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/gimp/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 初始化成功，当前配置仍选此源且暂停；容量仅是种子快照信息。
+  - url: rsync://rsync.mirrorservice.org/ftp.gimp.org/pub/gimp/
+    surveyed_at: '2026-10-03'
+    status: project-listed-third-party-rsync
+    note: 工作站有界非递归列表 exit0；不是自营 master。
+  - url: https://download.gimp.org/gimp/
+    surveyed_at: '2026-10-03'
+    status: official-http-parser-candidate
+    note: 根、版本、平台三级 nginx parser 成功；文件可能重定向到合作镜像，待完整范围/生产验证。

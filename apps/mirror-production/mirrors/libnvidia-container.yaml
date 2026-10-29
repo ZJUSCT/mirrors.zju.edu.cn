@@ -1,0 +1,56 @@
+metadata:
+  name: libnvidia-container
+info:
+  description: NVIDIA Container Toolkit 的 APT/RPM 软件包仓库
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/libnvidia-container/
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 16Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://nvidia.github.io/libnvidia-container/
+    - https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+    - https://github.com/NVIDIA/libnvidia-container/tree/gh-pages
+    policy:
+    - 本项是APT/RPM二进制包发布工作树，不是默认分支源码或bare Git。USTC根含stable/experimental、发行版别名、gpgkey、index.md及Pages模板，当前包路径已通过HTTP读取。普通包文件服务不依赖先构建Jekyll。
+    - 原样保留stable/experimental和旧发行版/架构，不只保留amd64或最新版本。官方debian11链接目标stable/debian10，stable/debian11链接debian10，均在根内；标准rsync
+      -a/--safe-links可保留内部链接，不用--copy-links掩盖布局。HTTP只能证明别名解析结果，种子完整链接表仍待本地验收。
+    - 官方.list/.repo是客户端引导配置，内含nvidia.github.io绝对URL；镜像文件保持原文，使用者应在客户端把本站/libnvidia-container作为baseurl并按文档配置signed-by。不能修改已签名InRelease/repomd或对包内容批量替换URL。
+    - RPM官方定义repo_gpgcheck=1、gpgcheck=0，应准确解释仓库元数据验签，不宣称每个RPM独立签名已验证。6h是本地建议，未找到固定同步/登记前置要求。
+    - 官方GitHub Pages不提供目录索引，stable/deb/返回404但具体.list/InRelease/Packages可读；gh-pages Git同步/包索引驱动更新尚未由现有四类模板证明。不能将.git源码URL直接套rsync，不能把tsumugu空目录或失败当成功。
+    - 2026-10-07官方安装指南及Pages根均HTTP200；指南仍使用stable/deb/nvidia-container-toolkit.list及signed-by。此前2026-10-04签名/摘要检查只代表当时元数据，本轮未重验包体或完整链接图，不当成当前发布验收。
+  bootstrap:
+    status: succeeded-and-published-paused
+    note: hourly-live.json确认USTC初始化成功，匹配快照及PVC libnvidia-container-snap-1791306249 已发布且Ready；自动同步仍暂停。本轮文档复核不等同公网内容或官方切源验收。
+    official_interval_candidate: 6h
+    post_bootstrap_review_required: true
+    job: libnvidia-container-sync-1791306249
+    succeeded_at: '2026-10-06T17:32:28Z'
+    published_at: '2026-10-06T17:32:37Z'
+    official_cutover_blocker: 官方GitHub Pages非可枚举目录索引，现有四类同步器尚未证明可完整维护gh-pages包工作树及别名；不得以Git源或空列表替代成功同步，继续暂停并保留现有范围。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/libnvidia-container/
+    surveyed_at: '2026-10-07'
+    status: bootstrap-complete
+    note: 初始化成功并发布；仍为USTC种子源且暂停，本轮无额外USTC请求。
+  - url: https://nvidia.github.io/libnvidia-container/
+    surveyed_at: '2026-10-04'
+    status: official-package-endpoint-incremental-enumeration-unresolved
+    note: 具体APT/RPM元数据与USTC匹配，根为Pages介绍页无完整autoindex；现有tsumugu nginx list失败。
+  verification:
+    surveyed_at: '2026-10-07'
+    checks:
+    - 初始化及发布时间来自hourly-live.json，保留匹配快照/PVC和Ready条件证据于review-remaining-success.evidence/bootstrap-status.json。
+    - 本轮仅复核官方网页，HTTP结果及原文在review-remaining-success.evidence；未发起rsync、包传输或集群变更。
+    remaining: 官方GitHub Pages非可枚举目录索引，现有四类同步器尚未证明可完整维护gh-pages包工作树及别名；不得以Git源或空列表替代成功同步，继续暂停并保留现有范围。 官方同步成功且匹配快照/PVC Ready、发布内容验证后才能取消暂停。

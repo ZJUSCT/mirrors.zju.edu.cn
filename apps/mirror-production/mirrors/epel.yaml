@@ -1,0 +1,38 @@
+metadata:
+  name: epel
+info:
+  description: EPEL 企业级 Linux 附加软件包仓库
+  upstream: rsync://dl.fedoraproject.org/fedora-epel/ # 逻辑内容模块；QFM 实际经同主机的 fedora-buffet 传输
+sync:
+  type: qfm
+  interval: 1h
+  timeout: 6h
+  qfm:
+    module: fedora-epel
+storage:
+  size: 2Ti
+  volumeName: pvc-bc7168c8-e951-4cbc-8c78-55d20eb22ec8
+publish:
+  http:
+    tier: standard
+    replicas: 1
+    subPath: epel
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://docs.fedoraproject.org/en-US/epel/
+      - https://fedoraproject.org/wiki/Infrastructure/Mirroring
+      - https://forge.fedoraproject.org/infra/quick-fedora-mirror
+      - https://dl.fedoraproject.org/pub/DIRECTORY_SIZES.txt
+    policy:
+      - EPEL 为 RHEL 及兼容的企业级 Linux 发行版提供 Fedora 社区维护的附加软件包；官方 fedora-epel rsync 模块对应 /pub/epel。
+      - 官方优先推荐 quick-fedora-mirror；该工具依赖提供 fedora-buffet 模块的上源，可每 10 分钟检查一次。使用普通 rsync 时应每日同步数次。
+      - 公共镜像须通过 Fedora 账户、mirror-admin 邮件列表及 MirrorManager 登记；在镜像覆盖充分的国家或地区，新镜像至少须有 100Mbit/s 互联网带宽，且不得置于 CDN 后方。
+      - fedora-epel 是当前发布树而非历史归档；停止支持的内容会移至 archives.fedoraproject.org。官方目录统计显示当前发布树约 1.1TiB。
+  upstreams:
+    - url: rsync://dl.fedoraproject.org/fedora-buffet/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 274–282ms、8.0MiB/s；IPv6 RTT 约 254–257ms、9.1MiB/s
+      note: Fedora 官方 master 的 QFM 聚合入口；本镜像仅选择 fedora-epel 模块（/pub/epel）。

@@ -1,0 +1,43 @@
+metadata:
+  name: gitlab-runner
+info:
+  description: GitLab Runner 软件包
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/gitlab-runner/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 716Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://docs.gitlab.com/runner/install/linux-repository/
+    - https://packages.gitlab.com/runner/gitlab-runner/
+    - https://packages.gitlab.com/runner/gitlab-runner/gpgkey
+    policy:
+    - 官方安装文档只描述安装仓库和支持发行版，未公布镜像站同步间隔；建议24h作为本地策略，不能称官方要求。
+    - 官方 Packagecloud 根按发行版分为 amazon/debian/el/fedora/linuxmint/ol/opensuse/raspbian/sles/ubuntu；APT/YUM 客户端依赖发行版目录、dists/repodata、包文件和
+      GitLab signing key，所有签名文件必须原样发布。
+    - TUNA 初始化日志显示748.56G全量、2799文件，包含 debian/ubuntu/el 等多个 APT/RPM 树；TUNA实际内容远超计划报告447G，切换前须以完整 TUNA相对路径为范围基线。
+    - 官方公开 HTTPS 目录和 GPG key 可读；未发现官方 rsync。通用 tsumugu 可抓目录页但无法保证 APT/YUM 元数据/删除和包签名一致性，需索引专用同步并逐发行版校验。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/gitlab-runner/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始同步已成功（gitlab-runner-sync-1790982066），当前保持 sync-paused。
+  - url: https://packages.gitlab.com/runner/gitlab-runner/
+    stack: dual
+    status: candidate
+    surveyed_at: '2026-10-03'
+    note: 官方 Packagecloud HTTPS 根目录可读；目录为静态发行版索引，不是 rsync。
+  bootstrap:
+    note: TUNA 初始同步已成功（gitlab-runner-sync-1790982066）；当前仍暂停。官方没有公开 rsync；Packagecloud APT/YUM 多发行版布局需要专用索引同步与签名/删除验证，现有模板不能安全表达。

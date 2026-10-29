@@ -1,0 +1,270 @@
+#cloud-config
+
+hostname: {{ node.hostname }}
+
+# The kairos user intentionally has no password set here. The image's
+# 10_accounting.yaml re-locks it ("!") on every initramfs stage; the
+# "Clear the kairos console password" step in boot.before then runs after
+# and empties the shadow field, so console login is passwordless (PAM
+# nullok) while SSH remains key-only via sshd_config below.
+users:
+  - name: kairos
+    groups:
+      - admin
+    ssh_authorized_keys:
+{% for key in ssh_authorized_keys %}
+      - {{ key }}
+{% endfor %}
+
+k3s:
+  enabled: true
+  args:
+    - --disable=servicelb,traefik,local-storage
+    - --tls-san={{ k3s.api_vip }},{{ k3s.api_hostname }}
+    - --cluster-cidr={{ k3s.pod_cidrs | join(',') }}
+    - --service-cidr={{ k3s.service_cidrs | join(',') }}
+    - --cluster-dns={{ k3s.cluster_dns | join(',') }}
+    - --flannel-backend=host-gw
+    - --flannel-iface=bond0
+    - --flannel-ipv6-masq
+    - --secrets-encryption
+    - --embedded-registry
+    - --node-name={{ node.hostname }}
+    - --node-ip={{ node.ipv4 }},{{ node.ipv6 }}
+    - --advertise-address={{ node.ipv4 }}
+{% if node.bootstrap %}
+    - --cluster-init
+{% else %}
+    - --server=https://{{ k3s.api_hostname }}:6443
+{% endif %}
+  env:
+    K3S_TOKEN: "{{ k3s.token }}"
+
+install:
+  device: "{{ node.install_device }}"
+  auto: true
+  reboot: true
+  # Explicit partition headroom. Kairos derives defaults from the
+  # install-time image size (state = 3x image + 1G, recovery = 2x image +
+  # 200M; agent/pkg/config/spec.go), which stranded node's state when
+  # images doubled across generations. Sizes are MiB, applied only at
+  # install, and kairos silently raises them to its own minimum if smaller.
+  partitions:
+    state:
+      size: 20480
+    recovery:
+      size: 10240
+
+stages:
+  rootfs.before:
+    - &node-network
+      name: "Configure the production bond and the stunnel SSH wrapper"
+      only_service_manager: systemd
+      directories:
+        - path: /etc/systemd/network
+          permissions: 0755
+          owner: 0
+          group: 0
+      files:
+        - path: /etc/ssh/sshd_config.d/10-mirror-security.conf
+          permissions: 0644
+          owner: 0
+          group: 0
+          content: |
+            PasswordAuthentication no
+            KbdInteractiveAuthentication no
+            PermitRootLogin no
+            # The datacenter network blocks SSH on every port (protocol DPI),
+            # so sshd only listens on loopback and stunnel terminates TLS on
+            # the node's dual-stack address (see stunnel.conf below).
+            ListenAddress 127.0.0.1:22
+            ListenAddress [::1]:22
+        - path: /etc/stunnel/stunnel.conf
+          permissions: 0644
+          owner: 0
+          group: 0
+          content: |
+            # The packaged stunnel@.service is Type=simple: without
+            # "foreground" stunnel daemonizes and systemd reaps the exited
+            # main process, killing the service right after startup.
+            foreground = yes
+            pid = /run/stunnel4.pid
+            [ssh]
+            # Bare "22222" would bind IPv4 only; the explicit v6 wildcard
+            # socket accepts IPv4-mapped connections too (verified).
+            accept = :::22222
+            connect = 127.0.0.1:22
+            cert = /oem/stunnel/stunnel.pem
+            key = /oem/stunnel/stunnel.pem
+        - path: /etc/systemd/system/stunnel@stunnel.service.d/10-cert.conf
+          permissions: 0644
+          owner: 0
+          group: 0
+          content: |
+            # /etc is rebuilt every boot while /oem persists, so the
+            # self-signed certificate is generated once and kept in /oem
+            # (remote admins can pin it). Generation runs as ExecStartPre
+            # to avoid the race where stunnel reads the not-yet-generated
+            # file (a plain boot stage runs concurrently with services and
+            # lost that race on first install); Restart covers any other
+            # transient failure instead of leaving the node SSH-less.
+            [Service]
+            ExecStartPre=/bin/sh -c 'if [ ! -f /oem/stunnel/stunnel.pem ]; then mkdir -p /oem/stunnel && openssl req -x509 -newkey rsa:4096 -nodes -days 3650 -keyout /oem/stunnel/stunnel.pem -out /tmp/stunnel.crt -subj "/CN={{ node.hostname }}" && cat /tmp/stunnel.crt >> /oem/stunnel/stunnel.pem && rm -f /tmp/stunnel.crt && chmod 0600 /oem/stunnel/stunnel.pem; fi'
+            ExecStartPre=/bin/chmod 0600 /oem/stunnel/stunnel.pem
+            Restart=on-failure
+            RestartSec=3
+        - path: /etc/systemd/network/10-bond0.netdev
+          permissions: 0644
+          owner: 0
+          group: 0
+          content: |
+            [NetDev]
+            Name=bond0
+            Kind=bond
+            MACAddress={{ node.bond_mac }}
+
+            [Bond]
+            Mode={{ bond.mode }}
+            TransmitHashPolicy={{ bond.transmit_hash_policy }}
+            LACPTransmitRate={{ bond.lacp_transmit_rate }}
+            MIIMonitorSec={{ bond.mii_monitor }}
+            MinLinks={{ bond.min_links }}
+{% for mac in node.bond_members %}
+        - path: /etc/systemd/network/20-bond-member-{{ "%02d" | format(loop.index) }}.network
+          permissions: 0644
+          owner: 0
+          group: 0
+          content: |
+            [Match]
+            PermanentMACAddress={{ mac }}
+
+            [Link]
+            RequiredForOnline=enslaved
+
+            [Network]
+            Bond=bond0
+            DHCP=no
+            LinkLocalAddressing=no
+{% endfor %}
+        - path: /etc/systemd/network/30-bond0.network
+          permissions: 0644
+          owner: 0
+          group: 0
+          content: |
+            [Match]
+            Name=bond0
+
+            [Link]
+            RequiredForOnline=routable
+
+            [Network]
+            DHCP=no
+            IPv6AcceptRA=no
+            # IPv6 link-local only. The kernel adds fe80:: on its own
+            # (kube-vip's VIPv6 needs it); "yes" would additionally run
+            # IPv4LL and nondeterministically claim a 169.254/16 address.
+            LinkLocalAddressing=ipv6
+            Address={{ node.ipv4 }}/{{ network.ipv4_prefix }}
+            Address={{ node.ipv6 }}/{{ network.ipv6_prefix }}
+{% for server in network.dns %}
+            DNS={{ server }}
+{% endfor %}
+
+            [Route]
+            Gateway={{ network.ipv4_gateway }}
+
+            [Route]
+            Gateway={{ network.ipv6_gateway }}
+  initramfs:
+    # Reapply authoritative files on every immutable-system boot.
+    - *node-network
+    - name: "Set the persistent node hostname"
+      hostname: {{ node.hostname }}
+    - name: "Link /etc/resolv.conf to systemd resolv.conf"
+      if: '[ -f /etc/hosts ]'
+      only_service_manager: systemd
+      commands:
+        - rm /etc/resolv.conf
+        - ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+    - name: "Enable stunnel SSH wrapper"
+      only_service_manager: systemd
+      # Ubuntu 26.04 ships templated units (stunnel@.service)
+      # the "stunnel" instance serves /etc/stunnel/stunnel.conf.
+      systemctl:
+        enable:
+          - stunnel@stunnel.service
+    - name: "Configure K3s container registry mirrors"
+      files:
+        - path: /etc/rancher/k3s/registries.yaml
+          permissions: 0600
+          owner: 0
+          group: 0
+          content: |
+            mirrors:
+              # Enable Spegel sharing for images from every registry. Default
+              # endpoint fallback must remain enabled for this wildcard entry.
+              "*":
+              docker.io:
+                endpoint:
+                  - "https://registry.mirrors.zjusct.io"
+                  - "https://m.daocloud.io"
+                rewrite:
+                  "^(.*)$": "docker.io/$1"
+              registry-1.docker.io:
+                endpoint:
+                  - "https://registry.mirrors.zjusct.io"
+                  - "https://m.daocloud.io"
+                rewrite:
+                  "^(.*)$": "registry-1.docker.io/$1"
+              hub.docker.com:
+                endpoint:
+                  - "https://registry.mirrors.zjusct.io"
+                  - "https://m.daocloud.io"
+                rewrite:
+                  "^(.*)$": "hub.docker.com/$1"
+              registry.k8s.io:
+                endpoint:
+                  - "https://registry.mirrors.zjusct.io"
+                  - "https://m.daocloud.io"
+                rewrite:
+                  "^(.*)$": "registry.k8s.io/$1"
+              gcr.io:
+                endpoint:
+                  - "https://registry.mirrors.zjusct.io"
+                  - "https://m.daocloud.io"
+                rewrite:
+                  "^(.*)$": "gcr.io/$1"
+    - name: "Configure K3s node pod limits"
+      files:
+        - path: /etc/rancher/k3s/config.yaml
+          permissions: 0600
+          owner: 0
+          group: 0
+          content: |
+              kubelet-arg:
+                - "max-pods={{ k3s.max_pods }}"
+              kube-controller-manager-arg:
+                - "node-cidr-mask-size-ipv4={{ k3s.node_cidr_mask_size_ipv4 }}"
+  boot.before:
+    # 10_accounting.yaml (image /system/oem) re-locks kairos ("!") in the
+    # initramfs stage on every boot; this boot-stage step runs after and
+    # empties the shadow field. PAM ships nullok on Ubuntu, so console
+    # (BMC/serial) login needs no password. SSH stays key-only: sshd
+    # disables every password mechanism and PermitEmptyPasswords does not
+    # apply without PasswordAuthentication.
+    - name: "Clear the kairos console password"
+      only_service_manager: systemd
+      commands:
+        - passwd -d kairos
+    # /etc is rebuilt from OEM stages on every boot, so /etc/zfs/zpool.cache
+    # cannot persist and the pools must be imported explicitly on every boot.
+    # -a imports every pool found on the disks regardless of name or count
+    # -N defers mounting to the per-dataset mountpoints
+    # "|| true" keeps pool-less nodes (f1/f2) booting
+    # individual pools failing to import must be investigated in the boot logs,
+    # not papered over here.
+    - name: "Import ZFS storage pools"
+      only_service_manager: systemd
+      commands:
+        - modprobe zfs || true
+        - zpool import -f -N -a || true

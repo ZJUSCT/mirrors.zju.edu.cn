@@ -1,0 +1,37 @@
+metadata:
+  name: anthon
+info:
+  description: 安同开源社区软件包及系统镜像仓库
+  upstream: rsync://repo.aosc.io/anthon/ # 速率良好，选用
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 3Ti
+  volumeName: pvc-fbe857f6-8582-4d33-bec4-dd9ea2fb851e
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://wiki.aosc.io/zh/developer/infrastructure/knowledge-base/00002-how-to-mirror/
+      - https://repo.aosc.io/
+    policy:
+      - 官方推荐同步包含软件包和系统镜像的 anthon 或 anthonos 模块。
+      - 主仓库 repo.aosc.io 带宽有限，官方推荐从同步代理 repo-us.aosc.io 同步。
+      - 对外提供 HTTP 服务时，官方强烈建议同时提供 HTTPS。
+  upstreams:
+    - url: rsync://repo-us.aosc.io/anthon/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 202ms；IPv6 RTT 约 200ms
+      note: 官方推荐的美国洛杉矶同步代理；MOTD 标称 10Gbps 出口，并支持 rsync over TLS。
+    - url: rsync://repo.aosc.io/anthon/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 70ms；IPv6 RTT 约 63ms
+      note: 位于香港的官方主仓库；MOTD 标称 1Gbps 出口，官方称其带宽有限。

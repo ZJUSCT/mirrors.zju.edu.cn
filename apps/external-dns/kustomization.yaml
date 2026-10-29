@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: external-dns
+resources:
+  - resources/namespace.yaml
+  - resources/sealedsecret-cloudflare.yaml
+  - resources/dnsendpoint-nodes.yaml
+  - resources/dnsendpoint-k8s.yaml
+helmCharts:
+  - name: external-dns
+    # Currently no OCI format chart
+    # https://github.com/kubernetes-sigs/external-dns/issues/4630
+    repo: https://kubernetes-sigs.github.io/external-dns/
+    version: 1.23.0
+    includeCRDs: true
+    releaseName: external-dns
+    namespace: external-dns
+    valuesFile: values/external-dns-1.23.0.yaml

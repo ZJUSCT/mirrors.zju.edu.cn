@@ -1,0 +1,13 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-mirror-production-argocd-webhook
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: mirror-production
+  to:
+    - group: ''
+      kind: Service
+      name: argo-cd-argocd-server

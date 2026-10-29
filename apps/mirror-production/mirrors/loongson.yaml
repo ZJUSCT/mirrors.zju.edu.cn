@@ -1,0 +1,43 @@
+metadata:
+  name: loongson
+info:
+  description: 龙芯社区整理的系统、固件与开发资料存档
+  upstream: rsync://rsync.anheng.com.cn/loongson/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 64Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.anheng.com.cn/loongson/mirrors.html
+    policy:
+    - 发布者在 mirrors.html 明确将 rsync://rsync.anheng.com.cn/loongson 称为原始 rsync 发布；内容是自 2008 年以来整理的龙芯社区开源软件资料，不是龙芯厂商的现代 Loongnix
+      仓库。
+    - 以 loongson 模块根为镜像根，原样保留 docs/、firmware/、install/、gentoo/、pmon/、历史系统目录及软链接；不与 bjlx 包源或 ftp.loongnix.cn 合并。
+    - 发布页说明目录内容和维护者联系方式，未规定同步周期；当前 interval/timeout 均为 24h，是本站按资料存档特点选择的维护周期，不是上游要求。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/loongson/
+    surveyed_at: '2026-10-02'
+    status: bootstrap-complete
+    note: 仅作首次初始化种子；2026-10-02 初始化及快照发布完成，日常同步已切到原始发布源。
+  - url: rsync://rsync.anheng.com.cn/loongson/
+    surveyed_at: '2026-10-02'
+    status: selected
+    stack: ipv6
+    note: 生产采用 rsync -6；切源 dry-run 的新增、删除、普通文件传输均为 0。真实官方任务 loongson-sync-1790955319 于 2026-10-02T15:35:29Z 成功，官方快照于 15:35:37Z
+      发布，Ready=True；已解除暂停，按 24h 自动同步。
+  bootstrap:
+    note: USTC 初始化、官方差异审阅、真实官方同步和公开发布校验均已完成。dry-run 检查 4431 项（含 57 个软链接），未发现需转移层级或删除的差异；不再处于等待官方切源或等待解除暂停状态。
+  verification:
+    surveyed_at: '2026-10-02'
+    checks:
+    - 官方与公开 ZJU 的 mirrors.html 均为 2307 字节，SHA256 同为 6663abb53832c2d7c61b71df918ed7e4147aede53501bf9ab9a483dc47bc05ad；验证公开路径内容与原始源一致。
+    - 此处验收为完整 rsync 作业成功、快照发布正常和公开文件抽样比对；没有把目录级 rsync 差异检查或单文件哈希比对描述为所有固件/系统文件逐一验证。

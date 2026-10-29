@@ -1,0 +1,40 @@
+metadata:
+  name: ctex
+info:
+  description: CTEX 中文 TeX 发行版安装文件与历史存档
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/ctex/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 64Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://ctex.org/ctex/download/
+    - https://ctex.org/
+    policy:
+    - CTEX 下载中心当前列出 BFSU、ISCAS、NJU、SJTU、TUNA、USTC 等镜像；稳定版 CTeX 3.0.216.3、最新版 3.1.218.3，并感谢 TUNA 提供下载镜像。
+    - CTEX 官网未给出独立项目自营公开 rsync；此前 TUNA `ctex-upload.tuna.tsinghua.edu.cn` 是上传/同步入口，不应直接当公开 pull 源。USTC 当前从 TUNA 公共 `rsync://mirrors.tuna.tsinghua.edu.cn/ctex/`
+      种子初始化。
+    - 该树是 CTEX Windows 安装包和历史存档，不是 CTAN 的 ctex 宏包子树；3.0/3.1/legacy 等范围不可与 CTAN 混合。
+    - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
+  bootstrap:
+    note: USTC 首次同步于 2026-10-03T06:06:43Z UTC 成功，发布于 2026-10-03T06:06:51Z UTC；当前 mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。没有经过验证的独立官方
+      pull 源可切换；保持 USTC 快照暂停，不把 TUNA 公共入口误写成 CTEX 官方服务器。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/ctex/
+    surveyed_at: '2026-10-03'
+    status: selected
+    note: USTC 首次同步源；站点报告容量 15.46 GiB，不是实际占用保证。
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/ctex/
+    surveyed_at: '2026-10-03'
+    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。

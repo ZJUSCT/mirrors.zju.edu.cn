@@ -1,0 +1,164 @@
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: anaconda
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Anaconda 仓库
+    upstream: https://repo.anaconda.com
+  sync:
+    interval: 6h
+    retryInterval: 15m
+    timeout: 6h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: anaconda
+            image: ghcr.io/zjusct/anaconda:latest
+            imagePullPolicy: Always
+            env:
+              - name: ANACONDA_DOWNLOAD_WORKERS
+                value: "4"
+              - name: CONDA_REPO_URL
+                value: https://repo.anaconda.com
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command: [anaconda]
+            args:
+              - --working-dir
+              - /data
+              - --delete
+              - --remove-legacy
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: "1", memory: 4Gi}
+              limits: {cpu: "4", memory: 8Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+  storage:
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    pvcTemplate:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 32Ti
+      volumeMode: Filesystem
+      volumeName: pvc-9944aa4d-9ab3-4bc8-b351-3b5c161f2f02
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    retention: 1
+  publish:
+    http:
+      replicas: 2
+      podTemplate:
+        metadata:
+          annotations:
+            reloader.stakater.com/auto: "true"
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              startupProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 2
+                timeoutSeconds: 2
+                failureThreshold: 30
+              readinessProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 6
+              resources:
+                requests: {cpu: "10m", memory: 32Mi}
+                limits: {cpu: "4", memory: 2Gi}
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/anaconda
+                  readOnly: true
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              # 目录缓存上限 512Mi，额外空间用于正在填充的响应及其他临时文件。
+              emptyDir:
+                sizeLimit: 1Gi

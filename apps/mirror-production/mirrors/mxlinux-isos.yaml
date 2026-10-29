@@ -1,0 +1,65 @@
+metadata:
+  name: mxlinux-isos
+info:
+  description: MX Linux 安装镜像
+  upstream: https://rsync-mxlinux.org/
+sync:
+  type: tsumugu
+  interval: 24h
+  timeout: 24h
+  tsumugu:
+    parser: apache-f2
+    threads: 4
+    max_delete: 100
+storage:
+  size: 56Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://antixlinux.com/download/
+    - https://rsync-mxlinux.org/
+    - https://rsync-mxlinux.org/MX/Final/README.txt
+    - https://rsync-mxlinux.org/ANTIX/Final/antiX-26.1/antiX-26.1_x64-full.iso.sha256
+    policy:
+    - 已读取 antiX 官方下载页、主归档的 README 和目录/校验文件，未找到第三方镜像必须遵守的同步间隔；建议24h作为本地低负载策略，并非官方强制频率。MX 网站下载及镜像文档入口此次返回403，不能把未读到的认证申请规则当作已证实事实。
+    - TUNA 所用 rsync://rsync-mxlinux.org/MX-Linux/ 服务自述 The MX-Linux / antiX-Linux Archive；匿名模块读取返回 auth failed，状态接口中的
+      downstreamtestuser 用户名不等于 ZJU 已获得密码或许可，不能尝试猜测凭据。该同一主机的 https://rsync-mxlinux.org/ 则公开提供 Apache 目录索引与文件，匿名访问已成功，不需要
+      rsync 密码。
+    - 主归档 HTTPS 根为 ANTIX/、MX/、TIME.txt；ANTIX/Final 含 antiX-23.2（含 runit 子树）及 antiX-26.1，MX/Final 含 Fluxbox/KDE/Xfce，MX/Snapshots
+      保留 README。读取12个目录页得到130个文件，逐路径对照已完成 TUNA bootstrap 的130个文件完全一致，没有子树裁剪或路径改写要求。
+    - antiX 官方下载页列出的 antiX-26.1_x64-full.iso SHA256 为293381af0b7c48399abe015da8f67d41fd34372b73c4aafcf53747fbaed22371，与主归档同名
+      .sha256 文件相同；文档要求用户验证 ISO/签名，镜像应保留 .sha256/.sig/.zsync 等配套文件。MX 主归档 README 仍写25.2但实际目录已25.3，该说明滞后不影响同路径文件核对。
+    - 现有 tsumugu apache-f2 解析器对主归档根 list 实测退出0；静态 Apache 目录、mtime/size 与原有相对路径符合通用模板。建议改用同一主归档 HTTPS 后先 dry-run
+      检查删除/范围，再在暂停状态执行一轮正式同步，只有成功与发布校验完成才恢复自动同步。
+    - 公共备选：antiX 官方下载页明确列出 Dotsrc（Aalborg）和 RIKEN。rsync://mirrors.dotsrc.org/mx-isos/ 匿名列目录成功，同样有 ANTIX/MX/TIME.txt，可作为
+      rsync 备选，不能称为项目主源；RIKEN 模块也可列目录但根有明显旧时间/更多目录，尚未做同范围验证，不选用。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/mxlinux-isos/
+    stack: dual
+    status: bootstrap-complete
+    note: 初始同步作业 mxlinux-isos-sync-1790957662 已成功，当前仍暂停。
+    surveyed_at: '2026-10-02'
+  - url: https://rsync-mxlinux.org/
+    stack: ipv4
+    status: selected
+    note: 同一 MX/antiX 主归档的公开 HTTPS；130个文件相对路径与初始化完全相同，tsumugu apache-f2 工作站解析通过，等待集群 dry-run/正式回源验收。
+    surveyed_at: '2026-10-02'
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  - url: rsync://rsync-mxlinux.org/MX-Linux/
+    stack: ipv4
+    status: auth-required
+    note: 模块公开列名但匿名访问 auth failed；未获取或尝试凭据。
+    surveyed_at: '2026-10-02'
+  - url: rsync://mirrors.dotsrc.org/mx-isos/
+    stack: dual
+    status: fallback
+    note: antiX 官方下载页认可的社区镜像，匿名 rsync 根列表通过；仅作备选，尚未执行完整内容/集群验证。
+    surveyed_at: '2026-10-02'
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。

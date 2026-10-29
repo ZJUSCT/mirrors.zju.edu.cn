@@ -1,0 +1,38 @@
+metadata:
+  name: centos-stream
+info:
+  description: 持续交付、略领先于 RHEL 开发的 Linux 发行版
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/centos-stream/ # 官方源受镜像网络 ACL 限制，暂用 TUNA
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 4Ti
+  volumeName: pvc-cb485349-6c6f-4135-bba3-88514f588418
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.centos.org/centos-stream/
+      - https://www.centos.org/download/mirrors/
+      - https://docs.centos.org/infra-docs/operations/apps/mirrormanagement/
+    policy:
+      - 官方完整同步源为 rsync.stream.centos.org::CentOS-Stream-All，并通过 GeoIP DNS 分配节点。
+      - 公共镜像需在 MirrorManager 注册并提交 CentOS Infra 工单，审核后同步出口 IP 才会加入 ACL。
+      - 当前 Stream 9 及以上版本的官方镜像说明未规定同步间隔。
+  upstreams:
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/centos-stream/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 30ms、26MB/s；IPv6 RTT 约 30ms、44MB/s
+      note: 模块包含 9-stream、10-stream 与 SIGs，时间戳已更新至检查当日。
+    - url: rsync://rsync.stream.centos.org/CentOS-Stream-All/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 124ms；IPv6 RTT 约 103ms
+      note: 官方 GeoIP 同步入口；MOTD 表明仅供公共镜像网络使用，当前出口访问模块返回 Unknown module。

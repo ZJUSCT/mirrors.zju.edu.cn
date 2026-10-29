@@ -1,0 +1,60 @@
+metadata:
+  name: mariadb
+info:
+  description: MariaDB 关系数据库与连接器发布文件
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/mariadb/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 2Ti
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://mariadb.com/docs/server/clients-and-utilities/server-client-software/download/mirror-sites-for-mariadb
+    - https://mariadb.org/download/?t=mirrors
+    policy:
+    - 官方文档直接指定两个 primary：rsync.osuosl.org::mariadb 与 mirror.netcologne.de::mariadb，并感谢 OSUOSL 和 NetCologne 提供服务。因此 NetCologne
+      是官方指定、第三方运营的主分发镜像，不是项目自营 master 的同义词；当前优先候选为 rsync://mirror.netcologne.de/mariadb/。
+    - 普通发布镜像要求 HTTPS、子目录可列、足够容量/带宽（建议至少100Mbit/s），推荐每6h更新且至少每日两次；低于6h频率时官方建议美国东部时间午夜至06:00更新。本站6h候选符合政策，当前USTC初始化24h配置仍暂停，不能直接当作合规长期频率。
+    - 官方示例为 rsync -a --partial --delete-after --delay-updates；模块内容直接落到本站/mariadb/根，不额外添加一层mariadb。保留PublicKey、PublicKey_2010、TIME、connector-{c,java,nodejs,odbc,python}-*、mariadb-*、repo/、yum/、zoneinfo/，不能仅同步某版服务器或忽略连接器。
+    - 官网建议先完成普通release tree初始化再邮件提交信息入镜像列表；这是列表登记步骤，不是公开primary拉取的前置许可。本次没有联系或宣称已入Mirrorbits。mirror.mariadb.org是客户端Mirrorbits分发服务，官方明确不是rsync源，不能以它替代primary。
+    - 普通release tree与archive.mariadb.org历史全集不同。官方对archive明确要求预先联系，参考容量约14TB（2025-06），并先比较STATUS避免无变更反复rsync；该限制不能误套到普通primary，也不能用archive替换本次源。官网普通树参考容量约750GB（2025-06），单次发布110–140GB；当前USTC种子约128.27GiB不能证明官方整树等量，2Ti
+      PVC也不能证明后端可用空间足够。
+    - NetCologne实际daemon MOTD限定每IP最多4个rsync连接，并声明禁用checksum(-c)。切源使用普通大小/mtime dry-run与独立文件哈希验收，不添加-c或并行超过对方限制。
+    - 现有rsync模板支持直接同步此树；需配置/核对--delete-after与--delay-updates，而无需增加同步类型。ftpsync/qfm不是必需，已有可用rsync时无需另行改成HTTP parser。官网两段保留版数表述不完全一致（最新2版/3–4版），应以完整dry-run和实际源树为准，不自己按网页数字清理版本。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: mariadb-sync-1791075156
+    succeeded_at: '2026-10-04T02:18:53Z'
+    published_at: '2026-10-04T02:19:01Z'
+    note: USTC首次同步及快照发布成功，Ready=True、Degraded=False，自动同步暂停；尚未进行官方primary切换。
+    official_interval_candidate: 6h
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/mariadb/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: USTC初始化种子；当前配置仍指向此源且暂停，不是官方长期源。
+  - url: rsync://mirror.netcologne.de/mariadb/
+    surveyed_at: '2026-10-04'
+    status: candidate-verified-readonly
+    note: 官方直接指定的primary，由NetCologne运营。本次工作站有界非递归列表exit0，待生产完整diff和容量审阅；每IP最多4连接，不用-c。
+  - url: rsync://rsync.osuosl.org/mariadb/
+    surveyed_at: '2026-10-04'
+    status: documented-alternative-not-retested
+    note: 官网直接指定另一个primary；本轮未探测该端点，不冒称生产双栈验证。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 官网镜像指南和Foundation mirror页面HTTP200；NetCologne精确模块非递归列表exit0（98行），HTTPS根可列；包含TIME、PublicKey、连接器、多个服务器版本、repo、yum、zoneinfo。
+    - 有界HTTP子目录读取证明mariadb-11.4.13内含bintar-linux-systemd-x86_64、repo、source、winx64-packages、yum；根repo/yum包含多个数字版与rolling/rc别名，不能扁平化或随意去除。
+    - NetCologne PublicKey为6575字节，gpg解析主钥指纹177F4010FE56CA3336300305F1656F24C74CD1D8；这里只识别从指定镜像获得的公钥，没有独立信任锚确认或InRelease/RPM/tarball验签，不宣称密码学验收完成。
+    remaining: 可推进生产同过滤dry-run：统计官方全树大小与传输增量、审查USTC子集差异/删除集/链接并检查2Ti卷及后端空间；按官方延迟删除/发布建议完成真实同步、匹配新快照发布、官方可信密钥下的APT/RPM或tarball签名与公网抽样验证后解除暂停。

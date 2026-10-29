@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - anaconda.yaml
+  - crates.io-index.git.yaml
+  - crates.io-index.yaml
+  - crates.io.yaml
+  - homebrew.yaml
+  - homebrew-bottles.yaml
+  - pypi.yaml
+  - rosdistro.yaml
+  - winget-source.yaml

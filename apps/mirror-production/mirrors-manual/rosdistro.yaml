@@ -1,0 +1,215 @@
+# comment:
+#   official:
+#     surveyed_at: 2026-09-19
+#     docs:
+#       - https://github.com/ros/rosdistro
+#       - https://docs.ros.org/en/independent/api/rosdistro/
+#       - https://docs.ros.org/en/independent/api/rosdep/html/sources_list.html
+#       - https://reps.openrobotics.org/rep-0153.html
+#     policy:
+#       - 该仓库同时维护 ROS 发行版软件包索引和 rosdep 规则数据库。
+#       - rosdistro 默认读取 master 分支的 index-v4.yaml；ROSDISTRO_INDEX_URL 可覆盖入口，索引内的相对路径以入口 URL 为基准。
+#       - rosdep 数据源列表需单独配置；rosdep init 默认仍从 raw.githubusercontent.com 获取 20-default.list。
+#   upstreams:
+#     - url: https://github.com/ros/rosdistro.git
+#       stack: ipv4
+#       surveyed_at: 2026-09-19
+#       metrics: GitHub API 报告仓库大小为 151789KiB；同步经 HTTP 代理，未取得有效 RTT
+#       note: 官方仓库；当前仅检出 master 工作树，不是完整 Git 镜像。
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: rosdistro
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: ROS 发行版索引与 rosdep 规则数据库
+    upstream: https://github.com/ros/rosdistro.git
+  sync:
+    interval: 6h
+    retryInterval: 15m
+    timeout: 6h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        nodeSelector:
+          kubernetes.io/hostname: s2.mirrors.zjusct.io
+        # gitsync 的 entry.sh 框架（chown/su-exec）需要 root，与
+        # runAsNonRoot 安全约定冲突——绕开框架直接调 /sync.sh（其同步
+        # 逻辑以当前用户运行，缺的 LOGDIR/LOGFILE 变量自行补上）。
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          fsGroup: 65532
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: gitsync
+            image: ustcmirror/gitsync:latest
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command: ["/sync.sh"]
+            env:
+              - name: TO
+                value: /data/
+              - name: LOGDIR
+                value: /log/
+              - name: LOGFILE
+                value: /log/result.log
+              - name: GITSYNC_URL
+                value: https://github.com/ros/rosdistro.git
+              - name: GITSYNC_REMOTE
+                value: origin
+              - name: GITSYNC_BRANCH
+                value: master:master
+              - name: GITSYNC_CHECKOUT
+                value: "true"
+              - name: GITSYNC_MIRROR
+                value: "false"
+              - name: DEBUG
+                value: "false"
+              - name: HTTP_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: HTTPS_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: NO_PROXY
+                value: localhost,127.0.0.1,::1,10.0.0.0/8,172.26.0.0/16,172.27.0.0/16,fda8:d4b1:99d0:100::/56,fda8:d4b1:99d0:200::/112,.svc,.cluster.local
+            volumeMounts:
+              - name: log
+                mountPath: /log
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+              limits: {cpu: "2", memory: 2Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: log
+            emptyDir: {}
+  storage:
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    retention: 1
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      volumeMode: Filesystem
+      volumeName: pvc-63a043c0-3138-46f8-bfa5-934f0aa01d59
+      resources:
+        requests:
+          storage: 5Gi
+  publish:
+    http:
+      replicas: 1
+      podTemplate:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /rosdistro/index-v4.yaml
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /rosdistro/index-v4.yaml
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 3
+              resources:
+                requests: {cpu: "10m", memory: 32Mi}
+                limits: {cpu: "4", memory: 256Mi}
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/rosdistro
+                  readOnly: true
+                - name: nginx-locations
+                  mountPath: /etc/nginx/locations
+                  readOnly: true
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              emptyDir: {}
+            - name: nginx-locations
+              configMap:
+                name: rosdistro-nginx-locations
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rosdistro-nginx-locations
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  hide-git.conf: |
+    location = /rosdistro/.git {
+        return 404;
+    }
+    location ^~ /rosdistro/.git/ {
+        return 404;
+    }

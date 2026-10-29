@@ -1,0 +1,85 @@
+metadata:
+  name: openvz
+info:
+  description: OpenVZ 容器虚拟化平台的模板与软件包
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/openvz/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 792Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-05'
+    docs:
+    - https://wiki.openvz.org/Setting_up_a_mirror
+    - https://wiki.openvz.org/Download_mirrors
+    - https://mirrors.openvz.org/
+    - https://download.openvz.org/
+    - https://repo.virtuozzo.com/vzlinux/security/VIRTUOZZO_GPG_KEY
+    policy:
+    - 官方Setting up a mirror明确给出美国rsync://download.openvz.org/openvz-download/、欧洲rsync://eu.download.openvz.org/openvz-download/，示例rsync
+      -av --delete；推荐1小时并建议至少每小时更新，因此正式候选interval=1h，当前引导24h仅保留暂停。该文档最后修改于2017-05-02，103GB/每月1.5GB是2015历史估计，不作当前容量依据。
+    - 镜像须有足够空间、带宽和维护人员，承诺多年维护、自动监控及及时修复；HTTP/FTP至少提供一种，rsync出口可选；不存在文件须正确返回HTTP404/FTP550。完成后通过openvz-mirrors仓库PR（添加vvs@ reviewer）或mirrors@openvz.org宣布，说明协议、管理员、地理位置、赞助、IPv6、同步频率及master。文档没有要求匿名拉取前先审批；本轮未发送邮件/PR，也不声称本站已登记。
+    - Download_mirrors明确标注过时，指向mirrors.openvz.org；后者本轮虽HTTP200，页面日期和last check均停在2024-04-29，不能把其健康状态或旧镜像名单当2026实时证据。文档的美欧地点为历史说明，本轮两域名DNS都为69.168.225.100、未解析到AAAA，不据主机名保证当前物理地点或冗余。
+    - 发布根实际10目录为contrib、criu、current、debian、doc、kernel、pstorage、template、utils、virtuozzo，另有HEADER.html、RPM-GPG-Key-OpenVZ、favicon.ico、mirrors-current、openvz.repo、robots.txt、timestamp。不是只有最新发行版；不新增或假定根archive/releases/testing。历史归档范围分散在现有旧版本、template/precreated/unsupported、旧kernel
+      branches等；kernel自定义页面另外链接vault.openvz.org，外部vault不是当前已证明的种子范围，不追抓合并。
+    - 保留virtuozzo全部factory/factory8/factory9/mirrorlists/obsoleted_tmpls/releases/updates；releases现有37项，含7.0及多个7.x历史构建、8/9
+      alpha及构建；updates66项。保留source与x86_64、ISO与仓库元数据，不能缩为最新7.x。template/precreated含beta、contrib、unsupported及31组模板包/asc；kernel/branches含6分支及rhel5/rhel6
+      testing，testing不因名称而删掉。
+    - 存在明确待查范围差异：官方kernel/branches/rhel6-2.6.32-testing列67项，ZJU列66项，缺debuginfo；官方debuginfo/HTTP200并列5子项，ZJU索引和普通公开URL均404。HTTP无法判断是USTC范围差异、断链、--safe-links跳过链接还是同步遗漏；不能称整树一致，也不擅自排除或扩充此分支。
+    - 保留标准rsync -aH与--safe-links，不加-L/--copy-links；current、版本别名和debuginfo等真实链接类型/目标、隐藏文件、硬链接与跨根闭包须由固定快照lstat及后续上游rsync列表确认，HTTP显示directory不能代替此检查。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: openvz-sync-1791146014
+    succeeded_at: '2026-10-05T01:42:17Z'
+    published_at: '2026-10-05T01:42:28Z'
+    note: 父会话hourly-live.json保存状态：UID bd3ccb9e-4eb9-48dd-9ec1-d9024497e30f、generation2、resourceVersion26843739；lastSync.jobName与lastSnapshot.jobName均为本job，activePVC/activeSnapshot/lastSnapshot.name均为openvz-snap-1791146014，成功早于发布；Ready=True、Degraded=False、Progressing=False、sync-paused=true。sizeBytes=389714804736，capacity792Gi。核对了job/snapshot/publication对应关系，不只依赖Ready。本轮没有查询或修改集群。
+    official_interval_candidate: 1h
+    official_cutover_state: documented-rsync-candidate-pending-scope-discrepancy-and-production-validation
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/openvz/
+    surveyed_at: '2026-10-05'
+    status: bootstrap-complete
+    note: 当前仍为USTC且暂停；未执行新增USTC连接或rsync探测。
+  - url: rsync://download.openvz.org/openvz-download/
+    surveyed_at: '2026-10-05'
+    status: official-documented-not-rsync-probed
+    note: 官方明确公布，HTTPS目录及小元数据可读。本轮仅本机DNS/HTTP，未证明873端口、rsync模块范围、生产网络或完整差异；DNS只有A，候选sync.ipv6=false以避免默认强制-6。
+  - url: rsync://eu.download.openvz.org/openvz-download/
+    surveyed_at: '2026-10-05'
+    status: official-documented-not-rsync-probed
+    note: 官方另一master名称，本轮A与美国名称相同且无AAAA；不是已验证独立容灾节点。
+  verification:
+    surveyed_at: '2026-10-05'
+    checks:
+    - 只获取显式列出的有界HTTP文档/目录/小元数据，每次最大600000字节、25秒、并发3；未递归遍历、下载RPM/ISO/模板体、执行rsync、预留槽位、创建资源或修改共享YAML/报告。原始headers/body、失败记录及离线比较在review-openvz.evidence/。
+    - virtuozzo根7项、releases37项、updates66项、kernel/branches6项名称集合相同；7.0.22-123发行目录source/x86_64两项相同，x86_64/iso十二项名称相同。HTTP上游显示的大小经常是K/M/G舍入值，本轮不宣称ISO字节大小或内容完全一致。testing缺debuginfo差异单列待解决。
+    - 官方根16个可见列表项与ZJU17项相比仅少HEADER.html；template及precreated也隐藏HEADER.html。直接GET官方根HEADER.html成功2033字节，证明目录页省略不等于文件不存在。官方kernel/是自定义index.html，ZJU还列出多个mirrors-*文件；仅靠HTTP递归会遗漏已有内容。
+    - 七个代表小文件逐字节一致：RPM-GPG-Key-OpenVZ1332字节、openvz.repo2397字节、centos-7-x86_64模板asc198字节、testing repomd.xml1208字节、7.0.22-145更新仓库repomd.xml3110字节、7.0.22-123
+      ISO sha256sum398字节及asc316字节。根timestamp不同：官网1791162001（2026-10-05T01:00:01Z），本站1791126001（2026-10-04T15:00:01Z），种子落后10小时，不写fresh或实时同步已通过。
+    - 官方首页区分Legacy OpenVZ包与OpenVZ7 Virtuozzo签名钥。已通过其链接的HTTPS地址取Virtuozzo key，指纹C92BBB23E3C313866694D5F5CA0B7D1944CDAD2A；隔离GNUPGHOME、禁自动取钥，对上述ISO
+      sha256sum.asc验证exit0、GOODSIG/VALIDSIG匹配，TRUST_UNDEFINED仅表示未本地认证钥身份。信任依据为官方页面链接与HTTPS来源，不是人工核准密钥或web-of-trust。该签名RSA1024/SHA1，是旧算法；未更改弱算法策略。
+    - Legacy OpenVZ钥指纹DEABA031F0A188489D7101D292A60DA6A7A1D4B6，模板asc issuer为92A60DA6A7A1D4B6；只检查了签名包issuer，未下载模板体验签。未哈希ISO、未验证RPM包签名，也未下载repomd所指完整metadata/payload闭包。Package_signatures
+      wiki两次有界获取超时，失败已保留；不把此页当成功读取的证据。
+    remaining: 继续暂停。槽位允许后先对固定snapshot clone做lstat/硬链接/隐藏文件及完整非破坏差异，调查testing/debuginfo缺失，不自行添排除规则；确认官方rsync模块匿名可达、生产IPv4路径、全树范围/删除集/容量及增长余量。保留全部旧版本、testing、template、virtuozzo，不追抓外部vault；在已有本地ISO上核对已验签SHA256清单，按两套官方钥验证代表RPM/模板与元数据闭包。以1h候选完成真实官方同步、新快照和发布对应、公网复验与监控后再解除暂停；登记另按官方流程处理，本轮未联系外部。
+    tools:
+      rsync: 官方明确支持且符合既有混合文件树；采用现有rsync类型，候选IPv4、1h，无新增脚本同步器。尚未执行模块/生产可达性及完整差异验证。
+      ftpsync: 现有模板为Debian archvsync双阶段协议；根内存在debian不等于整个OpenVZ树采用此协议，没有官方要求，不能替代完整rsync范围核对。
+      qfm: 现有QFM面向Fedora及其MODULES/文件清单协议；未发现OpenVZ提供该协议，不能用于此混合树。
+      tsumugu: 多数目录为Apache索引，但HEADER.html被隐藏、kernel自定义index页面省略实际文件，且真实链接语义未知；未证明可完整枚举现有树，不作安全等价切源候选。未运行解析器或HTTP全树同步。
+  candidate_config:
+    info:
+      upstream: rsync://download.openvz.org/openvz-download/
+    sync:
+      type: rsync
+      interval: 1h
+      timeout: 24h
+      ipv6: false

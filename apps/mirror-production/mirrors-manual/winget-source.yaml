@@ -1,0 +1,175 @@
+# comment:
+#   official:
+#     surveyed_at: 2026-09-28
+#     docs:
+#       - https://learn.microsoft.com/en-us/windows/package-manager/winget/source
+#       - https://github.com/microsoft/winget-pkgs
+#       - https://github.com/ustclug/ustcmirror-images/tree/master/winget-source
+#       - https://mirrors.ustc.edu.cn/help/winget-source.html
+#     policy:
+#       - winget 是由 WinGet Community Repository 提供的默认应用程序源；客户端应仅使用安全、可信的软件源。
+#       - 官方源为预索引软件源；客户端按版本下载 source.msix 或 source2.msix，在本地查询其中的元数据。
+#       - 官方未公布公共镜像同步规范、同步周期或 rsync 服务。
+#       - 官方 cache 不提供目录索引，不能直接由 tsumugu 遍历；使用 USTC 专用工具解析两代 MSIX 索引并同步引用文件。
+#       - 开启 WINGET_FORCE_SYNC，校验已有文件大小和 mtime、补齐失败同步；工具保留历史文件，不自动清理。
+#   upstreams:
+#     - url: https://cdn.winget.microsoft.com/cache
+#       stack: dual
+#       surveyed_at: 2026-09-28
+#       note: Microsoft 官方预索引源；source.msix 和 source2.msix 可公开下载，目录根请求返回 HTTP 400。
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: winget-source
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Windows Package Manager 社区预索引软件源
+    upstream: https://cdn.winget.microsoft.com/cache
+  sync:
+    interval: 8h
+    retryInterval: 15m
+    timeout: 8h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: winget
+            image: ustcmirror/winget-source:latest
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            # 绕过需要 root 的基础镜像入口；同步程序直接以 sync UID 运行。
+            command: [node, /sync-repo.js]
+            env:
+              - name: TO
+                value: /data/
+              - name: WINGET_REPO_URL
+                value: 'https://cdn.winget.microsoft.com/cache'
+              - name: WINGET_REPO_JOBS
+                value: "8"
+              - name: WINGET_FORCE_SYNC
+                value: "true"
+              - name: NODE_ENV
+                value: production
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: tmp
+                mountPath: /tmp
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+              limits: {cpu: "4", memory: 4Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+  storage:
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    pvcTemplate:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 64Gi
+      volumeMode: Filesystem
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    retention: 1
+  publish:
+    http:
+      replicas: 1
+      podTemplate:
+        metadata:
+          annotations:
+            reloader.stakater.com/auto: "true"
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /winget-source/
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /winget-source/
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 3
+              resources:
+                requests: {cpu: "10m", memory: 32Mi}
+                limits: {cpu: "4", memory: 1Gi}
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/winget-source
+                  readOnly: true
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              emptyDir: {}

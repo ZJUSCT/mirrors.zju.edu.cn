@@ -1,0 +1,34 @@
+metadata:
+  name: armbian
+info:
+  description: 面向 ARM 单板计算机的 Armbian 软件包仓库
+  upstream: rsync://rsync.armbian.com/apt/ # 官方指定的同步入口；当前仅 IPv4 节点可用
+sync:
+  type: rsync
+  ipv6: false
+  interval: 4h
+  timeout: 4h
+storage:
+  size: 300Gi
+  volumeName: pvc-25d29400-0ce6-4980-9680-c550cf1d2c2c
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.armbian.com/zh
+      - https://docs.armbian.com/contribute/run-a-mirror/
+      - https://docs.armbian.com/status/mirrors/
+    policy:
+      - 官方要求从 rsync.armbian.com 的对应模块同步，并每 2 至 4 小时运行一次。
+      - 软件包仓库使用 apt 模块，官方标注所需空间约为 84GB。
+      - 公共镜像必须可通过 HTTPS 访问，也接受纯 HTTP。
+  upstreams:
+    - url: rsync://rsync.armbian.com/apt/
+      stack: ipv4
+      surveyed_at: 2026-09-18
+      metrics: 可用 IPv4 节点 RTT 约 213–268ms，单文件 rsync 约 4.9–6.7MiB/s；IPv6 未连通
+      note: 官方指定的软件包同步入口；其 DNS 池中部分节点在本次探测中不可达。

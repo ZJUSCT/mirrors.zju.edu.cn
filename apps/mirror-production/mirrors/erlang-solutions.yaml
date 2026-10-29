@@ -1,0 +1,56 @@
+metadata:
+  name: erlang-solutions
+info:
+  description: Erlang Solutions 软件包仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/erlang-solutions/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 8Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.erlang-solutions.com/downloads/
+    - https://binaries2.erlang-solutions.com/
+    - https://binaries2.erlang-solutions.com/debian/dists/bookworm-esl-erlang-27/Release
+    - https://s3.eu-west-2.amazonaws.com/binaries2.erlang-solutions.com?delimiter=/&max-keys=20
+    policy:
+    - 已阅读的官方安装/仓库文档未规定第三方镜像同步间隔；建议后续每日（24h）检查一次作为本地低负载策略，非官方要求，当前暂停时不生效。
+    - Erlang Solutions 官方下载页提供 Erlang OTP、Elixir、MongooseIM。binaries2.erlang-solutions.com 首页内嵌 S3 Bucket Explorer，明确使用
+      https://s3.eu-west-2.amazonaws.com/binaries2.erlang-solutions.com 作为 XML API，下载域名仍为 binaries2.erlang-solutions.com。不是静态
+      s3-indexbuilder 列表。
+    - TUNA 根实际只有 debian/、ubuntu/。erlang.sh 选择 Debian bullseye/bookworm、Ubuntu jammy/noble，与 mongooseim-5/6、esl-erlang-24/25/26/27、elixir-1.14/1.15/1.16/1.17/1.18
+      组合为 suite；component contrib、architectures amd64/arm64；CentOS 同步已因仓库结构无效在脚本中禁用。
+    - 官方 binaries2 的 debian/dists/bookworm-esl-erlang-27/Release 匿名返回 200，声明 contrib、amd64/arm64；S3 根枚举也可匿名读取，同时含
+      almalinux/、centos/ 等额外范围，整桶同步会扩大 TUNA 初始化范围。脚本默认旧域名 packages.erlang-solutions.com，此次根与 Release 探测返回 502，不能据此误判
+      binaries2 不可用。
+    - 应实现针对 binaries2 的 APT 索引同步，保持 debian/ubuntu 两根与上述 suite 范围，或实现 S3 XML 分页且严格过滤范围；现有 tsumugu 的 s3-indexbuilder
+      不执行 Vue/JavaScript 也不解析 ListBucketResult，当前无兼容配置，保持暂停。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/erlang-solutions/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: TUNA 初始同步已成功；当前 sync-paused，不作为未获授权的长期同步源。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  - url: https://binaries2.erlang-solutions.com/
+    stack: dual
+    status: hold
+    surveyed_at: '2026-10-02'
+    note: 官方 JS 索引和具体 APT Release 已读取；可用 HTTPS 包源，需要 APT/S3 同步实现。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  - url: https://packages.erlang-solutions.com/
+    stack: ipv4
+    status: unavailable
+    surveyed_at: '2026-10-02'
+    note: TUNA 脚本默认的历史域名；此次根与 Debian Release 均返回 HTTP 502，当前不选用。 地址族按工作站 DNS 记录标注，不表示已完成相应地址族的集群传输验证。
+  bootstrap:
+    note: TUNA 初始同步已成功（erlang-solutions-sync-1790957192）；当前保持 sync-paused。官方文档和现有布局调查已完成；已确认 binaries2 官方 APT
+      文件可用与 debian/ubuntu 映射；首页为动态 S3 XML 枚举，现有模板不支持，需 APT 索引同步器或 S3 XML 适配，保持暂停。

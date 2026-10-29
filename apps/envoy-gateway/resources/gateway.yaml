@@ -1,0 +1,50 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: envoy-gateway-staging
+  namespace: envoy-gateway
+spec:
+  gatewayClassName: envoy
+  infrastructure:
+    annotations:
+      kube-vip.io/loadbalancerIPs: "10.202.236.72,2001:da8:e000:8936::72"
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: mirrors-zjusct-io-cert
+            namespace: cert-manager
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mirrors-zjusct-io-http-to-https
+  namespace: envoy-gateway
+spec:
+  parentRefs:
+    - name: envoy-gateway-staging
+      sectionName: http
+  hostnames:
+    - mirrors.zjusct.io
+    - "*.mirrors.zjusct.io"
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            port: 443
+            statusCode: 308

@@ -1,0 +1,53 @@
+metadata:
+  name: tex-historic-archive
+info:
+  description: TeX 与 TeX Live 历史版本归档
+  upstream: rsync://tug.org/historic/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 600Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://tug.org/historic/
+    - rsync://tug.org/historic/
+    - https://ftp.math.utah.edu/pub/tex/historic/
+    policy:
+    - TUG 官方页面定义该树为 TeX 历史资料归档，包含 files、fonts、macros、systems 及历史系统文件，不是当前 TeX Live 发布仓库。
+    - TUG 明确 master 为 rsync://tug.org/historic/，并列出 Utah、Finland、Chemnitz、TUNA、NJU 镜像；欢迎镜像使用 cron rsync -a --delete。由于
+      tug.org 对连接数有严格限制，官方建议优先使用镜像。
+    - 官方页面没有固定小时数；cron 示例仅要求周期性运行。该目录历史归档变更低，本站 24h 是保守实现，不冒充官方间隔。
+    - 官方 IPv4 rsync 列表根目录为 README、RCS、files、fonts、macros、systems；TUNA 初始化日志为 484,333 项、约 406.24G，完整层级兼容。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/tex-historic-archive/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-03'
+    note: TUNA 首轮初始化已成功；仅作为已完成初始化来源，当前保持暂停。
+  - url: rsync://tug.org/historic/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUG 官方页面指定 master；IPv4 目录列表成功。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  - url: rsync://ftp.math.utah.edu/historic/
+    stack: ipv4
+    status: mirror
+    surveyed_at: '2026-10-03'
+    note: TUG 官方列出的 Utah 镜像，仅作备选，不切换。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
+    reported_size: 373G

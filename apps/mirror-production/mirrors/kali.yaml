@@ -1,0 +1,39 @@
+metadata:
+  name: kali
+info:
+  description: Kali Linux 软件包仓库
+  upstream: rsync://mirror.twds.com.tw/kali/ # 官方镜像列表收录的台湾节点；主源需注册后开放访问
+sync:
+  type: ftpsync
+  interval: 6h
+  timeout: 6h
+  ftpsync:
+    archive: kali
+storage:
+  size: 1Ti
+  volumeName: pvc-362bed64-26a4-4508-9b77-5a1d0de29612
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.kali.org/docs/community/kali-linux-mirrors/
+      - https://www.kali.org/docs/community/setting-up-a-kali-linux-mirror/
+    policy:
+      - Kali 将软件包仓库与预构建镜像仓库分开发布；软件包仓库使用 kali 模块和 http.kali.org 重定向服务。
+      - 官方公共镜像通过 SSH 推送触发，每日更新四次；无法使用推送的镜像应定时运行 ftpsync sync:archive:kali。
+      - 申请加入官方镜像列表后，Kali 才会开放 archive.kali.org 的 rsync 访问；未获授权时应从公共镜像同步。
+  upstreams:
+    - url: rsync://mirror.twds.com.tw/kali/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 85ms、36MiB/s；IPv6 RTT 约 84ms、38MiB/s
+      note: Kali 官方镜像列表收录的台湾节点；MOTD 提示异常连接可能被封禁，无其他访问限制。
+    - url: rsync://archive.kali.org/kali/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 291ms；IPv6 RTT 约 252ms；rsync 未获授权并超时
+      note: 官方镜像脚本的默认主源；需邮件申请加入镜像列表，由 Kali 开放源站 rsync 访问。

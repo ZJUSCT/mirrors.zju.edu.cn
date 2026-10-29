@@ -1,0 +1,55 @@
+metadata:
+  name: slackware
+info:
+  description: Slackware Linux 官方软件包与源代码
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/slackware/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 512Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://mirrors.slackware.com/guidelines/
+    policy:
+    - 官方 Mirroring Guidelines 明确允许使用 primary rsync://ftp.slackware.com/slackware/（实际由 OSUOSL 托管），并说明该 primary 不含 ISO；不能把此树与
+      slackware-iso 混同。
+    - 要求根布局保持 /slackware/...，至少镜像最新 stable 与 current 的 32/64 位树；可以用 --exclude 排除历史版本，但不应在根混入 unofficial packages 或 SlackBuilds。当前候选根含
+      slackware-15.0、slackware64-15.0、slackware-current、slackware64-current、历史版本和 unsupported；slackware/slackware64 分别链接到对应
+      15.0。
+    - 官方示例包含 --delete --delete-after、--no-o --no-g、--safe-links；切换应保留安全链接并审阅删除时序和数据集差异。已知 USTC 首次树可能缺早期版本，不能把新增历史树误当错误或未经体积评估直接扩大。
+    - 镜像登记需要 HTTP(S)、rsync 扫描地址及联系方式，FTP 可选；文档已明确允许拉取 primary，没有先联系才能匿名 pull 的规定。登记及 MirrorBrain 入池尚未完成，本次不发送邮件。
+    - 文档未规定固定同步小时数；6h 是本站长期候选，当前初始化 24h 仍暂停。现有 rsync 模板可处理该文件树；无需 ftpsync/qfm/tsumugu 或新同步器。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: slackware-sync-1791059088
+    succeeded_at: '2026-10-04T00:30:29Z'
+    published_at: '2026-10-04T00:30:40Z'
+    note: USTC 首次同步及快照发布成功，Ready=True、Degraded=False，自动同步保持暂停；本次没有执行官方切源。
+    official_interval_candidate: 6h
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/slackware/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: USTC 初始化种子，当前配置仍指向此源但暂停；不冒称官方增量源。
+  - url: rsync://ftp.slackware.com/slackware/
+    surveyed_at: '2026-10-04'
+    status: candidate-verified-readonly
+    note: 精确模块工作站有界非递归列表 exit 0；可以继续生产 dry-run 验证，不代表生产协议栈、删除集和完整性已验收。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 官方指南 HTTP 200；精确 primary 根非递归 rsync 列表 exit 0；current 目录具有 2026-10-03 的工作站本地显示时间，根目录较旧时间不等同于内容陈旧。
+    - 根中观察到的两个链接均为模块内相对链接且目标目录存在。
+    - 尝试 ftp.slackware.com 的 HTTPS CHECKSUMS.md5/.asc/GPG-KEY 时出现证书主机名不匹配，未绕过校验；这不影响已证明可用的 rsync，也不构成已完成签名验证。
+    remaining: 执行生产同范围 rsync dry-run，审阅历史目录新增/删除与容量；核对 --delete-after 时序，再完成官方真实同步、匹配发布。通过可信官方钥核验 CHECKSUMS.md5.asc 与样例包、核对公网文件后才解除暂停；HTTPS
+      别名证书问题可用官方发布的有效 HTTPS 节点解决，不能跳过验证。

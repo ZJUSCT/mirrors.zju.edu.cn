@@ -1,0 +1,324 @@
+# comment:
+#   official:
+#     surveyed_at: 2026-09-19
+#     docs:
+#       - https://docs.brew.sh/Installation
+#       - https://docs.brew.sh/Manpage
+#       - https://github.com/Homebrew
+#     policy:
+#       - Homebrew 默认通过 JSON API 获取 formula 和 cask 元数据；设置 HOMEBREW_NO_INSTALL_FROM_API=1 后才恢复 homebrew/core 与 homebrew/cask 的 Git checkout。
+#       - 官方仅为 Homebrew/brew 与 Homebrew/homebrew-core 定义 HOMEBREW_BREW_GIT_REMOTE 和 HOMEBREW_CORE_GIT_REMOTE。
+#       - 官方未规定 Git 镜像的仓库集合、同步周期、保留策略或存储规模。
+#   upstreams:
+#     - url: https://github.com/Homebrew/
+#       stack: ipv4
+#       surveyed_at: 2026-09-19
+#       metrics: IPv4 RTT 约 94ms
+#       note: Homebrew 官方 GitHub 组织；当前同步的六个仓库属于本站兼容性选择，并非官方定义的镜像集合。
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: homebrew
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Homebrew 主程序与部分官方 Git 仓库镜像
+    upstream: https://github.com/Homebrew
+  storage:
+    retention: 1
+    syncStorageClassName: zfs-hdd-retain-immediate
+    publishStorageClassName: zfs-hdd-delete-immediate
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      volumeMode: Filesystem
+      resources:
+        requests:
+          storage: 20Gi
+      volumeName: pvc-5b640778-562c-4e00-9727-77a817c5c971
+  sync:
+    interval: 1h
+    retryInterval: 15m
+    timeout: 1h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: git-sync
+            image: ghcr.io/zjusct/git-http-backend:latest
+            imagePullPolicy: Always
+            command: [sh, /scripts/sync.sh]
+            env:
+              - name: HOME
+                value: /tmp
+              - name: UPSTREAM_BASE
+                value: https://github.com/Homebrew
+              # 本站兼容性仓库集合；已归档的 homebrew-services 与
+              # homebrew-command-not-found 仍保留供历史用户使用。
+              - name: REPOS
+                value: brew homebrew-core homebrew-cask install homebrew-services homebrew-command-not-found
+              - name: DATA
+                value: /data
+              - name: HTTP_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: HTTPS_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: NO_PROXY
+                value: localhost,127.0.0.1,::1,10.0.0.0/8,172.26.0.0/16,172.27.0.0/16,fda8:d4b1:99d0:100::/56,fda8:d4b1:99d0:200::/112,.svc,.cluster.local
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: script
+                mountPath: /scripts
+                readOnly: true
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: 100m, memory: 256Mi}
+              limits: {cpu: "2", memory: 2Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+          - name: script
+            configMap:
+              name: homebrew-git-sync
+              defaultMode: 0444
+  publish:
+    aliases:
+      - path: /git/homebrew
+    http:
+      replicas: 1
+      podTemplate:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: git-http
+              image: ghcr.io/zjusct/git-http-backend:latest
+              imagePullPolicy: Always
+              command: [sh, /entrypoint/entrypoint.sh]
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /homebrew/brew.git/HEAD
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /homebrew/brew.git/HEAD
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 3
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                - name: mirror-data
+                  mountPath: /srv/git
+                  readOnly: true
+                - name: nginx-locations
+                  mountPath: /etc/nginx/locations
+                  readOnly: true
+                - name: entrypoint
+                  mountPath: /entrypoint
+                  readOnly: true
+              resources:
+                requests: {cpu: 10m, memory: 32Mi}
+                limits: {cpu: "1", memory: 1Gi}
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              emptyDir: {}
+            - name: nginx-locations
+              configMap:
+                name: homebrew-git-nginx
+                defaultMode: 0444
+            - name: entrypoint
+              configMap:
+                name: homebrew-git-entrypoint
+                defaultMode: 0444
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homebrew-git-sync
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  sync.sh: |
+    #!/bin/sh
+    # Homebrew 仓库族同步（一个 Job 顺序同步全部仓库）。
+    # 参考 tuna/tunasync-scripts 的 homebrew.sh/git.sh、ustclug/ustcmirror-images 的 gitsync。
+    set -eu
+
+    UPSTREAM_BASE="${UPSTREAM_BASE:-https://github.com/Homebrew}"
+    REPOS="${REPOS:-brew homebrew-core homebrew-cask install homebrew-services homebrew-command-not-found}"
+    DATA="${DATA:-/data}"
+
+    total_start=$(date +%s)
+
+    for repo in $REPOS; do
+        dir="$DATA/$repo.git"
+        url="$UPSTREAM_BASE/$repo.git"
+        start=$(date +%s)
+        echo "==== SYNC $repo START ===="
+
+        # 自愈：目录缺失或残缺（裸仓库不以 HEAD 开头）时整体重建
+        if [ ! -f "$dir/HEAD" ]; then
+            echo "$dir is not a bare repository, re-cloning" >&2
+            rm -rf "$dir"
+            # --bare 而非 --mirror：只镜像 heads+tags，
+            # 不引入 GitHub 的 refs/pull/*（USTC gitsync 与 SJTU git.sh 均显式避开）
+            # --progress：非 tty 也持续输出下载进度到 Job 日志
+            git clone --bare --progress "$url" "$dir"
+        fi
+
+        cd "$dir"
+        git remote set-url origin "$url"
+
+        # 显式 refspec：分支直达 refs/heads/*（服务形态），tags 由 --tags 覆盖
+        git config --unset-all remote.origin.fetch 2>/dev/null || true
+        git config --add remote.origin.fetch '+refs/heads/*:refs/heads/*'
+
+        git fetch --progress --prune --tags --force origin
+
+        # 裸仓库的 HEAD 不随 fetch 更新；对齐上游默认分支，避免用户 clone 拿错分支
+        symref=$(git ls-remote --symref "$url" HEAD | sed -n 's/^ref: \(refs\/heads\/[A-Za-z0-9._/-]*\).*/\1/p')
+        echo "$repo: upstream HEAD -> ${symref:-<unknown>}"
+        if [ -n "$symref" ]; then
+            echo "ref: $symref" > HEAD
+        fi
+
+        # 服务端能力（git-http-backend 直接读取仓库配置）：
+        # 允许 partial clone（--filter）与按可达 SHA 取对象；镜像站只读，
+        # 显式禁用 receive-pack，避免未来引入认证后 Git 默认开放 push。
+        git config uploadpack.allowFilter true
+        git config uploadpack.allowReachableSHA1InWant true
+        git config http.receivepack false
+
+        # 维护：对象文件（loose+pack）碎片化超过阈值后全量重打包（TUNA git.sh 同款阈值）
+        nobj=$(find objects -type f | wc -l)
+        if [ "$nobj" -gt 8 ]; then
+            echo "$repo: repacking $nobj object files"
+            git repack -a -b -d
+        fi
+
+        echo "==== SYNC $repo DONE in $(( $(date +%s) - start ))s, refs=$(git for-each-ref | wc -l), size-pack: $(git count-objects -vH | sed -n 's/^size-pack: //p') ===="
+    done
+
+    echo "==== ALL REPOS DONE in $(( $(date +%s) - total_start ))s ===="
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homebrew-git-nginx
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  # 挂载到 /etc/nginx/locations，由共享主配置(nginx-conf)server 块的
+  # include 钩子并入；只能包含裸 location 块。alias 用绝对路径，与 server 的
+  # root（/usr/share/nginx/html）无关。
+  git-http.conf: |
+    # .git/objects 下静态直出；本服务未生成 dumb HTTP 所需的
+    # info/refs，客户端应使用 smart HTTP。
+    location ~ "^/homebrew(/.+\.git/objects/.+)$" {
+        alias /srv/git$1;
+    }
+
+    # Falcon 将 /git/homebrew 别名永久重定向至规范路径 /homebrew，
+    # 后端只处理规范路径并剥离该前缀后交给 git-http-backend。
+    location ~ "^/homebrew(/.*)$" {
+        client_max_body_size 0;
+        fastcgi_connect_timeout 60s;
+        # 大仓库协商打包耗时较长（SJTU git-backend 同款取值）
+        fastcgi_read_timeout 600s;
+        fastcgi_send_timeout 600s;
+
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /usr/libexec/git-core/git-http-backend;
+        fastcgi_param GIT_HTTP_EXPORT_ALL "";
+        fastcgi_param GIT_PROJECT_ROOT /srv/git;
+        fastcgi_param PATH_INFO $1;
+        fastcgi_param REMOTE_USER $remote_user;
+        fastcgi_pass unix:/tmp/fcgiwrap.sock;
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homebrew-git-entrypoint
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  entrypoint.sh: |
+    #!/bin/sh
+    set -eu
+    # fcgiwrap 以 4 进程承接并发 smart-http 请求；
+    # socket 与 nginx 同 uid（65532，与 sync 一致），无需求助宽权限
+    spawn-fcgi -s /tmp/fcgiwrap.sock -F 4 -- /usr/bin/fcgiwrap
+    exec nginx -g 'daemon off;'

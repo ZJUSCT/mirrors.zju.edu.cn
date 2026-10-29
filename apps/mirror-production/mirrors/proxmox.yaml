@@ -1,0 +1,36 @@
+metadata:
+  name: proxmox
+info:
+  description: Proxmox 各产品的公开软件仓库、安装镜像与容器模板
+  upstream: rsync://mirrors.nju.edu.cn/proxmox/ # 官方未提供 rsync；NJU 内容完整且更新及时
+sync:
+  type: rsync
+  interval: 8h
+  timeout: 8h
+storage:
+  size: 1Ti
+  volumeName: pvc-193d9cdd-8190-43ee-9837-a91f45ead94f
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://pve.proxmox.com/wiki/Package_Repositories
+      - https://pbs.proxmox.com/docs/installation.html
+      - https://pmg.proxmox.com/pmg-docs/pmg-admin-guide.html
+      - https://pdm.proxmox.com/docs/installation.html
+      - https://pom.proxmox.com/offline-mirror.html
+      - http://download.proxmox.com/
+    policy:
+      - 官方公开提供 Proxmox VE、Backup Server、Mail Gateway、Datacenter Manager 及 Ceph 的 no-subscription 和 test 软件源，并提供安装镜像与容器模板。
+      - Enterprise 软件仓库需要有效订阅，不属于本公共镜像范围。
+      - 官方未提供公共 rsync 上源或同步周期；Proxmox Offline Mirror 工具仅说明如何建立本地 APT 仓库快照。
+  upstreams:
+    - url: rsync://mirrors.nju.edu.cn/proxmox/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4/IPv6 RTT 约 12ms、rsync 约 88MiB/s
+      note: 非官方同步来源；包含 debian、images 和 iso，主要仓库元数据已更新至当日。

@@ -1,0 +1,63 @@
+metadata:
+  name: ubuntukylin-cdimage
+info:
+  description: Ubuntu Kylin 安装镜像
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/ubuntukylin-cdimage/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 16Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.ubuntukylin.com/downloads/osdownload-cn.html
+    - https://cdimage.ubuntu.com/ubuntukylin/releases/
+    - https://cdimage.ubuntu.com/ubuntukylin/releases/22.04/release/
+    - https://ubuntukylin.mirrorservice.org/
+    policy:
+    - 优麒麟官方当前下载页提供 26.04、25.10、24.04，另推荐高校与 mirrorservice 镜像；已确认官方仍发布新版，不能因旧 cdimage.ubuntukylin.com 域名解析失败而认定项目停止发行。
+    - 已对官方下载按钮作只读 HEAD 跳转核对：26.04 指向 cdimage.ubuntu.com/ubuntukylin/releases/26.04/release/ubuntukylin-26.04-desktop-amd64.iso，24.04
+      指向 NJU 的 professional/24.04/ubuntukylin-24.04-amd64.iso，均不是旧 releases/basic 树。
+    - 本次 TUNA 初始化严格只有 focal/ 下 20.04-basic、20.04.1-enhanced 两个 ISO，jammy/ 下 22.04-basic 一个 ISO，以及 20.04→focal、22.04→jammy
+      链接，总计约 8.85 GB；是历史 basic/enhanced 发行树。
+    - Canonical 的 https://cdimage.ubuntu.com/ubuntukylin/releases/ 当前可访问，但采用版本号/release/ 布局，22.04/release 下为 ubuntukylin-22.04.5-desktop-amd64.iso
+      及校验、torrent、zsync 文件，与 TUNA basic/enhanced 版文件名和产品范围不一致，不能直接替换根目录。
+    - 官方推荐的 https://ubuntukylin.mirrorservice.org/ 也可列出历史 enhanced/pro 等 ISO，但根目录布局与 focal/jammy 不同，且它是第三方镜像，并非可直接验证等价的官方
+      basic 树。
+    - 旧 rsync://cdimage.ubuntukylin.com/releases/basic/ 当前 DNS 解析失败；已找到持续发布的官方替代下载体系，但没有在已读文档中找到相同 basic/enhanced
+      树的新官方同步入口。
+    - 已阅读官方系统下载页及 Canonical 发布目录，未找到此历史 basic/enhanced 子树的官方镜像同步间隔要求；本站 24h 配置保持暂停。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/ubuntukylin-cdimage/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 已完成的一次性 TUNA 初始化来源；当前暂停自动同步。
+  - url: rsync://cdimage.ubuntukylin.com/releases/basic/
+    stack: unresolved
+    status: unavailable
+    surveyed_at: '2026-10-02'
+    note: 历史官方 basic 入口当前域名不可解析；TUNA 数据停留于 focal/jammy 三个 ISO。
+  - url: https://cdimage.ubuntu.com/ubuntukylin/releases/
+    stack: ipv4
+    status: incompatible
+    surveyed_at: '2026-10-02'
+    note: 官方可用的新发布目录，但 desktop 产品和 version/release 路径不同于 basic/enhanced 历史范围。
+  - url: https://ubuntukylin.mirrorservice.org/
+    stack: dual
+    status: incompatible
+    surveyed_at: '2026-10-02'
+    note: 项目官网推荐的第三方镜像；根目录为混合历史 ISO，不能直接替换 basic 子树。
+  bootstrap:
+    note: 已完成 TUNA 初始化，当前保持 sync-paused；旧 basic 上游已无法解析；现行官方 desktop 下载树与初始化 basic/enhanced 范围、路径不同，需要决定是否迁移产品范围及路径映射，保持暂停。
+      保留现有初始化数据并等待最终处理，不自动恢复同步。
+    reported_size: 8.25G

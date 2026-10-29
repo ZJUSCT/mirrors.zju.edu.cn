@@ -1,0 +1,50 @@
+metadata:
+  name: lxc-images
+info:
+  description: Linux Containers 容器镜像
+  upstream: rsync://rsync.images.linuxcontainers.org/lxc-images/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 764Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://images.linuxcontainers.org/
+    - https://linuxcontainers.org/incus/docs/main/reference/image_servers/
+    - https://github.com/lxc/lxc-ci
+    - https://mirrors.tuna.tsinghua.edu.cn/help/lxc-images/
+    policy:
+    - '官方 images.linuxcontainers.org 明确称其为 Incus 与 LXC 镜像服务器：LXC 使用 lxc-download 模板，Incus 使用默认 images: remote；不是
+      Canonical LXD 镜像库。TUNA 帮助页将 LXC 与 LXD 一并排除的表述与当前官方首页不符，应以官方为准。'
+    - 官方镜像由 distrobuilder 和 lxc/lxc-ci 定义构建，经基础自动测试发布；官方说明保留过去3天镜像，因此滚动更新产生的旧构建删除需要具体审核，不能直接放宽删除限制。
+    - 官方自营 rsync.images.linuxcontainers.org 的 lxc-images 模块当前允许匿名 IPv4、IPv6 列目录，均返回0；保留计划中的 -6。已查阅官方服务器和 Incus
+      文档，未找到规定镜像站同步频率或注册流程的镜像政策；24h 是本地策略，不声称为官方要求。
+    - TUNA 与官方 rsync 的根文件及 capn、images、meta、os 目录一致；images 下25个发行版名称逐一一致，meta 下1.0、instance-types、simplestreams
+      一致。应同步整个 lxc-images/ 根，不能仅同步 images/ 而丢失协议元数据。
+    - 现有 rsync 模板可保留该树，无须新增管理器；本次仅做只读目录探测，完整 dry-run、空间与删除审核、实际同步及 HTTP 发布验证由 rollout 执行。
+    - 3591项删除已审核；3572项可匹配新增的较新构建，Mint Vanessa余下19项仅有未变化的较新替代文件，现有删除门禁无法证明快照中的替代文件。另发现官方LXC索引10个唯一文件路径不在官方rsync树，需核实。保持暂停。
+    - 3591项旧构建删除均有同产品较新替代；其中Mint19项的替代文件已在发布快照逐个核对官方SHA256，但未出现在>f差异，当前门禁不支持已存在替代，暂保持暂停。LXC索引10个缺失路径经官方HTTP404和CI源码证实为上游产物/索引不一致，不是镜像布局差异；Incus索引完整。
+    - Mint 较新完整镜像已核对官方摘要；切源门禁新增当前只读快照 SHA256 复验且要求替代路径不在本轮变更/删除中。官方 LXC 索引缺失产物为上游自身问题，保留问题记录。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/lxc-images/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始化已成功，任务 lxc-images-sync-1791044468；仍需保持暂停直到正式上游验证完成。
+  - url: rsync://rsync.images.linuxcontainers.org/lxc-images/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: 官方自营主机；匿名 IPv4/IPv6 列目录成功，选择 -6；根及发行版/元数据目录布局对齐。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。

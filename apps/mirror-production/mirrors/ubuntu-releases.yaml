@@ -1,0 +1,35 @@
+metadata:
+  name: ubuntu-releases
+info:
+  description: Ubuntu 官方桌面版和服务器版安装镜像
+  upstream: rsync://rsync.releases.ubuntu.com/releases/ # Canonical 官方 releases 同步源
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 200Gi
+  volumeName: pvc-7d4bc8da-37cb-49e1-b3f0-607d5cddbb0b
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://releases.ubuntu.com/
+      - https://wiki.ubuntu.com/Mirrors
+      - https://wiki.ubuntu.com/Mirrors/Scripts
+      - https://canonical-ubuntu-project.readthedocs-hosted.com/release-team/push-mirroring/
+      - https://launchpad.net/ubuntu/+cdmirrors
+    policy:
+      - 普通安装镜像站每日检查一次即可；国家级镜像须每 4 小时同步一次或配置推送触发。
+      - 公共镜像应在 Launchpad 登记；HTTP 服务为必需，rsync 服务为可选。
+      - 推送同步须与 Ubuntu 协调；Canonical 支持 SSH 或 HTTP 触发，并要求由其推送的镜像从 rsync.releases.ubuntu.com 同步。
+  upstreams:
+    - url: rsync://rsync.releases.ubuntu.com/releases/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 248ms；IPv6 RTT 约 242ms；rsync 约 9.0MiB/s
+      note: Canonical 官方同步源；MOTD 提醒善意使用，releases 模块仅包含正式安装镜像。

@@ -1,0 +1,73 @@
+metadata:
+  name: nginx
+info:
+  description: Nginx Web 服务器的源码与发布文件
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/nginx/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 476Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-05'
+    docs:
+    - https://nginx.org/en/linux_packages.html
+    - https://nginx.org/en/pgp_keys.html
+    - https://nginx.org/packages/
+    policy:
+    - 官方Linux packages文档指定 https://nginx.org/packages/ 为稳定包根，mainline/为同根内主线子树；本站/nginx/应直接映射packages/内容，不再嵌套packages/，不替换成nginx.org/download/源码发布树。现有描述“源码与发布文件”不准确，建议改为“Nginx
+      官方 Linux 软件包仓库（稳定版与主线版）”。
+    - 官方与本站根均有10目录：aix、alpine、amzn、centos、debian、keys、mainline、rhel、sles、ubuntu。官方文档现行支持范围不是删除历史目录的许可；保留已有历史版本、架构、源码包和动态模块，切源前审核全树差异。文档仍提amzn2，但当前根未列出；不能凭文档凭空补目录或裁剪已存在的树。
+    - APT component为nginx；Debian/Ubuntu稳定与mainline仓库分开。RPM文档要求gpgcheck=1；APK使用独立RSA公钥。保留原元数据、包及签名，不重签，不用trusted=yes或关闭校验。keys/nginx_signing.key已包含多个签名钥，不应只保留文档示例中的旧主钥。
+    - 官方说明公钥和包在同一服务器，建议进一步认证钥的真实性；本轮信任锚来自官方HTTPS，未做Web of Trust或带外认证。两份实际InRelease签名钥为8540A6F18833A80E9C1653A42FD21310B49F6B46。
+    - 所查官方Linux packages/PGP页未给公开rsync模块、强制轮询周期或镜像登记前置要求；不据此推断未公开政策。6h仅是本地排程候选。现有tsumugu nginx解析器可读取官方树，无需新增同步类型或脚本。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: nginx-sync-1791153916
+    succeeded_at: '2026-10-05T00:12:28Z'
+    published_at: '2026-10-05T00:12:39Z'
+    note: 首次任务连接重置失败，唯一同源补同步成功发布；仍暂停，未执行官方切源。
+    official_interval_candidate: 6h
+    official_cutover_state: viable-existing-tsumugu-pending-production-validation
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/nginx/
+    surveyed_at: '2026-10-05'
+    status: bootstrap-complete
+    note: 当前USTC种子源，补同步已成功发布但仍暂停。
+  - url: https://nginx.org/packages/
+    surveyed_at: '2026-10-05'
+    status: candidate-verified-tsumugu-nginx
+    note: 根/一级/代表深层list验证通过；未完成全树兼容性/容量/删除审查及官方真实同步。
+  verification:
+    surveyed_at: '2026-10-05'
+    checks:
+    - 单次同源补同步nginx-sync-1791153916真实rsync exit0，2026-10-05T00:12:28Z Job完成（lastAttempt记录00:12:32Z），00:12:39Z发布；activeSnapshot/activePVC均为nginx-snap-1791153916，VolumeSnapshot
+      readyToUse、PVC dataSource及Ready observedGeneration匹配，Degraded=False。仍为原USTC源、原nginx-sync工作卷且暂停。
+    - 补同步127676项，新增48472项、传输47895文件/98.00G、总树231.68G、删除0；首轮连接重置失败未误记成功，额外一次重试已消费。
+    - 公网/nginx/返回200；实际目录JSON /nginx/.mirror-index/的10个一级目录与官方根一致。HTML是动态目录壳，不能只凭页面200认定有文件。
+    - 公网/官方7文件逐字节相同：Debian bookworm InRelease/Packages.gz、mainline Ubuntu noble InRelease/Packages.gz、稳定与mainline RHEL9 x86_64
+      repomd.xml，以及nginx_1.30.5-1~bookworm_amd64.deb。另公网keys/nginx_signing.key与官方/keys/nginx_signing.key一致。
+    - 两份公网InRelease经官方钥gpgv验证通过；对应Packages.gz大小/SHA256与已签名索引匹配。样例DEB为1085720字节，SHA256=ab248710dbd9c93dcd2eeb2df0544f3612011ec9fe96c396076a73d2421304bd，匹配已验证Packages索引。未执行安装、RPM/APK包签名验证或全树字节校验。
+    - 工作站tsumugu 0.20260921.0 list --parser nginx --upstream-base /packages/在根、全部10个一级目录及7个APT/RPM/APK深层目录exit0；深层含Debian元数据、amd64索引、nginx包池、mainline
+      Ubuntu noble、稳定/mainline RHEL9 repodata、Alpine v3.22 x86_64。未递归遍历全树、未执行tsumugu sync或生产容器验证。
+    remaining: 继续保持暂停；按共享max_concurrent=5 admission（active+OpenWrt空闲余量+reservation）取得容量后，从固定已发布快照恢复一次性独立可写克隆，使用现有tsumugu模板做全树预检（dry-run也可能写入符号链接，不挂载工作PVC，不在发布PVC上运行），审核平台/历史版本/链接/删除集/容量和工具版本。保留max_delete=100默认保护，不为切源盲目提高阈值。所有兼容性和容量门槛通过后，才能真实官方同步、新快照Ready与公网验证，最后解除暂停。当前是生产验收未完成，不是现有工具不支持。
+  candidate_config:
+    info:
+      description: Nginx 官方 Linux 软件包仓库（稳定版与主线版）
+      upstream: https://nginx.org/packages/
+    sync:
+      type: tsumugu
+      interval: 6h
+      timeout: 24h
+      tsumugu:
+        parser: nginx
+        threads: 4
+        max_delete: 100

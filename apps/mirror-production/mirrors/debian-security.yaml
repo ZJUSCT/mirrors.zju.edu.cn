@@ -1,0 +1,35 @@
+metadata:
+  name: debian-security
+info:
+  description: Debian 安全更新软件包仓库
+  upstream: rsync://rsync.security.debian.org/debian-security/ # Debian 安全仓库的官方 rsync 入口
+sync:
+  type: ftpsync
+  interval: 6h
+  timeout: 6h
+  ftpsync:
+    archive: security
+storage:
+  size: 300Gi
+  volumeName: pvc-7a1a5bb6-301d-43c1-b493-01ba49ea3b07
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.debian.org/security/faq#mirror
+      - https://www.debian.org/mirror/ftpmirror
+      - https://salsa.debian.org/mirror-team/archvsync
+    policy:
+      - security.debian.org 通过 DNS 别名提供多个官方镜像；Debian 不鼓励使用非官方安全更新镜像，以免因更新不及时造成问题。
+      - ftpsync 明确支持 security 归档；软件包仓库应使用两阶段同步，避免同步期间 APT 元数据与软件包不一致。
+      - 官方没有为第三方安全更新镜像规定同步间隔或登记流程。
+  upstreams:
+    - url: rsync://rsync.security.debian.org/debian-security/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: 实测约 4.5MB/s
+      note: Debian 安全仓库的官方 rsync 入口；DNS 会调度至不同的官方节点。

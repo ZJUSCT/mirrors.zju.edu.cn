@@ -1,0 +1,50 @@
+metadata:
+  name: python
+info:
+  description: Python 官方源码、软件、文档仓库
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/python/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 180Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.python.org/ftp/python/
+    - https://www.python.org/downloads/
+    - https://www.python.org/downloads/metadata/sigstore/
+    policy:
+    - 官方 https://www.python.org/ftp/python/ 是 Python 发行源码、Windows/macOS安装器、嵌入包、文档及历史版本目录树，与 PyPI 软件包仓库不同；保留完整 /ftp/python/
+      根映射，不替换成 downloads 页面或某个最新版本。
+    - 现有 tsumugu nginx parser 对根、3.14.0/、3.14.0/amd64/ 三级目录均 exit0，可枚举文件名、时间、大小；官方HTML提供标准目录索引，属于现有模板候选，没有发现需要专用同步器的证据。尚未验证所有历史子目录/全树删除集。
+    - 根下有版本目录以及其他平台/文档资源；3.14.0 包含源码压缩包、Windows MSI/EXE、签名bundle等，不能只同步tarball。维持文件时间戳、相对路径和伴随元数据，不改写签名材料。
+    - 官方说明 Python 3.14 起只提供 Sigstore 验证；较早系列还提供 legacy OpenPGP。验证需要匹配发布者证书身份和OIDC issuer；不能把缺少.asc当3.14发布损坏，也不能把bundle字节相同当签名验证成功。
+    - 未找到本轮可确认的官方公共 rsync 或固定镜像轮询周期；24h 是本站选择。HTTPS已有parser候选，应继续验证，而非因没有rsync就判定现有四类模板均不支持。
+  bootstrap:
+    note: USTC 初始化 job python-sync-1791052733 于 2026-10-03T19:50:14Z 成功，2026-10-03T19:50:25Z 发布，activeSnapshot=python-snap-1791052733；当前
+      sync-paused=true。官方切源尚未执行。
+    official_interval_candidate: 24h
+  validation:
+    observed_at: '2026-10-03'
+    completed:
+    - 2026-10-03 官方 HTTP 根和代表版本目录200；tsumugu list --parser nginx 三次 exit0，三级枚举成功。
+    - 公网 3.14.0/Python-3.14.0.tar.xz.sigstore 与官方同路径逐字节相同：5374字节，SHA256=83cf46269926bf166ca1b67e5647c44152a300a0f6d30cbbce147099e072bf41。未下载对应tarball或执行Sigstore证书/签名认证。
+    remaining: 继续以现有tsumugu模板审阅全树范围/异常和删除保护，生产增量与新快照验证；按官方身份/OIDC issuer完成代表Python发行物Sigstore验收。没有部署新工具、切源或解除暂停。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/python/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 初始化成功，当前配置仍选此源且暂停；容量仅是种子快照信息。
+  - url: https://www.python.org/ftp/python/
+    surveyed_at: '2026-10-03'
+    status: official-http-parser-candidate
+    note: tsumugu nginx 根、3.14.0、amd64列表均exit0；未执行生产转换或整树下载。

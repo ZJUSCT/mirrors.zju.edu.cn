@@ -1,0 +1,54 @@
+metadata:
+  name: trisquel-images
+info:
+  description: 完全由自由软件组成的 Trisquel GNU/Linux 安装镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/trisquel-images/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 76Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://trisquel.info/en/wiki/mirroring-trisquel
+    policy:
+    - 官方 Mirroring Trisquel 指定 rsync.trisquel.org::trisquel.iso，同步安装镜像与配套文件；trisquel.packages 是独立软件包仓库，不能混用。本次 trisquel.iso
+      根列表 exit 0，含 11.0.1/12.0 ISO、基础 tarball、.asc、.manifest、.sha256、.sha512 与 .torrent。
+    - 官方 2026 年 8 月页面报告 ISO 树 38.87GB、建议预留 100GB；本站现有 PVC 76Gi 大于当前报告体积但小于官方未来容量建议，需监测增长。未规定同步周期；24h 是本站候选。
+    - 官方要求镜像运行后通知项目以便公开列入镜像表；这是登记要求，公开 rsync 命令未要求先取凭据。本次未发邮件。
+    - 官方模块内 trisquel-archive-signkey.gpg 是指向 /home/archive/trisquel/trisquel-archive-signkey.gpg 的绝对外部链接；现有 --safe-links 应排除此链接，不能取消保护或扩大同步根。ISO
+      的 .asc 文件必须保留，验证公钥可从项目 HTTPS 独立取得。
+    - 现有 rsync 模板可直接处理该文件树，不需要 ftpsync/qfm/tsumugu 或新同步器；切换前必须审阅生产 dry-run，确认缺失链接不会影响 ISO/签名文件发布。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: trisquel-images-sync-1791044076
+    succeeded_at: '2026-10-03T16:31:59Z'
+    published_at: '2026-10-03T16:32:07Z'
+    note: USTC 首次同步与快照发布成功，Ready=True；自动同步仍暂停，本次只复核官方资料和端点，没有官方切源。
+    official_interval_candidate: 24h
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/trisquel-images/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 首次初始化种子；当前配置仍指向此源且暂停，不代表官方日常增量已经启用。
+  - url: rsync://rsync.trisquel.org/trisquel.iso/
+    surveyed_at: '2026-10-03'
+    status: candidate-verified-readonly
+    note: 工作站有界非递归 rsync 根列表成功，尚未验证生产出口、完整删除集或真实官方同步。
+  verification:
+    surveyed_at: '2026-10-03'
+    checks:
+    - 官方镜像指南 HTTP 200；工作站非递归 rsync 根列表 exit 0，116 行；明确发现上述越界签名钥链接。
+    - 本站 trisquel_12.0_amd64.iso.sha256 可访问（90 字节）；独立项目 HTTPS https://archive.trisquel.org/trisquel/trisquel-archive-signkey.gpg
+      可访问（6581 字节）。未下载多 GB ISO 或完成 ISO 验签。
+    - 尝试 https://cdimage.trisquel.org/trisquel_12.0_amd64.iso.sha256 返回 404，不能将该猜测的 HTTP 根当有效官方文件路径；官方 rsync 路径已确认。
+    remaining: 生产同过滤 dry-run、差异/删除集审核、官方真实同步与匹配快照发布、ISO 哈希/签名和公网抽样仍待完成；公钥越界链接单独记录，不关闭 safe-links。

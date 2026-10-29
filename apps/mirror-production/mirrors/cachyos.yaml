@@ -1,0 +1,69 @@
+metadata:
+  name: cachyos
+info:
+  description: CachyOS 的安装镜像和官方软件包仓库
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/cachyos/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 388Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/cachyos-mirrorlist/cachyos-mirrorlist
+    - https://github.com/CachyOS/wiki/blob/1803ac4541cf46059b37f8005b1211791e3a8bb3/src/content/docs/policy/repository_policy.md
+    - https://mirror.init7.net/packages.html
+    - https://mirror.init7.net/policy.html
+    - rsync://mirror.init7.net/cachyos/
+    policy:
+    - 官方wiki的当前分支为next；此前main分支路径404不能视为无官方文档。本轮浅克隆官方wiki并读取1803ac4541cf46059b37f8005b1211791e3a8bb3的Repository Usage Policy。第8节明确允许rsync/syncthing镜像及第三方Web服务，前提是仓库数据保持不变；第6节还明确排除终端用户和第三方镜像适用的distribution
+      redistribution限制，不能误判为第三方镜像禁令。
+    - 官方cachyos-mirrorlist将mirror.init7.net/cachyos/repo/$arch/$repo列为瑞士tier2客户端镜像。Init7自述同时公开HTTP/HTTPS/Rsync，其packages页明确公布cachyos模块，daemon模块列表与精确rsync://mirror.init7.net/cachyos/有界列表均成功。该候选是项目认可的第三方运营镜像，不是CachyOS自营master，也不是从客户端URL猜测后未验证的rsync端点。
+    - Init7根模块含与既有USTC种子相同的五个目录：ISO/、repo/、.stfolder/、.theme/、Nginx-Fancyindex-Theme-light/，还有README、根级安装辅助包和.stdfolder。HTTP隐藏目录不可见不代表rsync模块缺少它们；单根rsync能保留结构，无需改为包仓库子树或删除展示/同步标记目录。根目录一致只证明候选范围，未证明整树相同。
+    - 已验证ISO下cli/desktop/handheld/kde/testing，repo下x86_64/x86_64_v3/x86_64_v4，v4下cachyos-core-v4、cachyos-core-znver4、cachyos-extra-v4、cachyos-extra-znver4、cachyos-v4、cachyos-znver4。直接将模块落到/cachyos/，不额外添加层级，也不能只保留当前CPU架构。
+    - Init7公开公平使用政策：服务免费，请合理使用；允许大环境使用本地镜像，不作测速，并保留限速/临时封禁权。已读CachyOS和Init7文档未规定匿名拉取前置注册或固定最大连接数；不能由政策未提及推断无限制许可。本轮只用少量短列表，没有邮件联系、测速或包/ISO下载。
+    - Init7 packages页标注其自身CachyOS上游刷新4–8h，不是下游强制同步频率；6h仍可作为本站低负载候选。官方2024.09旧changelog提到项目内部由3h改1h，不能当成现行第三方镜像每小时同步要求。
+    - 现有rsync类型可以直接表达该候选，不需要新增工具或改造HTTP解析器；ftpsync/qfm无必要。工作站IPv4/IPv6精确根列表均exit0，不代表生产网络已通过。当前tsumugu nginx分别不能解析Init7及奥地利镜像的自定义HTML，但这不再阻塞已有公开rsync路径。
+    - CDN77仅确认精确包数据库可用，已测父目录404，仍不是本次完整镜像同步根。官方列表中的奥地利https://at.cachyos.org/具有同五目录的可浏览完整根，可保留为调查备选；不因项目子域便宣称自营master，页面明确标示SoulLabs运营。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: cachyos-sync-1791107993
+    succeeded_at: '2026-10-04T10:00:29Z'
+    published_at: '2026-10-04T10:00:38Z'
+    note: 首次作业cachyos-sync-1791086101因四个源端文件消失退出24；一次同源catch-up cachyos-sync-1791107993已退出0，2026-10-04T10:00:29Z成功、10:00:38Z发布匹配cachyos-snap-1791107993，Ready=True。历史失败不能继续当作当前初始化失败。仍使用USTC，自动同步暂停，未官方切源。
+    official_interval_candidate: 6h
+    official_cutover_blocker: 已找到项目认可第三方Init7的完整公开rsync候选；当前待生产连接、整树diff/容量、签名和发布验收，不再因缺少完整pull入口而等待用户裁定。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/cachyos/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: USTC首次拷贝及一次catch-up成功发布，当前配置仍使用它且暂停。
+  - url: rsync://mirror.init7.net/cachyos/
+    surveyed_at: '2026-10-04'
+    status: candidate-verified-readonly
+    note: 官方mirrorlist列出的第三方Init7；运营方公布rsync模块，本次工作站双栈根及ISO/repo代表子目录exit0，五个种子目录均存在。待生产整树和容量验证，未切换。
+  - url: https://cdn77.cachyos.org/repo/
+    surveyed_at: '2026-10-04'
+    status: client-endpoint-not-enumerable
+    note: 官方mirrorlist客户端入口；已知cachyos.db200，但根/目录404，不能用现有tsumugu从此根自动建立完整树。
+  - url: https://at.cachyos.org/
+    surveyed_at: '2026-10-04'
+    status: listed-full-root-http-parser-incompatible
+    note: 官方mirrorlist中的SoulLabs镜像，HTTP可列同五目录及ISO/repo代表子目录；当前tsumugu nginx解析失败。本轮没有验证其rsync，保留为备选而不优先于已验证Init7 rsync。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 官方wiki源码已浅克隆，固定commit并保存完整repository_policy.md；官方mirrorlist沿用本日已抓取证据。Init7政策和packages页已完整读取。
+    - Init7 daemon公开cachyos模块；精确根IPv4/IPv6非递归列表exit0。根含全部五个种子目录，ISO/repo/v4和desktop版本目录有界列表成功。没有递归全树、下载包或ISO。
+    - Init7已知cachyos.db只请求HEAD：HTTP200、Content-Length523530、Last-Modified2026-10-04T00:53:43Z。该大小与此前CDN数据库一致仅是元数据吻合，不是内容哈希或签名验证。
+    - USTC首次作业因源文件消失退出24，一次同源catch-up已成功并发布；本轮不重复USTC探测，不修改仓库或集群。
+    remaining: 可推进Init7生产同参数只读diff：优先使用一次性快照克隆，完整记录传输增量、总大小、删除集和链接；审查镜像同步时差对包索引的影响并核对卷及后端空间。通过后按调度余量真实同步、发布匹配快照，使用CachyOS可信keyring验证包签名/数据库引用及ISO校验和并公网抽样，再以6h本地候选周期解除暂停。不是已完成官方切源或必须用户决策的hold。

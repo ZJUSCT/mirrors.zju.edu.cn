@@ -1,0 +1,52 @@
+metadata:
+  name: neurodebian
+info:
+  description: 面向神经科学研究的 Debian 软件仓库与虚拟机镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/neurodebian/ # 仅首次初始化；完成后切换 comment.upstreams 中的官方源
+sync:
+  type: rsync
+  # USTC 初始化期间按每日一次；官方源日常周期见下方注释。
+  interval: 24h
+  timeout: 24h
+  # WaitForFirstConsumer 首次落盘到 s1；PVC 绑定后可移除此选择器。
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 160Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://neuro.debian.net/faq.html
+    policy:
+    - 官方 FAQ 明确仓库可用 rsync 镜像，并要求镜像赞助者联系项目；候选模块为 rsync://neuro.debian.net/neurodebian/。
+    - FAQ 标出仓库签名密钥 0x439754ED1F42AA2C；根列表显示 .timestamp、dists/、extracts/、pool/、vm/，应保持这些范围和 APT 元数据边界。
+    - 未查到官方固定同步周期；6h 是本站本地排程候选，不是官方要求。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: neurodebian-sync-1790954927
+    succeeded_at: '2026-10-02T19:39:35Z'
+    published_at: '2026-10-02T19:39:45Z'
+    note: USTC bootstrap source neurodebian-sync-1790954927 于 2026-10-02T19:39:35Z UTC 成功，快照发布于 2026-10-02T19:39:45Z UTC；mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。此
+      URL 只记录首次初始化来源，不表示已切换到官方源。
+    official_cutover: 未执行；须先按下列候选源完成范围、删除集、新鲜度和完整性验收。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/neurodebian/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 仅作为本次首次同步种子；该镜像的 USTC bootstrap rsync 已成功，自动增量仍暂停。
+  - url: rsync://neuro.debian.net/neurodebian/
+    surveyed_at: '2026-10-03'
+    status: candidate-unverified
+    note: 官方 daemon 根列表 exit 0 且含 .timestamp/dists/extracts/pool/vm；尚未执行生产 dry-run、签名验收或真实切换。
+  verification:
+    surveyed_at: '2026-10-03'
+    checks:
+    - 官方 FAQ HTTP 200；2026-10-03 04:10:02（工作站本地时间） 的 .timestamp 和 2026-09-28/08-04 的内容目录可见。
+    - 签名锚点按 FAQ 记录为 0x439754ED1F42AA2C；切换前仍须在同步快照中用该项目密钥验证 Release。
+    caveats:
+    - FAQ 未规定固定轮询周期；6h 是本站候选。

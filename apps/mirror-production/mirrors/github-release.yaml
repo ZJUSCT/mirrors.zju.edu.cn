@@ -1,0 +1,42 @@
+metadata:
+  name: github-release
+info:
+  description: 一些项目的 Github Release 镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/github-release/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 192Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://docs.github.com/en/rest/releases/releases
+    - https://github.com/ustclug/ustcmirror-images/tree/master/github-release
+    policy:
+    - 本项目是 USTC 选择的 GitHub Release 下载树，不是 GitHub 全站镜像；现有种子包含 14 个所有者目录，不得用脚本示例配置替代真实项目白名单。
+    - 官方 API 提供分页 releases 与 assets；后续需保留既有版本数、预发布/源码归档选取、目录命名、排除规则及 LatestRelease 内部链接。保留上游校验和/签名文件，不改写资产。
+    - 未发现官方固定镜像周期；24h 是本地设置。
+  bootstrap:
+    note: USTC 首次同步任务 github-release-sync-1791056350 于 2026-10-03T20:24:38Z 成功，快照于 2026-10-03T20:24:47Z 发布，Ready=True；自动同步保持暂停，并未完成官方切换。
+    official_cutover_blocker: 官方为按项目分页的 Release API，现有 rsync/ftpsync/qfm/tsumugu 没有实现项目白名单、release/asset 选择及现有布局生成。样本 API
+      请求本轮返回 403 rate limit exceeded，属额外的本轮访问限制，不代表永久不可用。现行项目规则尚未完整还原；不能以普通 HTTP 递归代替 API 同步。
+    action: 保留成功发布快照和暂停状态，不新增同步类型、不恢复 USTC 定时同步；待来源、现有范围和工具能力均验证后再安排接续。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/github-release/
+    surveyed_at: '2026-10-03'
+    status: selected
+    note: 已完成的 USTC 首次同步来源；本轮未连接 USTC rsync。
+  - url: https://api.github.com/repos/
+    surveyed_at: '2026-10-03'
+    status: blocked-by-existing-template
+    note: 官方为按项目分页的 Release API，现有 rsync/ftpsync/qfm/tsumugu 没有实现项目白名单、release/asset 选择及现有布局生成。样本 API 请求本轮返回 403 rate limit
+      exceeded，属额外的本轮访问限制，不代表永久不可用。现行项目规则尚未完整还原；不能以普通 HTTP 递归代替 API 同步。

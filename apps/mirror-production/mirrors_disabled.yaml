@@ -1,0 +1,42 @@
+# 暂不生成 Mirror CR 的候选镜像。需启用时将对应条目移入 mirrors/，
+# 再运行 gen-mirrors.py 重新生成清单。
+- metadata:
+    name: fedora-archive
+  info:
+    description: Fedora 与 EPEL 历史发布归档
+    upstream: rsync://dl.fedoraproject.org/fedora-archive/ # 逻辑内容模块；QFM 实际经同主机的 fedora-buffet 传输
+  sync:
+    type: qfm
+    interval: 1h
+    timeout: 24h
+    # WaitForFirstConsumer 首次落盘到 s1；PVC 绑定后移除此选择器
+    nodeSelector:
+      kubernetes.io/hostname: s1.mirrors.zjusct.io
+    qfm:
+      module: fedora-archive
+  storage:
+    size: 40Ti
+  publish:
+    http:
+      tier: standard
+      replicas: 1
+      subPath: archive
+  comment:
+    official:
+      surveyed_at: 2026-09-19
+      docs:
+        - https://fedoraproject.org/wiki/Infrastructure/Mirroring
+        - https://forge.fedoraproject.org/infra/quick-fedora-mirror
+        - https://archives.fedoraproject.org/pub/archive/
+        - https://dl.fedoraproject.org/pub/DIRECTORY_SIZES.txt
+      policy:
+        - 官方将 fedora-archive 定义为历史 Fedora 发行版归档，对应主服务器上的 /pub/archive；其中还包含停止支持的 EPEL 与 Fedora 次级架构内容。
+        - 归档中的发行版已停止支持和维护，不再接收缺陷修复或安全更新，官方不建议将其用于现行系统。
+        - 官方优先推荐 quick-fedora-mirror；该工具依赖提供 fedora-buffet 模块的上源，可每 10 分钟检查一次。使用普通 rsync 时应每日同步数次。
+        - 官方目录统计显示 archive 当前约为 32TiB，且会随 Fedora 与 EPEL 版本停止支持而继续增长。
+    upstreams:
+      - url: rsync://dl.fedoraproject.org/fedora-buffet/
+        stack: dual
+        surveyed_at: 2026-09-19
+        metrics: IPv4 RTT 约 274–282ms、8.0MiB/s；IPv6 RTT 约 254–257ms、9.1MiB/s
+        note: Fedora 官方 master；quick-fedora-mirror 经 fedora-buffet 同步，本镜像仅选择 fedora-archive（/pub/archive）。

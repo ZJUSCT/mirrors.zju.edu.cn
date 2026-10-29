@@ -1,0 +1,45 @@
+metadata:
+  name: virtualbox
+info:
+  description: VirtualBox 虚拟化软件发布文件
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/virtualbox/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 380Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.virtualbox.org/wiki/Downloads
+    - https://download.virtualbox.org/virtualbox/
+    - https://download.virtualbox.org/virtualbox/7.2.20/
+    policy:
+    - Oracle 官方 Downloads 页面当前发布 VirtualBox 7.2.20，并说明平台包 GPLv3、Extension Pack 另受 PUEL；download.virtualbox.org/virtualbox/
+      是版本目录归档根。
+    - TUNA 初始化日志为 3,822 项、3,566 普通文件、约 254.72G，内容为版本目录、平台包、SDK、Extension Pack、UserManual 等，与官方根目录范围相符。
+    - 官方根索引采用 Apache 风格日期，例如 12-Oct-2013；现有 tsumugu nginx/apache-f2 解析器分别失败（日志记录 ParseError / 日期无法解析），fallback
+      尚未形成可复现的完整成功同步。
+    - 官方页面未规定镜像同步间隔；24h 只能作为未来配置建议。当前阻塞是解析器兼容性和可验证的完整范围，不是官方源不存在。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/virtualbox/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 首轮初始化已成功；仅作为已完成初始化来源，当前保持暂停。
+  - url: http://download.virtualbox.org/virtualbox/
+    stack: dual
+    status: blocked
+    surveyed_at: '2026-10-03'
+    note: 官方 HTTP 版本归档根可访问，目录格式与现有 parser 不兼容；需要修复/验证 parser 后再切源。
+  bootstrap:
+    note: TUNA 初始化已成功完成，当前保持 sync-paused；存在已记录的工具、范围或协议阻塞，保持暂停。
+    reported_size: 236G

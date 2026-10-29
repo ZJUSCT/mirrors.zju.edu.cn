@@ -1,0 +1,30 @@
+metadata:
+  name: ubuntu-cdimage
+info:
+  description: Ubuntu 及其衍生版本的每日构建与专用镜像
+  upstream: rsync://cdimage.ubuntu.com/cdimage/ # Canonical 官方 cdimage rsync 源
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 4Ti
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-23
+    docs:
+      - https://cdimage.ubuntu.com/
+      - https://canonical-ubuntu-project.readthedocs-hosted.com/release-team/mirrors/
+    policy:
+      - cdimage 站点提供 Ubuntu 及其衍生版本的每日构建、预安装镜像、Ubuntu Base、Ubuntu Core、netboot 等镜像。
+      - 官方通用镜像文档仅规定 Archive 与 Releases 镜像的同步频率；未找到完整 cdimage 树的同步间隔、登记要求或专用同步参数。
+  upstreams:
+    - url: rsync://cdimage.ubuntu.com/cdimage/
+      stack: dual
+      surveyed_at: 2026-09-23
+      metrics: IPv4 RTT 约 251–293ms；IPv6 RTT 约 242–252ms
+      note: Canonical 官方 rsync 源；与 ubuntu-releases 内容范围不同，主要包含每日构建及各类专用镜像；当前保留硬链接后的数据量约 2.97TiB。

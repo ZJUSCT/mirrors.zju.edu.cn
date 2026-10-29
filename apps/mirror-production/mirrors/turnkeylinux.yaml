@@ -1,0 +1,64 @@
+metadata:
+  name: turnkeylinux
+info:
+  description: 预配置服务器应用的 TurnKey GNU/Linux 系统镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/turnkeylinux/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 404Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://www.turnkeylinux.org/mirrors/
+    - https://www.turnkeylinux.org/mirrors/new/
+    - https://www.turnkeylinux.org/docs/release-verification/
+    - https://www.turnkeylinux.org/blog/v19.0-stable-iso-release/
+    policy:
+    - 官方mirrors页现可读且明确列名USTC、FAU、Kent等镜像，官方推荐根为rsync://mirror.turnkeylinux.org/turnkeylinux/。本轮没有rsync连接，协议未复验。
+    - 新镜像指南建议1h同步，理由为偶发紧急安全更新；规范公开根为/turnkeylinux/。注册页面用于加入镜像网络，未见匿名拉取前置白名单要求，本轮不发邮件。
+    - 保留原种子apt/images/metadata三棵树及历史平台/版本；不是只镜像v19 ISO。官方指南约600GB/保留两代是一般说明，本次404Gi为原计划，需保留容量监控。
+    - 不能把Sep1最后成功仅凭年龄当损坏；实际观测到同名Core19 ISO在USTC、官方metadata和官方images三个不同SHA256，且USTC为未签名hash。正常公开前须解决实际内容版本差异，不能仅替换hash。
+  bootstrap:
+    status: succeeded-sync-only-publication-held
+    note: USTC初始化成功并保留固定快照；无spec.publish，Ready=False/HTTPDisabled是预期隔离状态，不是公开Ready。继续保持sync-paused及publish删除覆盖，未执行官方同步或发布。
+    official_interval_candidate: 1h
+    publication_gate: kustomization.yaml:turnkeylinux-remove-publish-and-pause
+    post_bootstrap_review_required: true
+    job: turnkeylinux-sync-1791298916
+    succeeded_at: '2026-10-06T17:03:54Z'
+    snapshot: turnkeylinux-snap-1791298916
+    official_cutover_blocker: 继续保持不发布及暂停。在固定快照验证Core19实际ISO摘要与对应hash及官方可信签名，区分旧未签名0ab1beaa…、官方images已签名3d90e71a…、官方metadata未签名2b72e768…三种声明。不得只换hash；若需更新，按获准同范围官方接续同步完整image+hash并验收。FAU现有rsync/tsumugu候选仍需生产范围、APT、历史树、链接、删除集和容量验证；官方成功同步及匹配发布内容通过前不解除暂停。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/turnkeylinux/
+    surveyed_at: '2026-10-07'
+    status: bootstrap-complete-sync-only
+    note: USTC原范围同步成功，固定快照待内容验收，未公开；本轮仅复核已保存证据，无额外USTC请求。
+  - url: rsync://ftp.fau.de/turnkeylinux/
+    surveyed_at: '2026-10-04'
+    status: official-listed-rsync-candidate-unprobed
+    note: 官方列出的公共master；HTTPS Core19 signed hash通过验签，与官方images入口逐字节一致；rsync未连接。
+  - url: https://ftp.fau.de/turnkeylinux/
+    surveyed_at: '2026-10-04'
+    status: candidate-existing-tsumugu-nginx-list-verified
+    note: 现有tsumugu根和ISO目录list exit0，可作为现有工具备选；没有全树sync、APT/链接/删除集/生产网络验收。
+  verification:
+    surveyed_at: '2026-10-07'
+    checks:
+    - 官方/USTC root、metadata一级和ISO文件名集合相同，分别3、163、356项；ISO内有85个19.0及18.x历史文件。
+    - Core19官方images/FAU signed .hash原文一致，GPG GOOD/VALIDSIG；primary DEE90D9970AE35D55B7C6C2DC6D254B76A9D9430，subkey21FCE5FF2EC641318D9EA8F7D9FC75C29D0A033B。ISO
+      SHA256=3d90e71a3ba646c7a3f544e87cb32f36a00fe2d91d2f1606a6f76ff3b04fcd73。
+    - USTC images/metadata及Kent旧未签名文件SHA256期望=0ab1beaac8fc0d8a37de77c7a496960713758b94a762a339f0a4120f32825dcf；官方releases
+      metadata未签名期望=2b72e7685e4972aee44bdf1b28ddeacee0c05e4bbf0ff33d9ef7775cf871d340。该结论来自2026-10-04元数据调查；如今本地种子已取得，但固定快照实际ISO摘要仍待验证，不能认定具体包体损坏或构建归属。
+    - 官方与USTC trixie Release逐字节一致，SHA256=2c046bd70ee2966f028daf86673166a1fc9f11d1da33d8fe1edefa8918c51fd0；这是代表APT元数据比较，未验Release签名或包闭包。
+    - hourly-live.json确认turnkeylinux-sync-1791298916成功及lastSnapshot保留；未发布。上述官方指南、GPG和元数据对比为2026-10-04保存证据，本轮未重新请求上游。
+    remaining: 继续保持不发布及暂停。在固定快照验证Core19实际ISO摘要与对应hash及官方可信签名，区分旧未签名0ab1beaa…、官方images已签名3d90e71a…、官方metadata未签名2b72e768…三种声明。不得只换hash；若需更新，按获准同范围官方接续同步完整image+hash并验收。FAU现有rsync/tsumugu候选仍需生产范围、APT、历史树、链接、删除集和容量验证；官方成功同步及匹配发布内容通过前不解除暂停。

@@ -1,0 +1,57 @@
+metadata:
+  name: puppy
+info:
+  description: Puppy Linux 系统镜像与 PET 软件包
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/puppy/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 300Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://puppylinux-woof-ce.github.io/download.html
+    - https://raw.githubusercontent.com/puppylinux-woof-CE/woof-CE/testing/woof-distro/x86_64/ubuntu/noble64/DISTRO_PET_REPOS
+    - https://distro.ibiblio.org/puppylinux/
+    policy:
+    - Puppy 官方下载页指向官方 Woof-CE 构建配方；noble64 的 DISTRO_PET_REPOS 明确列 http://distro.ibiblio.org/puppylinux 作为 PET 包源。准确称其为官方构建使用的
+      ibiblio 发布仓库，不能称为 Puppy 自营主机。
+    - 候选 rsync://rsync.ibiblio.org/puppylinux/ 模块本次匿名根列表成功；模块内容直接映射本站 /puppy/，不得额外嵌套 puppylinux/。保留 Packages-puppy-*-official、pet_packages-*、puppy-*
+      发布树、arm、firmware、huge_kernels、sources、SFS 与历史目录，不能只取最新 ISO。
+    - 根中的 14 个链接均为模块内相对链接且目标目录存在，例如 pet_packages-jammy64 -> pet_packages-fossa64、pet_packages-lucid -> pet-packages-lucid、testx
+      -> test；继续保留 --safe-links，不重写客户端仓库元数据。
+    - ibiblio /help/rsync/ 本次 HTTP 200 内容仍为 Anubis 挑战页，未取得实际运维政策；不能把 HTTP 200 写成已阅读指南，也不能由此虚构禁止 pull 或必须申请。已观测匿名 rsync 可用，官方配方认可托管内容来源，仍须如实保留
+      rsync 运维政策未确认的限制。
+    - 未查到固定官方同步周期或针对该模块的登记前置条件；6h 是本站候选，不是上游要求。现有 rsync 模板直接支持标准发布文件树，无需定制下载器或其它模板。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: puppy-sync-1791068722
+    succeeded_at: '2026-10-04T00:51:29Z'
+    published_at: '2026-10-04T00:51:38Z'
+    note: USTC 首次同步及快照发布成功，Ready=True、Degraded=False，自动同步保持暂停；本次没有执行官方切源。
+    official_interval_candidate: 6h
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/puppy/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: USTC 初始化种子，当前配置仍指向此源但暂停；不冒称官方增量源。
+  - url: rsync://rsync.ibiblio.org/puppylinux/
+    surveyed_at: '2026-10-04'
+    status: candidate-verified-readonly
+    note: 精确模块工作站有界非递归列表 exit 0；可以继续生产 dry-run 验证，不代表生产协议栈、删除集和完整性已验收。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 官方下载页及 Woof-CE 配置 HTTP 200，配置第 33/37 行等明确引用 ibiblio puppylinux；ibiblio HTTPS 根可读，rsync 根列表 exit 0（105 行）。
+    - 根列表同时存在多年历史 PET 索引和 2026 年更新的 puppy-resolute/puppy-upups 等目录；不能仅因旧索引日期就判定全树停止维护。
+    - 只完成文档/根布局/根链接检查，没有把目录可用性当成包签名、ISO 校验或全树新鲜度验证；未执行下载页脚本或安装 PET 包。
+    remaining: 可在现有 rsync 模板继续生产 dry-run，先比较完整范围、删除集及内部链接；随后真实官方认可托管源同步、匹配快照发布并抽样核对 ISO/PET 校验信息与公网文件。ibiblio rsync 运维指南仍未读取到，不冒称已获特定镜像授权或已完成登记。

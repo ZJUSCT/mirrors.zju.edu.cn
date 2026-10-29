@@ -1,0 +1,39 @@
+metadata:
+  name: openwrt
+info:
+  description: 面向嵌入式设备的 Linux 操作系统及其固件与软件包
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/openwrt/ # 国内唯一 Tier 1
+  # upstream: rsync://mirrors.tuna.tsinghua.edu.cn/openwrt/ # Tier 2
+sync:
+  type: rsync
+  interval: 4h
+  timeout: 4h
+storage:
+  size: 3Ti
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-21
+    docs:
+      - https://openwrt.org/mirrors
+      - https://lists.openwrt.org/pipermail/openwrt-announce/2026-January/000075.html
+      - https://downloads.openwrt.org/
+      - https://lists.openwrt.org/mailman/listinfo/openwrt-announce
+    policy:
+      - 官方采用两级镜像体系；Tier 1 从需认证的官方源同步，Tier 2 应选择网络邻近的 Tier 1 作为上游。
+      - 默认镜像集仅包含仍受支持的发行版，排除非最新的 RC 版本及 XX.YY-SNAPSHOT，且镜像不得自行过滤内容。
+      - 官方要求随机选择起始时间并每 4 小时同步一次；指定的 rsync 参数用于正确保留硬链接并安全更新。
+      - 初次从官方源同步建议使用 --bwlimit=8000；禁止使用 HTTP 抓取镜像，否则可能被永久封禁。
+      - 联系方式：openwrt-adm@lists.openwrt.org
+  upstreams:
+    - url: rsync://rsync.mirrors.ustc.edu.cn/openwrt/
+      stack: dual
+      surveyed_at: 2026-09-21
+      note: OpenWrt 官方列表收录国内唯一 Tier 1 镜像；使用上游 releases-mirror-default
+    - url: rsync://rsync.openwrt.org/releases-mirror-default/
+      stack: ipv4
+      surveyed_at: 2026-09-21
+      note: 官方默认 Tier 1 同步入口，仅包含仍受支持的发行版；需要申请用户名和密码，匿名访问认证失败。

@@ -1,0 +1,41 @@
+metadata:
+  name: anolis
+info:
+  description: Anolis OS 软件包与安装镜像
+  upstream: rsync://rsync_user@rsync.openanolis.cn/anolis/
+sync:
+  type: rsync
+  ipv6: false
+  interval: 24h
+  timeout: 24h
+  rsync:
+    password_secret: anolis-rsync
+    # 排除滚动累积的 Nightly 及已由 GA 取代的 ALPHA/BETA 安装镜像；保留 RC/QU。
+    extra_args:
+      - '--exclude=*/Nightly/'
+      - '--exclude=*/isos/BETA/'
+      - '--exclude=*/isos/ALPHA*/'
+storage:
+  size: 7Ti
+  volumeName: pvc-55a3f192-77c2-4d83-a40a-075584737308
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://openanolis.cn/anolisos
+      - https://openanolis.cn/download
+      - http://docs.openanolis.cn/
+      - https://mirrors.openanolis.cn/anolis/
+    policy:
+      - 官方公开下载树包含 Anolis OS 各版本的软件包、安装镜像，以及 epao、epao-nonfree 和 migration 内容。
+      - 未查到公开的镜像同步周期、存储要求或镜像登记规范。
+  upstreams:
+    - url: rsync://rsync_user@rsync.openanolis.cn/anolis/
+      stack: ipv4
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 11ms；2026-09-17 rsync 实测约 10MiB/s
+      note: 官方认证 rsync 服务；anolis 模块说明为 /mirrors/anolis directory，无额外 MOTD。

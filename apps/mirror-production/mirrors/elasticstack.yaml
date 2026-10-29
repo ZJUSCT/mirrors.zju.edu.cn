@@ -1,0 +1,53 @@
+metadata:
+  name: elasticstack
+info:
+  description: Elastic Stack 软件包仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/elasticstack/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 336h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 2344Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-with-debian-package
+    - https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-with-rpm
+    - https://mirrors.tuna.tsinghua.edu.cn/help/elasticstack/
+    - https://github.com/tuna/tunasync-scripts/blob/master/elastic.sh
+    policy:
+    - 官方安装文档明确 APT 源为 https://artifacts.elastic.co/packages/9.x/apt stable main，RPM 源为 https://artifacts.elastic.co/packages/9.x/yum（rpm-md）；所读官方文档未公布公共
+      rsync 服务、镜像注册要求或强制同步周期。24h 仅为本地建议，不能据此宣称获得官方镜像授权。
+    - 官方签名密钥指纹为 4609 5ACC 8548 582C 1A26 99A9 D27D 666C D88E 42B4；本次下载 6.x、7.x、8.x、9.x 的 Release 与 Release.gpg
+      并以该公钥验证，四项均通过；9.x InRelease 与四个版本 repomd.xml 也均可读取。未下载软件包，不代表已验证完整仓库。
+    - TUNA elastic.sh 组合八个逻辑仓库：6.x/7.x/8.x/9.x 的 APT stable/main（amd64、i386）及 YUM；实际数据存于 apt/<版本>/ 与 yum/elastic-<版本>/，<版本>/apt
+      和 <版本>/yum 为兼容链接。只读 rsync 已确认四版本顶层、9.x 两个符号链接及 APT 两种架构目录。不能将官方 packages/ 根直接替换 TUNA 根。
+    - 官方 9.x Release 还列出 arm64，而 TUNA 9.x 的 main/ 实测仅 binary-amd64、binary-i386；回源实现必须明确保持既有架构范围或另行审定扩展，不能默认为全架构复制。需保留现有用户访问的
+      /elasticstack/<版本>/apt/ 与 /elasticstack/<版本>/yum/ 路径。
+    - 实测官方 /packages/ 返回404，9.x/apt/ 返回空正文200、9.x/yum/ 返回404，但对应 Release 与 repomd.xml 返回200；这是按索引访问的仓库，不是可供现有
+      tsumugu 目录解析器枚举的网页目录。现有 qfm 面向 Fedora rsync 模块，ftpsync/rsync 也不能据这些 HTTPS 索引完成同步。
+    - 需专用 APT 与 RPM 元数据同步器：验证 InRelease 或 Release.gpg，按 Release 的摘要枚举 Packages 并验证包摘要；RPM 按 repomd.xml 摘要读取 primary
+      等元数据，按 location 获取包并保留官方 RPM 签名（官方配置 gpgcheck=1）。不能将 gpgcheck=1 误称为官方已提供 repomd 签名。
+    - 索引与内容须作为一致快照发布：先完整下载校验被引用文件，再更新对外元数据，遇索引轮换或缺文件应重试或失败，不能发布半成品；保留签名和相对路径，支持 Acquire-By-Hash，删除必须依据完整成功索引并受删除保护限制。TUNA
+      apt-sync.py/yum-sync.py 可作实现参考，不等于现有模板已支持，也未在本次执行这些同步脚本。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/elasticstack/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-04'
+    note: 初始化任务 elasticstack-sync-1791033731 已成功；本次仅补充只读目录与官方文档调查，保持暂停。
+  - url: https://artifacts.elastic.co/
+    stack: unknown
+    status: candidate
+    surveyed_at: '2026-10-04'
+    note: 四版本 APT Release 签名验证通过，RPM repomd 可访问；非目录镜像源，未做全量同步或双栈验证。
+  bootstrap:
+    note: TUNA 初始化完成；需保留八个逻辑仓库、版本兼容链接和既有架构范围，专用 APT/RPM 同步及一致性发布验证完成前继续暂停。

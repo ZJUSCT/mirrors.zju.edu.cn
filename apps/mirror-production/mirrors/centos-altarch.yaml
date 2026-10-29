@@ -1,0 +1,54 @@
+metadata:
+  name: centos-altarch
+info:
+  description: CentOS Linux 非主流架构历史下载入口
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/centos-altarch/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.centos.org/centos-linux/
+    - https://www.centos.org/centos-linux-eol/
+    - https://www.centos.org/download/mirrors/
+    - https://vault.centos.org/
+    - https://vault.centos.org/altarch/
+    policy:
+    - CentOS Linux 7 已于 2024-06-30 结束维护，CentOS Linux 8 已于 2021-12-31 结束维护；官方说明结束维护的内容移至 vault.centos.org，归档树不再获得安全更新。
+    - 当前官方镜像接入文档仅提供 rsync.stream.centos.org 的 CentOS-Stream-All、CentOS-Stream-nosrc、CentOS-Stream-nodebug 模块，不能用
+      Stream 树替换 CentOS Linux 历史入口。
+    - 已阅读官方 EOL、镜像接入及 Vault 说明，未找到针对该历史入口的官方同步间隔要求；现有 24h 仅为本站配置，当前暂停。
+    - TUNA 初始化只有 14 个普通文件（约 4.04 KB）、7→7.9.2009 与 8→8.1.1911 两个符号链接及版本目录中的 deprecated readme，没有 RPM 仓库。
+    - 官方 Vault 的 altarch/ 是历史非主流架构归档，含 7.1.1503 至 7.9.2009、7/、8-stream/、8.0.1905/、8.1.1911/、8/；应先核对现有 centos-vault
+      同步范围再决定子集别名，不能把 tiny 入口数据当作完整归档。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/centos-altarch/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 已完成的一次性 TUNA 初始化来源；当前暂停自动同步。
+  - url: rsync://msync.centos.org/altarch/
+    stack: ipv4
+    status: retired
+    surveyed_at: '2026-10-02'
+    note: 历史 altarch 主镜像入口；当前 CentOS Stream 镜像策略不代表此历史入口仍受维护。
+  - url: https://vault.centos.org/altarch/
+    stack: ipv4
+    status: available
+    surveyed_at: '2026-10-02'
+    note: 官方实际存在的 altarch 历史归档；范围与本次只有 readme 的入口不同。
+  bootstrap:
+    note: 已完成 TUNA 初始化，当前保持 sync-paused；CentOS Linux altarch 已退役，初始化仅包含退役提示与版本链接；完整历史归档在 Vault，需决定与 centos-vault
+      的重叠及别名安排。 保留现有初始化数据并等待最终处理，不自动恢复同步。
+    reported_size: 170K

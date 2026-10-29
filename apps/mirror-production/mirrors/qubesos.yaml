@@ -1,0 +1,48 @@
+metadata:
+  name: qubesos
+info:
+  description: Qubes OS 软件仓库与安装镜像
+  upstream: rsync://rsync.qubes-os.org/qubes-mirror/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 2672Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://doc.qubes-os.org/en/latest/user/downloading-installing-upgrading/download-mirrors.html
+    - https://www.qubes-os.org/downloads/#mirrors
+    - https://mirrors.tuna.tsinghua.edu.cn/static/tunasync.json
+    policy:
+    - 官方镜像运营文档明确提供 rsync 或 HTTP master，首选每24小时同步一次，最多每6至8小时一次；技术安排联系 Wojtek 或 Marek，官网镜像列表更新联系 unman。本次采用24h，不额外发送邮件。
+    - 官方文档未直接写出 master URL；TUNA 状态给出的项目域名 rsync.qubes-os.org 已实测匿名 IPv4 可读，服务模块 qubes-mirror 自述 Qubes OS authoritative
+      repo。无需凭据；IPv6 请求因域名无对应地址失败，因此选择 -4。
+    - 官方与 TUNA 根均包含 iso/、repo/、qubes-windows-tools/、robots.txt，无额外路径前缀。iso 一级182项（含历史ISO及展开目录）、Windows工具2项、repo五棵子树
+      archlinux/contrib/deb/debu/yum 的名称与文件大小一致；yum一级6项、deb一级11项也一致。此结论来自只读轻量目录对照，不代表整树文件校验已完成。
+    - 保留整根同步范围，不裁剪旧版本或只同步ISO；使用现有rsync模板保留符号链接。正式切源前仍须在生产快照执行完整 dry-run、容量及删除审核，成功实际同步后再验证HTTP发布与摘要；大规模删除不得因本次轻量范围相符而自动放行。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/qubesos/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-04'
+    note: 初始化 qubesos-sync-1791038403 已成功；保留安装镜像、完整repo与Windows工具三部分。
+  - url: rsync://rsync.qubes-os.org/qubes-mirror/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-04'
+    note: 项目官方域名服务公开qubes-mirror模块；IPv4根及子目录可读，IPv6无地址。轻量布局对照通过，等待生产完整验证。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。

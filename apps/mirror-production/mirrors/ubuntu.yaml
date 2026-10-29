@@ -1,0 +1,35 @@
+metadata:
+  name: ubuntu
+info:
+  description: Ubuntu 主软件包仓库
+  upstream: rsync://rsync.archive.ubuntu.com/ubuntu/ # Canonical 自营的 Ubuntu Archive 同步入口
+sync:
+  type: ftpsync
+  interval: 6h
+  timeout: 6h
+  ftpsync:
+    archive: ubuntu
+storage:
+  size: 6Ti
+  volumeName: pvc-a56ebee9-0305-489a-a8c1-6d6226cd2c66
+publish:
+  http:
+    tier: hot
+    replicas: 3
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://canonical-ubuntu-project.readthedocs-hosted.com/release-team/mirrors/
+      - https://canonical-ubuntu-project.readthedocs-hosted.com/release-team/mirror-scripts/
+      - https://launchpad.net/ubuntu/+archivemirrors
+    policy:
+      - Archive 镜像应每 6 小时同步一次；Country mirror 必须使用 two-stage sync，避免元数据与包体短暂不一致。
+      - 官方允许从 Launchpad 列出的附近 rsync 镜像同步，并保证国家代码 rsync.archive.ubuntu.com 入口可用。
+      - 官方未指定必须使用 ftpsync；ubumirror 或正确的两阶段 rsync 均可。
+  upstreams:
+    - url: rsync://rsync.archive.ubuntu.com/ubuntu/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 246–296ms、9.3MiB/s；IPv6 rsync 已验证可用
+      note: Canonical 自营的 Ubuntu Archive 同步入口；MOTD 提醒镜像方善意使用服务。

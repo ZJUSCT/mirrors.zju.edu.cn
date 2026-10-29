@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-data-plane
+  namespace: envoy-gateway
+spec:
+  podMetricsEndpoints:
+  - interval: 15s
+    path: /stats/prometheus
+    port: metrics
+    relabelings:
+    - action: replace
+      replacement: mirrors
+      targetLabel: scrape_profile
+    scrapeTimeout: 10s
+  selector:
+    matchLabels:
+      gateway.envoyproxy.io/owning-gateway-name: envoy-gateway-staging

@@ -1,0 +1,197 @@
+# Default values for the Falcon chart.
+# Everything renders into the release namespace; the controller watches only
+# that namespace (POD_NAMESPACE).
+# Site identity and Gateway topology are deployment-specific and ship empty:
+# mirrorz.site.url is required when the endpoint is on, and publishing needs
+# a publish.http gatewayRef plus hostnames.
+
+namespace:
+  create: false
+  # Defaults to the release namespace.
+  name: ""
+
+global:
+  imageRegistry: ghcr.io/zjusct
+  imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Controller. Runtime configuration below is rendered into the falcon-config
+# ConfigMap; any change rolls the Deployment through a checksum annotation.
+# Single instance by design: no replica knob.
+controller:
+  enabled: true
+  image:
+    repository: falcon
+    # Empty tag defaults to Chart.AppVersion; a digest takes precedence.
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  revisionHistoryLimit: 10
+
+  # Mirrors the internal/config Go structs (see README「配置文件」); validated
+  # at render time and again at controller startup. The api listen addresses
+  # are chart-internal plumbing and stay fixed.
+  config:
+    log:
+      # debug | info | warn | error
+      level: info
+    # /mirrorz.json output (MirrorZ data format). site.url is required and
+    # must carry a scheme while enabled.
+    mirrorz:
+      enabled: true
+      site:
+        url: https://mirrors.zju.edu.cn
+        abbr: ZJU
+        name: 浙江大学开源软件镜像站
+        logo: https://mirrors.zju.edu.cn/favicon.svg
+        logo_darkmode: ""
+        homepage: https://www.zjusct.io
+        issue: "https://github.com/ZJUSCT/mirrors.zju.edu.cn/issues"
+        request: "https://github.com/ZJUSCT/mirrors.zju.edu.cn/issues"
+        email: "mirrors@zju.edu.cn"
+        group: "QQ 群 139895416"
+        disk: "654TB"
+        note: "公网上行 v4/v6 各 100Mbps；校内链路 10Gbps"
+        big: ""
+        disable: true
+    sync:
+      maxConcurrent: 0
+    # Per-protocol publishing topology. An empty http.hostnames list
+    # disables publish HTTPRoute generation altogether; mirrorz reflects
+    # the request Host against the list.
+    publish:
+      http:
+        gatewayRef:
+          name: envoy-gateway-production
+          namespace: ""
+          sectionName: ""
+        hostnames:
+          - mirrors.zju.edu.cn
+          - mirror.zju.edu.cn
+        labels: {}
+        annotations: {}
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      labels: {}
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 256Mi
+    limits:
+      cpu: '2'
+      memory: 1Gi
+
+  rbac:
+    create: true
+    # Cluster-scoped nodes/proxy read backing status.sizeBytes; disabling it
+    # leaves sizeBytes empty. The rendered ClusterRole/ClusterRoleBinding are
+    # suffixed with the release namespace so multi-instance deployments with a
+    # reused release name each own their objects.
+    nodeStats: true
+
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv:
+    - name: HTTP_PROXY
+      value: http://sing-box.sing-box.svc.cluster.local:7890
+    - name: HTTPS_PROXY
+      value: http://sing-box.sing-box.svc.cluster.local:7890
+    - name: NO_PROXY
+      value: localhost,127.0.0.1,::1,10.0.0.0/8,172.26.0.0/16,172.27.0.0/16,fda8:d4b1:99d0:100::/56,fda8:d4b1:99d0:200::/112,.svc,.cluster.local,falcon-ui
+  extraVolumes: []
+  extraVolumeMounts: []
+
+# /mirrorz.json HTTPRoute. Fully derived from controller.config.publish.http
+# (same hostnames, same Gateway): every publish domain serves the catalog.
+mirrorz:
+  route:
+    enabled: false
+
+# Admin web UI: static Next.js export served by nginx, exposed through an
+# OAuth-gated route. The first hostname doubles as the admin host the
+# webapi gates admin operations on. parentRefs is a standard Gateway API
+# ParentReference list.
+ui:
+  enabled: true
+  image:
+    repository: falcon-ui
+    # Empty tag defaults to Chart.AppVersion; a digest takes precedence.
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  # GitHub OAuth guarding the whole admin surface (API + UI): with it
+  # configured every admin endpoint requires a session; without it the
+  # admin endpoints answer unauthenticated (debug/local mode). The chart
+  # renders this into the controller's admin config section.
+  oauth:
+    clientID: "Ov23liklCYcHsZIoija8"
+    # Either a plaintext value rendered into the chart-managed Secret, or
+    # the name of an existing Secret carrying key "client-secret" — the
+    # controller receives it as FALCON_ADMIN_OAUTH_CLIENT_SECRET and the
+    # rendered config references it via ${...} expansion only.
+    clientSecret: ""
+    existingSecret: falcon-github-oauth
+    allowedUserIDs:
+      - '16241583'
+      - '22582237'
+      - '35755846'
+      - '52441312'
+      - '114898949'
+  route:
+    hostnames:
+      - falcon.mirrors.zjusct.io
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: envoy-gateway-staging
+        namespace: envoy-gateway
+        sectionName: https
+    labels: {}
+    annotations: {}
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits: {}
+
+# ZFS usage agent: one read-only DaemonSet pod per storage node feeding
+# GET /api/usage.
+zfsAgent:
+  enabled: true
+  # Grafana sidecar discovers this dashboard across namespaces.
+  dashboard:
+    enabled: true
+    datasourceUid: PAE45454D0EDB9216
+    labels:
+      grafana_dashboard: "1"
+    annotations:
+      k8s-sidecar-target-directory: /tmp/dashboards/Falcon
+  image:
+    repository: zfs-agent
+    # Empty tag defaults to Chart.AppVersion; a digest takes precedence.
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  # Agent flags, e.g. --pools=tank.
+  extraArgs: []
+  # OTLP HTTP endpoint of a central collector; empty disables metric push.
+  otelEndpoint: "http://aggregator-collector.opentelemetry.svc:4318"
+  # Must match the zfs-localpv nodes (pools are read locally).
+  nodeSelector: {}
+  tolerations: []
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits: {}

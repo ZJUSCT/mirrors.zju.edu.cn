@@ -1,0 +1,59 @@
+metadata:
+  name: elpa
+info:
+  description: Emacs 内建包管理器 package.el 的软件源
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/elpa/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 20Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://github.com/melpa/melpa#mirrors
+    - https://elpa.gnu.org/packages/doc/
+    - https://orgmode.org/elpa/
+    policy:
+    - 官方/项目提供多个独立 rsync 根：GNU ELPA、GNU-devel、NonGNU、NonGNU-devel、MELPA packages、MELPA stable；Org ELPA 为 HTTPS。官方 MELPA README
+      给出 `rsync -avz --delete rsync://melpa.org/packages/` 和 `packages-stable/` 示例。
+    - USTC `elpa/` 组合树包含 gnu、gnu-devel、nongnu、nongnu-devel、melpa、stable-melpa、org；各子目录应保持独立删除边界，不能将单个官方根覆盖整个 `/elpa/`。
+    - 保留 archive-contents、包文件、签名/索引；Org HTTP 子树不能由当前单个 rsync 官方切换替代。
+    - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
+  bootstrap:
+    note: USTC 首次同步于 2026-10-03T04:20:51Z UTC 成功，发布于 2026-10-03T04:20:59Z UTC；当前 mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。官方增量候选是多源组合，现有单一
+      rsync 模板不能同时从六个官方 rsync 加 Org HTTP 更新；不做生产切换，继续使用成功的 USTC 快照并保持暂停。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/elpa/
+    surveyed_at: '2026-10-03'
+    status: selected
+    note: USTC 首次同步源；站点报告容量 8.66 GiB，不是实际占用保证。
+  - url: rsync://elpa.gnu.org/elpa/
+    surveyed_at: '2026-10-03'
+    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。
+  - url: rsync://elpa.gnu.org/elpa-devel/
+    surveyed_at: '2026-10-03'
+    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。
+  - url: rsync://elpa.nongnu.org/nongnu/
+    surveyed_at: '2026-10-03'
+    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。
+  - url: rsync://elpa.nongnu.org/nongnu-devel/
+    surveyed_at: '2026-10-03'
+    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。
+  - url: rsync://melpa.org/packages/
+    surveyed_at: '2026-10-03'
+    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。
+  - url: rsync://melpa.org/packages-stable/
+    surveyed_at: '2026-10-03'
+    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。
+  - url: https://orgmode.org/elpa/
+    surveyed_at: '2026-10-03'
+    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。

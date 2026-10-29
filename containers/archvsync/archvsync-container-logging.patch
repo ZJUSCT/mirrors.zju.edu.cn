@@ -1,0 +1,103 @@
+From: Baolin Zhu <zhubaolin@zju.edu.cn>
+Subject: [PATCH] Container-friendly logging
+
+Small, independent changes that make ftpsync usable as a Kubernetes
+job whose logs are collected from the container stdout:
+
+1. savelog(): never rotate non-regular targets such as /dev/stdout (or
+   a FIFO). Previously cleanup()'s savelog "$LOG" would fail on such a
+   target, which - combined with set -e - aborted cleanup, leaked the
+   Archive-Update-in-Progress lock and turned a successful sync into a
+   non-zero container exit.
+
+2. MAILTO now only defaults to $LOGNAME when *unset*, as documented in
+   ftpsync.conf(5). The old :- expansion also treated the empty string
+   as unset, so MAILTO="" never actually disabled mailing. This matters
+   in containers without an MTA: on a failed sync, cleanup() would
+   attach $LOG (= /dev/stdout) via mailf, and mailf's `cat` of
+   /dev/stdout deadlocks forever (a process reading its own stdout).
+   With mailing off, mailf() is never called - cleanup() already guards
+   with [[ -n ${MAILTO} ]] - so no change to mailf() itself is needed.
+
+3. LOG_RSYNC and LOG_RSYNC_ERROR are now overridable, like LOG itself.
+
+4. Drop --quiet from the rsync invocation: transfer details (itemized
+   changes, stats, errors) now go to stdout, which run_rsync()
+   redirects into $LOG_RSYNC_ERROR. Point LOG_RSYNC_ERROR at
+   /dev/stdout to have them show up in the container log. --log-file is
+   kept and duplicates the details into $LOG_RSYNC, which check_rsync()
+   and trace generation parse for transfer speed and received-byte
+   totals. LOG_RSYNC must remain a regular file OUTSIDE the synced tree
+   (TO); inside TO it would be deleted by stage 2's --delete-excluded,
+   silently breaking both extractions (and pointing it at /dev/stdout
+   would deadlock them instead, since the trace byte extraction uses
+   [[ -e ]] which succeeds for device targets).
+
+A typical container configuration then is:
+
+    MAILTO=""
+    TO=/data
+    LOGDIR=/tmp                       # emptyDir, outside TO
+    LOG=/dev/stdout
+    LOG_RSYNC_ERROR=/dev/stdout
+
+Applies to archvsync master (6533577), which is what the image builds
+from via ADD of the upstream git repository.
+---
+diff --git a/bin/common b/bin/common
+index 7ac7977..ffcaf2b 100644
+--- a/bin/common
++++ b/bin/common
+@@ -268,6 +268,11 @@ get2stage() {
+ # Rotate logfiles
+ savelog() {
+     torotate="$1"
++    # Never rotate non-regular targets such as /dev/stdout or a FIFO,
++    # which may be used as log destinations inside a container.
++    if [[ ! -f ${torotate} || -L ${torotate} ]]; then
++        return 0
++    fi
+     count=${2:-${LOGROTATE}}
+     while [[ ${count} -gt 0 ]]; do
+         prev=$(( count - 1 ))
+diff --git a/bin/ftpsync b/bin/ftpsync
+index 25cefe5..5f5e4e7 100755
+--- a/bin/ftpsync
++++ b/bin/ftpsync
+@@ -381,7 +381,11 @@ create_logdir
+ ########################################################################
+ MIRRORNAME=${MIRRORNAME:-$(hostname -f)}
+ TO=${TO:-"/srv/mirrors/debian/"}
+-MAILTO=${MAILTO:-${LOGNAME:?Environment variable LOGNAME unset, please check your system or specify MAILTO}}
++# Only default to $LOGNAME when MAILTO is unset. An explicitly empty
++# MAILTO disables mailing, as documented in ftpsync.conf(5); the old
++# :- expansion also treated the empty string as unset, so MAILTO=""
++# could never actually turn mailing off.
++MAILTO=${MAILTO-${LOGNAME:?Environment variable LOGNAME unset, please check your system or specify MAILTO}}
+ HUB=${HUB:-"false"}
+ 
+ # Connection options
+@@ -411,8 +415,13 @@ LOG=${LOG:-"${LOGDIR}/${NAME}.log"}
+ ERRORSONLY=${ERRORSONLY:-"true"}
+ FULLLOGS=${FULLLOGS:-"false"}
+ LOGROTATE=${LOGROTATE:-14}
+-LOG_RSYNC="${LOGDIR}/rsync-${NAME}.log"
+-LOG_RSYNC_ERROR="${LOGDIR}/rsync-${NAME}.error"
++# Both rsync log destinations are overridable, which containers need:
++# LOG_RSYNC_ERROR may point at /dev/stdout to send rsync's stdout and
++# stderr into the container log, while LOG_RSYNC must stay a regular
++# file outside TO (e.g. on an emptyDir) so that check_rsync() and trace
++# generation can parse speed and byte totals from it.
++LOG_RSYNC=${LOG_RSYNC:-"${LOGDIR}/rsync-${NAME}.log"}
++LOG_RSYNC_ERROR=${LOG_RSYNC_ERROR:-"${LOGDIR}/rsync-${NAME}.error"}
+ 
+ # Other options
+ LOCKTIMEOUT=${LOCKTIMEOUT:-3600}
+@@ -468,7 +477,6 @@ _TRACE_FILES=(
+ 
+ _RSYNC=(
+   $RSYNC
+-  --quiet
+   --log-file "${LOG_RSYNC}"
+ )
+ 

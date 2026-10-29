@@ -1,0 +1,46 @@
+metadata:
+  name: kernel.org
+info:
+  description: Linux Kernel Archive（pub/ 全树）
+  upstream: rsync://rsync.kernel.org/pub/
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 2Ti
+  volumeName: pvc-c4df5a3a-91d3-4090-b6cb-ccaf8ba0e471
+publish:
+  aliases:
+    # kernel 是 linux/kernel 子树的独立目录学条目（MirrorZ 常用 cname），
+    # 301 至 /kernel.org/linux/kernel/<后缀>，并以独立 cname 进入 mirrorz.json。
+    - path: /kernel
+      subset:
+        subpath: linux/kernel
+        cname: kernel
+        description: Linux 内核源码归档
+        upstream: rsync://rsync.kernel.org/pub/linux/kernel/
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://www.kernel.org/
+      - https://www.kernel.org/pub/
+    policy:
+      - 官方通过 https://www.kernel.org/pub/ 和 rsync://rsync.kernel.org/pub/ 发布 /pub/ 完整归档。
+      - /pub/ 当前包含 dist/、linux/、media/、scm/、site/、software/ 和 tools/；镜像根目录应保持这一层级。
+      - 当前官网未发布公共镜像注册、权重或强制同步周期说明；旧的 category/mirrors.html 已返回 404。
+  upstreams:
+    - url: rsync://rsync.kernel.org/pub/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 248ms；IPv6 RTT 约 227ms；全树约 1.79TiB
+      note: 官方公开 rsync 源；NJU 仅用于初始种子，生产环境改用此源对账并长期同步。
+    - url: rsync://mirrors.nju.edu.cn/kernel.org/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4/IPv6 RTT 均约 12ms
+      note: 与官方 /pub/ 根目录层级一致，仅用作初始种子源。

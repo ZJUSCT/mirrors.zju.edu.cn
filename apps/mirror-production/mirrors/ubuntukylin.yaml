@@ -1,0 +1,53 @@
+metadata:
+  name: ubuntukylin
+info:
+  description: Ubuntu Kylin 补充软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/ubuntukylin/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 8Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.ubuntukylin.com/
+    - https://www.ubuntukylin.com/docs/index-cn.html
+    - https://docs.ubuntukylin.com/
+    - https://archive.ubuntukylin.com/ubuntukylin/dists/focal-partner/Release
+    policy:
+    - 优麒麟官方网站和文档平台仍在运营，当前发行版为 26.04；本镜像是 archive.ubuntukylin.com/ubuntukylin/ 补充 APT 仓库，不等同于完整 Ubuntu 仓库或安装 ISO。
+    - 官方 rsync ubuntukylin 模块在集群探测明确返回 auth failed；需上游授予 rsync 凭证后才能用现有 rsync 模板匿名之外的方式同步。
+    - 官方 HTTPS 仓库根目录及 dists/ 列表均返回 403，但已知路径 dists/focal-partner/Release 返回 200：Suite/Codename 为 focal-partner，架构
+      amd64/i386，组件 main，日期 2026-09-09；这证明文件服务存在，不能将目录 403 误判为整个官方仓库不可用。
+    - TUNA 初始化根目录含 dists/ 和 pool/，但 dists/ 仅有 focal→focal-partner、groovy→groovy-partner 两个悬空链接，未取得对应索引目录；不能作为完整可用
+      APT 镜像验收。
+    - 现有 tsumugu 依赖目录索引，无法遍历该上游被禁止的目录列表；若不申请 rsync 凭证，需要可解析 Release/Packages 的 APT 专用同步方式，不能直接恢复自动同步。
+    - 已阅读官网、文档入口及仓库 Release，未找到官方镜像同步周期或公开匿名 rsync 接入政策；24h 只是本站配置。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/ubuntukylin/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 已完成的一次性 TUNA 初始化来源；当前暂停自动同步。
+  - url: rsync://archive.ubuntukylin.com/ubuntukylin/
+    stack: ipv4
+    status: blocked
+    surveyed_at: '2026-10-02'
+    note: 集群既有 IPv4 实测 auth failed on module ubuntukylin，无法匿名拉取。
+  - url: https://archive.ubuntukylin.com/ubuntukylin/
+    stack: ipv4
+    status: blocked
+    surveyed_at: '2026-10-02'
+    note: 根和 dists 列表 403；已知 Release 路径 200。需 rsync 凭证或 APT 索引驱动同步器，不能直接用目录抓取替代。
+  bootstrap:
+    note: 已完成 TUNA 初始化，当前保持 sync-paused；官方 rsync 要求认证，HTTPS 禁止目录遍历；TUNA 数据中 APT 索引缺失。需要凭证或额外 APT 同步方案，保持暂停。 保留现有初始化数据并等待最终处理，不自动恢复同步。
+    reported_size: 4.90G

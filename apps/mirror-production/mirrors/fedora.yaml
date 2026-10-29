@@ -1,0 +1,37 @@
+metadata:
+  name: fedora
+info:
+  description: Fedora Linux 发行版软件仓库
+  upstream: rsync://dl.fedoraproject.org/fedora-enchilada/ # 逻辑内容模块；QFM 实际经同主机的 fedora-buffet 传输
+sync:
+  type: qfm
+  interval: 1h
+  timeout: 1h
+  qfm:
+    module: fedora-enchilada
+storage:
+  size: 10Ti
+  volumeName: pvc-6635e36f-9c78-4979-ba04-75115e5e5044
+publish:
+  http:
+    tier: hot
+    replicas: 2
+    subPath: fedora/linux
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://fedoraproject.org/wiki/Infrastructure/Mirroring
+      - https://fedoraproject.org/wiki/Infrastructure/Mirroring/Tiering
+      - https://forge.fedoraproject.org/infra/quick-fedora-mirror
+    policy:
+      - 官方推荐使用 quick-fedora-mirror；该工具要求上源提供 fedora-buffet 主模块。
+      - 使用 quick-fedora-mirror 时可每 10 分钟同步一次；否则应每日同步数次。
+      - 公共镜像应登记到 MirrorManager，并建议提供 rsync 地址用于健康检查。
+      - Tier 1 必须完整同步 fedora-enchilada 与 fedora-epel，并向下游提供私有 rsync 服务。
+  upstreams:
+    - url: rsync://dl.fedoraproject.org/fedora-buffet/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 274–282ms、8.0MiB/s；IPv6 RTT 约 254–257ms、9.1MiB/s
+      note: Fedora 官方 master 的 QFM 聚合入口；本镜像仅选择 fedora-enchilada 模块（/pub/fedora）。

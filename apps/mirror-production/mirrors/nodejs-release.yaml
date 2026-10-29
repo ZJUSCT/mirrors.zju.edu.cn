@@ -1,0 +1,60 @@
+metadata:
+  name: nodejs-release
+info:
+  description: 预编译的 Node.js 二进制程序
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/node/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 1328Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-06'
+    docs:
+    - https://github.com/nodejs/build/blob/main/jenkins/download-test.sh
+    - https://nodejs.org/dist/
+    - https://nodejs.org/dist/index.json
+    - https://github.com/nodejs/node#verifying-binaries
+    policy:
+    - 范围为Node.js正式发行文件树，保留全部历史版本、latest系列入口、index.json/index.tab及原始SHASUMS256.txt、签名；不是npm仓库，也不擅自扩展nightly/unofficial-builds。USTC种子模块为node，本站发布路径nodejs-release。
+    - 官方build/download-test.sh仍引用rsync://unencrypted.nodejs.org/nodejs/release/。9月30日既有rsync证据显示该树陈旧且latest为/home/dist/nodejs/release/...绝对链接；本轮未重新发起rsync，只通过对应HTTP
+      index.json复核其最新仍为v24.1.0（2025-05-20），官网dist索引则为v26.10.0（2026-09-21）。不能将较新种子切至此旧树并启用删除。
+    - 官方https://nodejs.org/dist/是可继续验证的tsumugu候选：本机现有nginx解析器对根及v26.10.0叶目录非递归list均退出0，无需先开发新同步器；这不证明生产网络、完整范围或删除集已通过。latest别名展开、历史文件、隐藏文件及种子链接/硬链接语义仍需全树核对。
+    - 官方验证说明要求使用nodejs/release-keys可信keyring验证SHASUMS256.txt.asc，再核对下载文件SHA256。仅有index.json或目录可列不能当成二进制真实性验证。
+    - 本轮所读官方资料没有给出镜像注册前置或固定同步周期，不能虚构要求，也不能以可下载代替政策确认。24h保留为本地候选。ftpsync/qfm没有证明适用于此发行树，不替代范围与完整性验收。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: nodejs-release-sync-1791215428
+    succeeded_at: '2026-10-06T00:34:39Z'
+    published_at: '2026-10-06T00:34:47Z'
+    note: hourly-live.json确认同步成功，匹配nodejs-release-snap-1791215428已发布且Ready；仍使用USTC源并暂停，未执行官方切源。
+    official_interval_candidate: 24h
+    official_cutover_blocker: 官方rsync对应HTTP索引仍严重陈旧，已有绝对软链接风险；官方HTTPS+现有tsumugu nginx有可行候选，尚待生产全树范围/删除集、别名和容量检查、签名及文件摘要验证与真实同步发布，属于可继续调查的技术待办。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/node/
+    surveyed_at: '2026-10-06'
+    status: bootstrap-complete
+    note: 已成功发布并暂停；本轮未向USTC发起额外请求。
+  - url: rsync://unencrypted.nodejs.org/nodejs/release/
+    surveyed_at: '2026-10-06'
+    status: stale-legacy-candidate
+    note: 本轮对应HTTP索引仍v24.1.0；rsync陈旧树及绝对链接为9月30日既有证据，未新探测rsync。
+  - url: https://nodejs.org/dist/
+    surveyed_at: '2026-10-06'
+    status: tsumugu-nginx-list-verified
+    note: 官网索引v26.10.0；本机根及代表叶目录非递归list退出0，尚未正式同步或证明整树等价。
+  verification:
+    surveyed_at: '2026-10-06'
+    checks:
+    - 官方根/索引、旧节点HTTP索引、官方验证文档和download-test.sh均HTTP200，原文与抓取记录保存于review-nodejs-release.evidence。
+    - 现有tsumugu nginx根及v26.10.0非递归列表通过，parser-results.json保存命令与退出码；未转移发行文件、未创建预留、未修改集群。
+    - 成功发布状态依据父任务刷新hourly-live.json；本轮未校验公网发布内容或二进制签名，不把文档复核当作切源验收。
+    remaining: 使用可写一次性快照克隆和生产镜像验证HTTPS候选全树差异、latest展开和精确大小/容量，核对种子独有文件及删除集合；验证可信发布签名和代表二进制哈希。实际官方同步成功、匹配快照/PVC Ready及公网内容验证后才能取消暂停。

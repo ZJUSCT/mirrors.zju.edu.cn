@@ -1,0 +1,29 @@
+From: Baolin Zhu <zhubaolin@zju.edu.cn>
+Subject: [PATCH] anaconda: mirror the nvidia cloud channel
+
+Add the nvidia Anaconda cloud channel to CONDA_CLOUD_REPOS. Verified
+against https://conda.anaconda.org/nvidia on 2026-10-10; these are the
+subdirs whose repodata.json actually contains packages:
+
+    noarch          748 files    1.7 GiB
+    linux-64       4834 files  205.3 GiB
+    linux-aarch64  4339 files  172.0 GiB
+    linux-ppc64le  1573 files   69.7 GiB
+    win-64         3030 files  123.6 GiB
+
+osx-64, osx-arm64, win-32 and linux-32 exist but serve empty repodata
+({"packages":{}, "packages.conda":{}}), so they are intentionally not
+listed.
+
+Applies to tuna/tunasync-scripts master as of b7f41c7c28df.
+---
+--- a/anaconda.py
++++ b/anaconda.py
+@@ -37,6 +37,7 @@
+     "rapidsai/noarch",             "rapidsai/linux-64",           "rapidsai/linux-aarch64",
+     "bioconda/noarch",             "bioconda/linux-64",           "bioconda/linux-aarch64",      "bioconda/win-64",                                            "bioconda/osx-64",             "bioconda/osx-arm64",
+     "menpo/noarch",                "menpo/linux-64",                                             "menpo/win-64",                "menpo/win-32",                "menpo/osx-64",
++    "nvidia/noarch",               "nvidia/linux-64",             "nvidia/linux-aarch64",        "nvidia/linux-ppc64le",        "nvidia/win-64",
+     "pytorch/noarch",              "pytorch/linux-64",            "pytorch/linux-aarch64",       "pytorch/win-64",              "pytorch/win-32",              "pytorch/osx-64",              "pytorch/osx-arm64",
+     "pytorch-lts/noarch",          "pytorch-lts/linux-64",                                       "pytorch-lts/win-64",
+     "pytorch-test/noarch",         "pytorch-test/linux-64",       "pytorch-test/linux-aarch64",  "pytorch-test/win-64",         "pytorch-test/win-32",         "pytorch-test/osx-64",         "pytorch-test/osx-arm64",

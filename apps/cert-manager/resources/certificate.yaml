@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mirrors-zjusct-io-cert
+  namespace: cert-manager
+spec:
+  secretName: mirrors-zjusct-io-cert
+  issuerRef:
+    name: letsencrypt-dns01
+    kind: ClusterIssuer
+  dnsNames:
+    - mirrors.zjusct.io
+    - "*.mirrors.zjusct.io"

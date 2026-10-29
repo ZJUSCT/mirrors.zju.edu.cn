@@ -1,0 +1,35 @@
+metadata:
+  name: ctan
+info:
+  description: TeX 相关资料的综合归档网络
+  upstream: rsync://rsync.dante.ctan.org/CTAN/ # 官方要求镜像直接从主节点同步
+sync:
+  type: rsync
+  interval: 1h
+  timeout: 1h
+storage:
+  size: 100Gi
+  volumeName: pvc-f78aca27-e53c-4634-acc3-ff37d946ccb7
+publish:
+  aliases:
+    - /CTAN
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://ctan.org/ctan
+      - https://ctan.org/mirrors/
+      - https://ctan.org/mirrors/register/
+    policy:
+      - 官方镜像必须直接从主节点 rsync://rsync.dante.ctan.org/CTAN/ 同步。
+      - 官方镜像必须至少每小时同步一次，并应选择固定的随机分钟错峰运行。
+      - 官方同步示例使用归档模式和 --delete，以保留文件属性并删除上游已移除的文件。
+  upstreams:
+    - url: rsync://rsync.dante.ctan.org/CTAN/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 262ms、3.4MiB/s；IPv6 RTT 约 250ms、3.9MiB/s
+      note: '官方主节点；提供 CTAN 和 MirMon 两个 rsync 模块，CTAN 模块说明为“CTAN: Comprehensive TeX Archive Network”。'

@@ -1,0 +1,52 @@
+metadata:
+  name: lyx
+info:
+  description: LyX 文档处理器发布归档
+  upstream: http://ftp.lyx.org/pub/lyx/
+sync:
+  type: tsumugu
+  interval: 24h
+  timeout: 24h
+  tsumugu:
+    parser: nginx
+    threads: 4
+    max_delete: 100
+storage:
+  size: 52Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://www.lyx.org/Download
+    - https://ftp.lip6.fr/pub/lyx/
+    - https://ftp.lip6.fr/pub/lyx/mirrors.txt
+    policy:
+    - 官方下载页 Mirrors 明确 ftp://ftp.lyx.org 与 https://ftp.lip6.fr/ 指向同一法国主站，并推荐 HTTPS；不能因 ftp.lyx.org 的 HTTPS 证书名不匹配而断言只能使用明文
+      HTTP。
+    - 主站 /pub/lyx/ 是完整发布归档，根目录包含 bin/、contrib/、devel/、stable/、mirrors.txt；已与既有 HTTP 索引逐项核对一致，tsumugu nginx parser
+      可保留与 TUNA 同样的路径布局。
+    - 官方发布 tarball 与安装包旁提供 GPG 签名，签名指纹 FE66471B43559707AFDAD955DE7A44FAC7FB382D，应一同镜像；完整回源已扫描 1,803 对象、30.50 GiB。
+    - 下载页及主站 mirrors.txt 未给出同步间隔或特殊镜像工具要求；发布归档采用 24h 保守同步，现有 HTTP 回源已成功，下一次切换优先使用文档明确的 HTTPS 主站并重新验收。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/lyx/
+    stack: ipv6
+    status: bootstrap-complete
+    surveyed_at: '2026-10-02'
+    note: TUNA 首轮同步已成功，仅作本次初始化源。
+  - url: http://ftp.lyx.org/pub/lyx/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 当前运行的 http://ftp.lyx.org/pub/lyx/ 已完成真实回源和发布验收；调研确认同一主站 HTTPS 地址 https://ftp.lip6.fr/pub/lyx/ 有效且布局相同，建议切换后完成生产验收。
+  - url: https://ftp.lip6.fr/pub/lyx/
+    stack: dual
+    status: preferred-candidate
+    surveyed_at: '2026-10-02'
+    note: 官方下载页明示与 ftp.lyx.org 为同一主站，HTTPS 证书校验通过，/pub/lyx/ 索引与现用 HTTP 一致；生产切换仍须执行完整同步和发布验收。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、官方源真实同步、快照发布及 HTTP 文件内容校验均已通过，已恢复自动同步。
+    reported_size: 31.3G

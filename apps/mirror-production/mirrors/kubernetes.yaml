@@ -1,0 +1,36 @@
+metadata:
+  name: kubernetes
+info:
+  description: Kubernetes kubeadm、kubelet 与 kubectl 软件包仓库
+  upstream: rsync://mirrors.nju.edu.cn/kubernetes/ # 官方仅提供 HTTP；暂时沿用经验证的 NJU rsync 副本
+sync:
+  type: rsync
+  interval: 8h
+  timeout: 8h
+storage:
+  size: 150Gi
+  volumeName: pvc-6bbe16fb-6115-47db-b64d-6ce485c8a73a
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  # TODO: 实现软件包仓库的 HTTP 同步工具后，改为直接从 pkgs.k8s.io 同步。
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/change-package-repository/
+      - https://pkgs.k8s.io/
+    policy:
+      - Kubernetes 按次要版本在 pkgs.k8s.io/core:/stable:/vX.Y 下分别发布 Debian 与 RPM 软件包仓库。
+      - 官方未提供 rsync 服务，也未发布第三方镜像的同步间隔或登记规范。
+  upstreams:
+    - url: rsync://mirrors.nju.edu.cn/kubernetes/
+      stack: dual
+      surveyed_at: 2026-09-17
+      metrics: IPv4 RTT 约 17ms、12.6MB 软件包约 1 秒
+      note: 当前 rsync 副本；抽查活跃仓库元数据与 TUNA 一致，但每个来源 IP 最多允许两个并发连接。
+    - url: https://pkgs.k8s.io/
+      stack: dual
+      surveyed_at: 2026-09-18
+      note: Kubernetes 官方软件包源，仅提供 HTTP 服务，当前同步器无法直接使用。

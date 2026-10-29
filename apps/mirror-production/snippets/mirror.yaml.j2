@@ -1,0 +1,37 @@
+{# 主模板:Mirror CR 骨架,sync/publish 片段按类型 include。
+   缩进约定:片段输出位于 spec.sync / spec.publish 内(基缩进 4 空格)。 #}
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: {{ m.metadata.name }}
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: {{ m.info.description | ys }}
+    upstream: {{ m.info.upstream }}
+  sync:
+    interval: {{ m.sync.interval }}
+    retryInterval: 15m
+    timeout: {{ m.sync.timeout }}
+    failureRetryLimit: 3
+    keepJobs: 1
+{% include 'sync-' ~ m.sync.type ~ '.yaml.j2' %}
+  storage:
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    pvcTemplate:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: {{ m.storage.size }}
+      volumeMode: Filesystem
+{% if m.storage.volumeName %}
+      volumeName: {{ m.storage.volumeName }}
+{% endif %}
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    retention: 1
+  publish:
+{% include 'publish-aliases.yaml.j2' %}
+{% include 'publish-http.yaml.j2' %}

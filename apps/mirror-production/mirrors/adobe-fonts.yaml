@@ -1,0 +1,53 @@
+metadata:
+  name: adobe-fonts
+info:
+  description: Adobe 开源字体仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/adobe-fonts/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 152Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://github.com/adobe-fonts
+    - https://github.com/adobe-fonts/source-code-pro
+    - https://github.com/adobe-fonts/source-sans
+    - https://github.com/adobe-fonts/source-serif
+    - https://fonts.adobe.com/
+    policy:
+    - Adobe Fonts 官方 GitHub organization 页面列出 40 个独立仓库；Source Code Pro README 说明源文件、构建说明及 release 均在各自 Git 仓库中。不存在一个官方
+      adobe-fonts 聚合 rsync 树。
+    - TUNA 的 adobe-fonts 根实际只包含 source-code-pro、source-sans-pro、source-serif-pro、source-han-sans、source-han-serif
+      的工作树，以及若干相应 bare .git 仓库（source-han-mono 只有 bare .git）；这不是 Adobe organization 全量，且同时混合工作树和 Git object/refs
+      布局。
+    - 官方文档未规定镜像同步间隔，也未授权一个统一镜像入口；现行 24h 仅能作为本站 bootstrap 暂存频率，不能据此把 GitHub organization 当作 rsync 上游。
+    - 要继续提供此镜像，应为每个选定 Git 仓库定义 Git fetch/镜像与工作树发布策略，并明确仓库清单、分支、标签、LFS/生成字体文件和删除规则；现有 rsync 模板无法表达。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/adobe-fonts/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始化成功；目录根列出 5 个非 bare 字体树与 6 个 bare Git 树，scope 见 evidence/adobe-fonts/adobe-fonts.rsync4.txt。
+  - url: https://github.com/adobe-fonts
+    stack: dual
+    status: official-reference
+    surveyed_at: '2026-10-03'
+    note: 官方 organization 页面；40 个独立仓库，没有统一 rsync 服务。
+  - url: https://github.com/adobe-fonts/source-code-pro.git
+    stack: dual
+    status: official-repository
+    surveyed_at: '2026-10-03'
+    note: 单仓库官方 Git 源；其 README 明确源文件和构建说明在 main 分支。
+  bootstrap:
+    note: TUNA 首轮初始化已成功（adobe-fonts-sync-1790961326）；当前仍处于官方上游研究门禁，保持 sync-paused，须按 recommendation 完成回源 dry-run、真实同步和发布验收后再恢复自动同步。
+    reported_size: 94.4G

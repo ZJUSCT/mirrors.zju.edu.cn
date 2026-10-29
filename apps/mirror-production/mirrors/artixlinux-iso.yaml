@@ -1,0 +1,48 @@
+metadata:
+  name: artixlinux-iso
+info:
+  description: Artix Linux 安装镜像
+  upstream: rsync://download.artixlinux.org/iso/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 52Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://artixlinux.org/download.php
+    - https://download.artixlinux.org/iso/
+    - https://download.artixlinux.org/iso/sha256sums
+    policy:
+    - 官方下载页区分稳定快照 iso/、weekly-iso/ 和 testing-iso/；TUNA artixlinux-iso 对应稳定 iso/ 根目录，不应混入每周构建、测试版或 Artix 软件包仓库。官方默认建议用户选每周构建并保留稳定快照作回退，本镜像的范围仅为稳定快照。
+    - 官方下载页链接 download.artixlinux.org/iso/ 的稳定 ISO 和对应 .sig，sha256sums 一并保留；官方签名校验示例使用 PGP key 0xB886B428。已逐项核对
+      TUNA 和主站均为 15 个 ISO、15 个签名、1 个 sha256sums，路径布局相同。
+    - 下载页说明项目下载服务器通常过载，推荐最终用户选就近镜像；没有给出稳定 ISO 镜像的强制轮询间隔。采用每日 24h 保守增量 rsync，避免并行重复连接，主站异常时保持暂停再选官方列出的其他镜像。
+    - 已验证官方 rsync iso 模块生产 IPv4 可列出，IPv6 无可用地址；用 -4，切换前执行完整 dry-run，真实同步和发布验收成功后再恢复自动同步。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/artixlinux-iso/
+    stack: ipv6
+    status: bootstrap-complete
+    surveyed_at: '2026-10-02'
+    note: 当前配置的初始化源，TUNA 首轮同步已成功；仍暂停等待完成官方源切换验收。
+  - url: rsync://download.artixlinux.org/iso/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 主站与 TUNA 根目录均为稳定快照 ISO、签名和 sha256sums；本次 SHA256 清单逐字节相同。 官方项目域名公开 rsync 模块已在生产网络列出；尚未进行真实回源验收。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
+    reported_size: 32.1G

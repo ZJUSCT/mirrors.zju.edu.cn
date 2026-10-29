@@ -1,0 +1,36 @@
+metadata:
+  name: gnu
+info:
+  description: GNU 项目软件源码发布归档
+  upstream: rsync://mirror.twds.com.tw/gnu/ # 官方列表中的台湾镜像，避免增加 GNU 主站及中国大陆镜像负载
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 500Gi
+  volumeName: pvc-86b69207-3573-47b4-b0db-4aca12c5358f
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.gnu.org/server/mirror.html
+    policy:
+      - GNU 建议从现有镜像而非 ftp.gnu.org 主站同步，以降低主站负载；公开镜像应每日更新一次。
+      - 本镜像仅包含 ftp.gnu.org 的正式发布归档；alpha.gnu.org 与 Savannah nongnu 发布归档需要分别同步。
+      - 新镜像建成后应向 webmasters@gnu.org 提交地址、所在国家、更新频率和联系方式以申请收录。
+  upstreams:
+    - url: rsync://mirror.twds.com.tw/gnu/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4/IPv6 RTT 约 85ms、同站 rsync 约 36–38MiB/s
+      note: GNU 官方同步源列表收录的台湾节点；内容新鲜，MOTD 提供 mirror@twds.tw 并提示异常连接可能被封禁。
+    - url: rsync://ftp.gnu.org/gnu/
+      stack: dual
+      surveyed_at: 2026-09-17
+      metrics: IPv4 RTT 约 290ms、单文件约 1.2MB/s
+      note: GNU 官方主站；可以匿名同步，但官方建议优先使用现有镜像。

@@ -1,0 +1,47 @@
+metadata:
+  name: gitlab-ce
+info:
+  description: GitLab 社区版软件包
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/gitlab-ce/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 336h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 5572Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://docs.gitlab.com/install/package/
+    - https://packages.gitlab.com/gitlab/gitlab-ce/
+    - https://packages.gitlab.com/gitlab/gitlab-ce/gpgkey
+    policy:
+    - GitLab 官方安装文档将 Linux 软件包安装指向 packages.gitlab.com 的 APT/YUM 仓库；官方 Packagecloud 根目录以 HTTPS 静态目录提供 amazon、debian、el、ubuntu、yum
+      等发行版树，并公开独立 GPG key。调查未发现官方 GitLab CE rsync 端点。
+    - APT 客户端依赖 dists/Release、InRelease、Packages 及其签名和 deb 文件；YUM 客户端依赖 repodata/repomd.xml、模块元数据（如有）、RPM 和签名。索引、签名、包文件必须作为同一快照发布并校验，不能只抓
+      HTML 目录或用通用目录同步替代。
+    - TUNA 的 gitlab-ce 初始化快照来自 rsync://mirrors.tuna.tsinghua.edu.cn/gitlab-ce/；根下实际包含 apt/packages.gitlab.com、debian/bookworm|bullseye|trixie、ubuntu/jammy|noble|resolute、yum/el7|el9|el10。初始化日志记录
+      4,619 个条目、总逻辑大小约 4.93T、此次传输 471.67G；这与计划中 3.4T 报告值不一致，切换前必须以快照相对路径重新建立范围基线。
+    - 官方 Packagecloud 目录会随发行版和版本变化；当前观测到 Debian、Ubuntu、EL 及 YUM 元数据树，不能假定目录集合长期固定。需要按发行版逐一比较 Release/repomd 校验、签名、包索引与包文件集合，并对删除执行
+      fail-closed 审计。
+    - 现有 rsync、ftpsync、qfm、tsumugu 模板只能递归复制目录，不能保证 APT/YUM 索引原子性、GPG 信任链、包哈希和跨发行版删除审计。因此官方源已确认但不能安全恢复自动同步；应保持暂停，等待专用索引同步实现和端到端安装验证。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/gitlab-ce/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-07'
+    note: TUNA 初始化成功（gitlab-ce-sync-1791352541）；当前 Mirror 仍 sync-paused，仅作为现有快照范围证据。
+  - url: https://packages.gitlab.com/gitlab/gitlab-ce/
+    stack: dual
+    status: candidate
+    surveyed_at: '2026-10-07'
+    note: 官方 Packagecloud HTTPS 根目录可读，包含多发行版 APT/YUM 树；不是 rsync 源，需要专用索引同步和签名校验。
+  bootstrap:
+    note: TUNA 初始化成功（gitlab-ce-sync-1791352541），但官方源是 Packagecloud HTTPS 多发行版布局，不能由现有通用模板安全表达；保持 sync-paused，待专用同步实现、快照范围核对、索引/签名和包安装验证完成后再评估。

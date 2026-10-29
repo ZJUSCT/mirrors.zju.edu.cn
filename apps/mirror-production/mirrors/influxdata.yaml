@@ -1,0 +1,43 @@
+metadata:
+  name: influxdata
+info:
+  description: 时间序列数据平台
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/influxdata/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 124Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://docs.influxdata.com/influxdb/v2/install/
+    policy:
+    - 官方文档给出 debian stable main APT 与 stable/${basearch}/main RPM；已发布树确认为 debian/、stable/，保留两者及既有发行版/架构范围。
+    - 保留官方 APT 签名元数据、RPM repodata/包签名及索引引用包；本次官方 InRelease 样本 gpgv 验证成功，不代表整个种子或全部包已校验。
+    - 官方主密钥指纹 24C975CBA61A024EE1B631787C3D57159FC2F927；根据官方轮换指引处理兼容密钥，不关闭校验。未发现固定镜像周期，24h 为本地设置。
+  bootstrap:
+    note: USTC 首次同步任务 influxdata-sync-1791045345 于 2026-10-03T17:10:46Z 成功，快照于 2026-10-03T17:10:56Z 发布，Ready=True；自动同步保持暂停，并未完成官方切换。
+    official_cutover_blocker: 官方 HTML 索引和已知 InRelease/repomd/密钥可由 curl/tsumugu 访问；不能以 Python 403 认定不可用。tsumugu 0.20260921.0
+      的 nginx、apache-f2、fancy-index、s3-indexbuilder 根目录解析失败；apache-f2 能列 debian/ 却在 dists/stable 文件日期解析失败；fallback 虽退出 0 但仅列
+      index.html，跳过无尾斜线的仓库目录。APT/YUM 扩展不能修复目录遍历。没有本轮验证通过的官方 rsync 源，现有模板不能可靠完成全范围同步。
+    action: 保留成功发布快照和暂停状态，不新增同步类型、不恢复 USTC 定时同步；待来源、现有范围和工具能力均验证后再安排接续。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/influxdata/
+    surveyed_at: '2026-10-03'
+    status: selected
+    note: 已完成的 USTC 首次同步来源；本轮未连接 USTC rsync。
+  - url: https://repos.influxdata.com/
+    surveyed_at: '2026-10-03'
+    status: blocked-by-existing-template
+    note: 官方 HTML 索引和已知 InRelease/repomd/密钥可由 curl/tsumugu 访问；不能以 Python 403 认定不可用。tsumugu 0.20260921.0 的 nginx、apache-f2、fancy-index、s3-indexbuilder
+      根目录解析失败；apache-f2 能列 debian/ 却在 dists/stable 文件日期解析失败；fallback 虽退出 0 但仅列 index.html，跳过无尾斜线的仓库目录。APT/YUM 扩展不能修复目录遍历。没有本轮验证通过的官方
+      rsync 源，现有模板不能可靠完成全范围同步。

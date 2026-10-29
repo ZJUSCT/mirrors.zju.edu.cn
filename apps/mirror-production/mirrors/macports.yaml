@@ -1,0 +1,49 @@
+metadata:
+  name: macports
+info:
+  description: macOS 的 MacPorts 软件包管理系统
+  upstream: rsync://rsync-origin.macports.org/macports/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+    - --compress
+    - --delete-delay
+    - --timeout=600
+storage:
+  size: 4884Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://trac.macports.org/wiki/Mirroring
+    - https://trac.macports.org/wiki/Mirrors
+    policy:
+    - 官方 Mirroring 文档明确允许首次从邻近镜像初始化，后续必须使用 rsync-origin.macports.org，不能固定IP或继续使用普通镜像域名。至少每日同步，小时更新仅为建议，因此保留24h。
+    - 官方整根示例包括 packages、distfiles、release 以及已弃用的 trunk；TUNA和origin当前均为这四个根子目录。本次保留整根历史布局，不裁剪trunk或旧平台。release/
+      5项、release/tarballs/ 34项、distfiles/MacPorts/ 1965项名称集合一致；packages/zlib/ 同时保存包及rmd160/sig签名文件。
+    - 官方要求压缩、延迟删除、硬链接、符号链接、权限、递归、时间戳及600秒超时；现有-aH已涵盖主体要求，建议额外参数--compress、--delete-delay、--timeout=600。不得改用立即删除。
+    - 工作站当前IPv6查询返回无地址(code 10)，IPv4根与抽样目录成功；packages/zlib一次握手失败(code 5)后单次只读重试成功。历史生产IPv6证据不能代表当前DNS；推荐IPv4并由生产验证确认可达。
+    - 官方建议发布rsync模块macports及HTTP目录列表；加入自动镜像选择需维护者登记与专用distfiles/packages主机名。这是后续注册事项，本次不发送邮件或修改DNS。现有macports/distfiles与macports/packages路径保持兼容；实际同步及HTTP包/签名检查通过前保持暂停。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/macports/
+    status: bootstrap-complete
+    surveyed_at: '2026-10-07'
+    note: 已成功完成初始化；本次调查为真实subagent执行。
+  - url: rsync://rsync-origin.macports.org/macports/
+    status: selected
+    stack: ipv4
+    surveyed_at: '2026-10-07'
+    note: 官方明确指定origin整根rsync方案，TUNA目录布局相符，IPv4只读探测成功；使用官方要求的延迟删除/压缩参数进入受保护验证。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。

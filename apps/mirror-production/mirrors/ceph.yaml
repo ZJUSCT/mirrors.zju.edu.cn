@@ -1,0 +1,53 @@
+metadata:
+  name: ceph
+info:
+  description: 高性能对象存储和文件系统
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/ceph/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 924Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://docs.ceph.com/en/latest/install/mirrors/
+    - https://github.com/ceph/ceph/blob/main/mirroring/README.md
+    - https://github.com/ceph/ceph/blob/main/mirroring/mirror-ceph.sh
+    policy:
+    - 范围为官方ceph rsync模块整树，保留tarballs、各debian/rpm发行系列、原始元数据与链接/硬链接；不能将USTC种子缩减为单一发行版。
+    - 官方脚本明确两轮rsync：第一轮排除Packages*、Sources*、Release*、InRelease、i18n/*、ls-lR*、repodata/*；第二轮取消这些排除并使用--delete-after，保证先包后索引。不能把第一轮排除永久化，也不能未经论证用普通单轮替代。
+    - 官方要求同步间隔不短于3h，避开整点并优先邻近源；4h是本地合规候选，启用时须核对实际启动偏移。
+    - 加入官方mirror source另有1Gbit、原生IPv4/IPv6、HTTP及rsync、至少2TB、监控及六个月HTTP日志要求，并涉及邮件列表/申请；这些属于注册身份要求，不将本轮技术同步认定为已注册，也不发送邮件。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: ceph-sync-1791205230
+    succeeded_at: '2026-10-06T01:22:51Z'
+    published_at: '2026-10-06T01:22:59Z'
+    note: hourly-live.json确认USTC初始化成功且匹配快照已发布；仍暂停，未执行官方切源。
+    official_interval_candidate: 4h
+    official_cutover_blocker: 官方两轮rsync顺序与现有允许同步器的配置表达尚需核对；尚无生产同参数差异/容量、删除集合、签名、真实官方同步和发布验收。注册官方mirror身份的额外要求需另行决策，不能与单纯同步混同。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/ceph/
+    surveyed_at: '2026-10-07'
+    status: bootstrap-complete
+    note: 成功发布并暂停；本轮未向USTC发起请求。
+  - url: rsync://download.ceph.com/ceph/
+    surveyed_at: '2026-10-07'
+    status: documented-candidate-not-cut-over
+    note: 官方两轮rsync顺序与现有允许同步器的配置表达尚需核对；尚无生产同参数差异/容量、删除集合、签名、真实官方同步和发布验收。注册官方mirror身份的额外要求需另行决策，不能与单纯同步混同。
+  verification:
+    surveyed_at: '2026-10-07'
+    checks:
+    - docs.ceph.com本轮HTTP403；直接读取官方GitHub main的mirrors.rst、README.md、mirror-ceph.sh成功，原文保存review-backlog.evidence/ceph-*。
+    - 未新建rsync连接；未把文档流程视为生产同步已通过。
+    - 成功发布状态依据hourly-live.json；本轮没有集群修改、传输预留或公网发布验收。
+    remaining: 官方两轮rsync顺序与现有允许同步器的配置表达尚需核对；尚无生产同参数差异/容量、删除集合、签名、真实官方同步和发布验收。注册官方mirror身份的额外要求需另行决策，不能与单纯同步混同。

@@ -1,0 +1,36 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mirrors-zju-edu-cn
+  namespace: mirror-production
+spec:
+  secretName: mirrors-zju-edu-cn-cert
+  dnsNames:
+    - mirrors.zju.edu.cn
+    - mirror.zju.edu.cn
+  issuerRef:
+    name: letsencrypt-http01
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-http01
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: mirrors@zju.edu.cn
+    privateKeySecretRef:
+      name: letsencrypt-http01-private-key
+    solvers:
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: envoy-gateway-production
+                namespace: mirror-production
+                kind: Gateway
+                sectionName: http-mirrors
+              - name: envoy-gateway-production
+                namespace: mirror-production
+                kind: Gateway
+                sectionName: http-mirror

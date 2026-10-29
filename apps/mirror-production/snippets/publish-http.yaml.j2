@@ -1,0 +1,88 @@
+{# spec.publish 的 http 形态(基缩进 4 空格,输出含 "http:" 键)。
+   tier → nginx 内存 limit 映射(对照仓库 README 的 tier 表):
+     small:    256Mi
+     standard: 1Gi
+     hot:      2Gi
+   所有档位统一设置 4 CPU limit，作为漏洞利用或异常进程的硬隔离边界；
+   CPU request 显式设置，用于调度和节点争用时的相对权重。共享配置固定为
+   两个 worker，正常请求处理的 CPU 并行度约为 2，4 CPU limit 留出足够余量，
+   避免在正常峰值处触发 CFS throttling。内存按档位设置 limit。
+   同一进程的 8080 为公开入口，127.0.0.1:8081 为目录生成端；/tmp emptyDir
+   保存本 Pod 的目录响应缓存，随快照发布替换 Pod 而失效。
+   主配置 /etc/nginx/nginx.conf 由共享 ConfigMap nginx-conf
+   以 subPath 挂载(见 configs/nginx.conf)。 #}
+{% set tiers = {
+  'small':    {'lm': '256Mi'},
+  'standard': {'lm': '1Gi'},
+  'hot':      {'lm': '2Gi'},
+} %}
+{% set t = tiers[m.publish.http.tier] %}
+    http:
+      replicas: {{ m.publish.http.replicas | default(1) }}
+      podTemplate:
+        metadata:
+          annotations:
+            reloader.stakater.com/auto: "true"
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              startupProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 2
+                timeoutSeconds: 2
+                failureThreshold: 30
+              readinessProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 6
+              resources:
+                requests: {cpu: "10m", memory: 32Mi}
+                limits: {cpu: "4", memory: {{ t.lm }}}
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/{{ m.metadata.name }}
+{% if m.publish.http.subPath %}
+                  subPath: {{ m.publish.http.subPath | ys }}
+{% endif %}
+                  readOnly: true
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              # 目录缓存上限 512Mi，额外空间用于正在填充的响应及其他临时文件。
+              emptyDir:
+                sizeLimit: 1Gi

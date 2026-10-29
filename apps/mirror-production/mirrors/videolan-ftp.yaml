@@ -1,0 +1,52 @@
+metadata:
+  name: videolan-ftp
+info:
+  description: VideoLAN 多媒体软件及相关编解码工具发布文件
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/videolan-ftp/ # 仅首次初始化；完成后切换 comment.upstreams 中的官方源
+sync:
+  type: rsync
+  # USTC 初始化期间按每日一次；官方源日常周期见下方注释。
+  interval: 24h
+  timeout: 24h
+  # WaitForFirstConsumer 首次落盘到 s1；PVC 绑定后可移除此选择器。
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 256Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.videolan.org/videolan/mirrors.html
+    policy:
+    - VideoLAN 镜像页说明其 Mirrorbits/赞助镜像基础设施，并要求有意提供镜像者联系 VideoLAN；候选 rsync://rsync.videolan.org/videolan-ftp/。
+    - 有界根列表成功，包含 trace、keys 及多个项目目录（如 vlc、x264、x265）；目标是 videolan-ftp 范围，不得误用 videolan-ftp-full 或把 Mirrorbits HTTP 页面当 rsync
+      源。
+    - 未查到官方固定同步周期；6h 是本站本地排程候选，不是官方要求。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: videolan-ftp-sync-1790964749
+    succeeded_at: '2026-10-02T21:36:42Z'
+    published_at: '2026-10-02T21:36:50Z'
+    note: USTC bootstrap source videolan-ftp-sync-1790964749 于 2026-10-02T21:36:42Z UTC 成功，快照发布于 2026-10-02T21:36:50Z UTC；mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。此
+      URL 只记录首次初始化来源，不表示已切换到官方源。
+    official_cutover: 未执行；须先按下列候选源完成范围、删除集、新鲜度和完整性验收。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/videolan-ftp/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 仅作为本次首次同步种子；该镜像的 USTC bootstrap rsync 已成功，自动增量仍暂停。
+  - url: rsync://rsync.videolan.org/videolan-ftp/
+    surveyed_at: '2026-10-03'
+    status: candidate-unverified-contact-required
+    note: 官方 daemon 根列表 exit 0；VideoLAN 页面要求镜像赞助/联系确认，尚未取得本站登记或完成生产 dry-run，因此保持暂停。
+  verification:
+    surveyed_at: '2026-10-03'
+    checks:
+    - 官方镜像页 HTTP 200；2026-10-03 04:30:01（工作站本地时间） trace 文件和 2026-09-24/09-22 的项目目录在 rsync 根可见。
+    caveats:
+    - 未找到官方固定同步周期；6h 仅为本站候选。官方镜像登记/联系要求未完成，不宣称可直接切换。

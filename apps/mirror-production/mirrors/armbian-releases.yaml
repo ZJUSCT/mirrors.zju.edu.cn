@@ -1,0 +1,52 @@
+metadata:
+  name: armbian-releases
+info:
+  description: Armbian 单板计算机系统镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/armbian-dl/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 1Ti
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-05'
+    docs:
+    - https://docs.armbian.com/contribute/run-a-mirror/
+    policy:
+    - 官方文档要求镜像提供可访问的 HTTPS（也接受 HTTP）主机，并从官方 rsync 模块拉取要发布的内容。
+    - 官方当前镜像模块为 dl（当前镜像）、apt（软件包）、archive 和 oldarchive；本条目对应 dl，命令为 rsync -av rsync://rsync.armbian.com/dl，文档标注所需空间约 556G。
+    - 官方要求通过 cron 每 2–4 小时同步一次；同步完成后需通过联系表单提交镜像，以加入官方 redirector。当前 24h 配置不是官方周期，不能据此宣称满足官方要求。
+    - 本条目只覆盖 dl；Armbian 的 apt 是不同数据集，不能把两个模块合并或用 apt 条目替代 dl。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: armbian-releases-sync-1791206585
+    succeeded_at: '2026-10-05T18:37:53Z'
+    published_at: '2026-10-05T18:38:03Z'
+    note: 本地 rollout-live.json 记录 Ready=True、Degraded=False，activeSnapshot=armbian-releases-snap-1791206585，sizeBytes=566246768640；自动同步随后暂停。
+    official_cutover_blocker: 当前生产清单仍使用 USTC bootstrap 源并设置 24h；官方要求 2–4h，并要求运行后通过联系表单登记 redirector。保存的 2026-09-30 证据显示 rsync.armbian.com
+      IPv4 成功、IPv6 失败，因此切源需固定 IPv4 起步并在生产容器复核。
+    action: 保留已发布 USTC 快照并暂停自动增量；在调整周期、完成生产 IPv4 验证并通过官方联系表单登记前，不解除暂停或宣称已加入官方 redirector。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/armbian-dl/
+    surveyed_at: '2026-10-02'
+    status: bootstrap-complete
+    note: USTC bootstrap 数据集；expanded-distros.json 报告 563.05 GiB，根布局与 armbian dl 对应；当前自动同步暂停。
+  - url: rsync://rsync.armbian.com/dl/
+    surveyed_at: '2026-09-30'
+    status: official-candidate-ipv4-verified
+    note: 项目保存的 expanded-distros.md 记录官方 IPv4 根及生产探测成功、IPv6 失败；未在本次 review 中重新传输数据。
+  verification:
+    surveyed_at: '2026-10-05'
+    checks:
+    - 已读取官方 run-a-mirror 文档，确认 HTTPS/HTTP 可达、rsync 模块范围、2–4h cron 周期及联系表单登记要求。
+    - 仅使用项目目录中的本地证据：expanded-distros.json、expanded-distros.md 与 rollout-live.json；未修改镜像配置，未执行同步传输或集群切换。
+    - 保存的最新同步作业 armbian-releases-sync-1791206585 成功并发布快照；公开服务状态为 Ready=True。
+    remaining: 需要在生产同步容器以官方 dl 源进行 IPv4 连接和范围核对，按官方 2–4h 周期运行，并通过官方联系表单登记后再考虑切换；IPv6 失败仍是已知限制。

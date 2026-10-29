@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: clickhouse
+  namespace: clickhouse
+spec:
+  podMetricsEndpoints:
+    - interval: 30s
+      port: metrics
+      scrapeTimeout: 10s
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: clickhouse

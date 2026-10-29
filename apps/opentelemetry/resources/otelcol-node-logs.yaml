@@ -1,0 +1,118 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: node-logs
+spec:
+  mode: daemonset
+  env:
+    - name: K8S_NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    runAsGroup: 0
+    runAsUser: 0
+  volumeMounts:
+    - name: varlogpods
+      mountPath: /var/log/pods
+      readOnly: true
+    - name: varlibotelcol
+      mountPath: /var/lib/otelcol
+  volumes:
+    - name: varlogpods
+      hostPath:
+        path: /var/log/pods
+        type: Directory
+    - name: varlibotelcol
+      hostPath:
+        path: /var/lib/otelcol
+        type: DirectoryOrCreate
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: '4'
+      memory: 2Gi
+  config:
+    extensions:
+      file_storage:
+        directory: /var/lib/otelcol
+        create_directory: true
+    receivers:
+      filelog:
+        include:
+          - /var/log/pods/*/*/*.log
+        exclude:
+          - /var/log/pods/opentelemetry_node-logs-collector-*_*/otc-container/*.log
+        start_at: beginning
+        retry_on_failure:
+          enabled: true
+        storage: file_storage
+        include_file_path: true
+        include_file_name: false
+        operators:
+          - type: container
+            id: container-parser
+            max_log_size: 1MiB
+    processors:
+      memory_limiter:
+        check_interval: 200ms
+        limit_mib: 1536
+        spike_limit_mib: 512
+      k8sattributes:
+        filter:
+          node_from_env_var: K8S_NODE_NAME
+        passthrough: false
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.uid
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.node.name
+            - k8s.deployment.name
+            - k8s.daemonset.name
+            - k8s.statefulset.name
+            - k8s.container.name
+            - container.image.name
+            - container.image.tag
+      batch:
+        send_batch_size: 1024
+        send_batch_max_size: 2048
+        timeout: 5s
+    exporters:
+      otlp/aggregator:
+        endpoint: aggregator-collector.opentelemetry.svc.cluster.local:4317
+        tls:
+          insecure: true
+        sending_queue:
+          enabled: true
+          storage: file_storage
+        retry_on_failure:
+          enabled: true
+    service:
+      extensions: [file_storage]
+      pipelines:
+        logs:
+          receivers: [filelog]
+          processors: [memory_limiter, k8sattributes, batch]
+          exporters: [otlp/aggregator]
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+                    without_scope_info: false
+                    without_type_suffix: false
+                    without_units: false

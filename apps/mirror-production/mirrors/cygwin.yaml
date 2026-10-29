@@ -1,0 +1,32 @@
+metadata:
+  name: cygwin
+info:
+  description: 面向 Windows 的 POSIX 兼容环境与开源工具集
+  upstream: rsync://cygwin.com/cygwin-ftp/ # 官方要求直接从 cygwin.com 同步；IPv6 实测优于 IPv4
+sync:
+  type: rsync
+  interval: 12h
+  timeout: 12h
+storage:
+  size: 300Gi
+  volumeName: pvc-24c6fad0-ba35-42e3-9fbe-5368ba046043
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.cygwin.com/
+      - https://www.cygwin.com/mirrors.html
+    policy:
+      - 公共镜像必须直接从 cygwin.com 同步，并且每天至少同步两次。
+      - 镜像滞后超过 24 小时会被临时移出列表，恢复更新后会自动重新加入。
+      - 官方当前标注完整镜像约占 132GB。
+  upstreams:
+    - url: rsync://cygwin.com/cygwin-ftp/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 340ms、1.2MiB/s；IPv6 RTT 约 257ms、3.3MiB/s
+      note: 官方直接同步源；rsync 服务中的 cygwin-ftp 模块包含完整软件包仓库。

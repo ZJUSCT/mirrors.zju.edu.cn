@@ -1,0 +1,101 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: nodes
+spec:
+  endpoints:
+    - dnsName: s1-bmc.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.235.99
+    - dnsName: s1.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.236.99
+    - dnsName: s1.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: AAAA
+      targets:
+        - 2001:da8:e000:8936::99
+    - dnsName: s2-bmc.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.235.100
+    - dnsName: s2.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.236.100
+    - dnsName: s2.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: AAAA
+      targets:
+        - 2001:da8:e000:8936::100
+    - dnsName: s3-bmc.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.235.101
+    - dnsName: s3.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.236.101
+    - dnsName: s3.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: AAAA
+      targets:
+        - 2001:da8:e000:8936::101
+    - dnsName: f1-bmc.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.235.102
+    - dnsName: f1.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.236.102
+    - dnsName: f1.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: AAAA
+      targets:
+        - 2001:da8:e000:8936::102
+    - dnsName: f2-bmc.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.235.103
+    - dnsName: f2.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.202.236.103
+    - dnsName: f2.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: AAAA
+      targets:
+        - 2001:da8:e000:8936::103
+    - dnsName: v0.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.203.1.200
+    - dnsName: v0.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: AAAA
+      targets:
+        - 2001:da8:e000:8001::200
+    - dnsName: v1.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: A
+      targets:
+        - 10.203.1.201
+    - dnsName: v1.mirrors.zjusct.io
+      recordTTL: 1
+      recordType: AAAA
+      targets:
+        - 2001:da8:e000:8001::201

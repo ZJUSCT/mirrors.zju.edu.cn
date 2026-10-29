@@ -1,0 +1,45 @@
+metadata:
+  name: opensuse
+info:
+  description: openSUSE 发行版与软件仓库（opensuse-full 层级）
+  # upstream: rsync://rsync.opensuse.org/opensuse-full/opensuse/ # 模块根含 opensuse/ 包装目录 # too-slow(15Mb/s, 2026-09-20)
+  upstream: rsync://ftp.gwdg.de/pub/opensuse/ # 2026-09-20，注意该镜像上游为 stage
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 24h
+  rsync:
+    extra_args:
+      # 上游当前拒绝访问的路径：永久保留，不能作为阶段开关移除。
+      - --filter=-sr /repositories/home:/sainaif:/***
+      # 分阶段同步保护：逐条移除，单次成功发布后再推进下一条。
+      - --filter=-sr /discontinued/***
+storage:
+  size: 64Ti
+  volumeName: pvc-576b8877-8e3b-489a-b3ed-6b904e308350
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://en.opensuse.org/openSUSE:Mirror_infrastructure
+      - https://en.opensuse.org/openSUSE:Mirror_howto
+      - https://mirrors.opensuse.org/
+    policy:
+      - 公共 rsync 服务最多允许约 50 个并发连接；已注册且带宽至少 100Mbit/s 的镜像可申请 stage.opensuse.org 访问权限。
+      - opensuse-full 提供 download.opensuse.org 的完整内容，但不含高频更新的顶层 tumbleweed/ 目录。
+      - 官方 howto 示例每 6 小时同步一次，并要求加入随机延迟和互斥锁；使用 stage 源时还须保留权限并遵守 bit-flip 发布规则。
+  upstreams:
+    - url: rsync://rsync.opensuse.org/opensuse-full/opensuse/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 270ms；IPv6 RTT 约 247ms；可读取内容 50.50TiB（55,525,732,047,241 bytes）
+      note: 官方公共源；模块根额外包含 opensuse/ 包装目录，须从该子目录同步到本地镜像根。
+    - url: rsync://stage.opensuse.org/opensuse-full/opensuse/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: 仅向已注册并加入白名单的镜像开放
+      note: 可提前取得 staged 内容且传输能力更高；正式注册后应优先使用。

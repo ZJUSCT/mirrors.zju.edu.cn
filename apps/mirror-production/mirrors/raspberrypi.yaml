@@ -1,0 +1,32 @@
+metadata:
+  name: raspberrypi
+info:
+  description: Raspberry Pi OS 的附加软件包仓库
+  upstream: rsync://apt-repo.raspberrypi.org/archive/debian/ # 官方指定的 IPv6 rsync 上源；仅同步软件包子目录
+sync:
+  type: rsync
+  interval: 12h
+  timeout: 12h
+storage:
+  size: 1Ti
+  volumeName: pvc-16b94303-f65c-4ee4-9032-b2983729f21a
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.raspberrypi.com/documentation/computers/os.html
+      - https://archive.raspberrypi.com/README.txt
+      - https://archive.raspberrypi.com/debian/
+    policy:
+      - 官方指定 apt-repo.raspberrypi.org::archive 作为镜像同步源，且该服务仅支持 IPv6。
+      - 官方未说明建议的同步间隔，也未公布镜像登记要求。
+  upstreams:
+    - url: rsync://apt-repo.raspberrypi.org/archive/debian/
+      stack: ipv6
+      surveyed_at: 2026-09-18
+      metrics: IPv6 RTT 约 241ms、6.7MiB/s
+      note: 官方 rsync 上源；无 MOTD，archive 模块中的 debian 子目录对应公开软件包仓库。

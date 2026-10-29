@@ -1,0 +1,33 @@
+{# spec.publish.aliases（基缩进 4 空格，输出含 "aliases:" 键，无 aliases 时输出空）。
+   mirrors/ 中普通 alias 可写为字符串简写（/CPAN）；子集 alias 写完整结构：
+     - path: /debian-nonfree
+       subset:
+         subpath: unofficial/non-free   # 镜像数据内的相对路径
+         cname: ...                     # 缺省取 path 去首 /
+         description: ...
+         upstream: ...                  # 该子目录的精确上游，缺省省略
+   语义见 Falcon 仓库「别名与重定向」：普通 alias 301 至规范路径、不进 mirrorz；
+   子集 alias 301 至子目录并作为独立条目进入 mirrorz（status 投影父镜像）。 #}
+{% if m.publish.aliases %}
+    aliases:
+{% for a in m.publish.aliases %}
+{% if a is string %}
+      - path: {{ a | ys }}
+{% else %}
+      - path: {{ a.path | ys }}
+{% if a.subset %}
+        subset:
+          subpath: {{ a.subset.subpath | ys }}
+{% if a.subset.cname %}
+          cname: {{ a.subset.cname | ys }}
+{% endif %}
+{% if a.subset.description %}
+          description: {{ a.subset.description | ys }}
+{% endif %}
+{% if a.subset.upstream %}
+          upstream: {{ a.subset.upstream | ys }}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}

@@ -1,0 +1,59 @@
+metadata:
+  name: lfs
+info:
+  description: Linux From Scratch 构建系统所需的源码包
+  upstream: rsync://ftp.osuosl.org/lfs/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 96Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://www.linuxfromscratch.org/lfs/download.html
+    - https://ftp.osuosl.org/pub/lfs/
+    policy:
+    - LFS 官方下载页明确列 OSUOSL 的 /pub/lfs/ 为构建源码包镜像；这不是仅包含书籍 HTML/PDF 的 LFS 网站镜像。精确 rsync://ftp.osuosl.org/lfs/ 由历史
+      USTC metadata 提供，本次已独立向 daemon 验证可用，属于官方认可的第三方分发节点，不冒称项目自营。
+    - 模块根为 .timestamp 与 lfs-packages/；不能将 lfs-packages/ 内容提升到 /lfs/ 根。下级含版本目录、整套 lfs-packages-<version>.tar、conglomeration/；12.4
+      -> 12.4-rc1 等内部相对链接应保留。
+    - 根 .timestamp mtime 停在 2012 年，但 lfs-packages/ 目录 mtime 为 2026-08-31；旧标记文件本身不能证明整树停止更新。切换前比较具体版本/文件和完整差异。
+    - 未查到源码包镜像的固定同步周期；官网 daily snapshots 指书籍开发快照，不是本模块同步要求。24h 是本站候选。
+    - 标准文件树与内部链接由现有 rsync 模板支持，保留 safe-links 与原始版本结构；不需要新增模板。OSUOSL MOTD 表示优先供主/次级镜像使用，未发现公开模块需凭据。
+    - 2026-10-04已从USTC种子切换至官方认可的OSUOSL节点rsync://ftp.osuosl.org/lfs/，生产IPv6真实同步exit0，新快照及公网文件验证通过后解除暂停；采用本地24h周期，保留模块根lfs-packages/和safe-links。
+  bootstrap:
+    status: official-handoff-complete
+    job: lfs-sync-1791044076
+    succeeded_at: '2026-10-03T17:12:28Z'
+    published_at: '2026-10-03T17:12:36Z'
+    note: USTC初始化于2026-10-03T17:12:28Z成功、17:12:36Z发布。2026-10-04官方认可OSUOSL节点切源完成：lfs-sync-1791108535于10:09:15Z同步成功，10:09:27Z发布lfs-snap-1791108535；新快照/PVC与Ready匹配，公网清单/源码包验证后解除暂停。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/lfs/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC 首次初始化种子；当前配置仍指向此源且暂停，不代表官方日常增量已经启用。
+  - url: rsync://ftp.osuosl.org/lfs/
+    surveyed_at: '2026-10-04'
+    status: selected
+    note: 官方认可的OSUOSL源码包分发节点；生产同过滤dry-run与真实同步均exit0，无创建/删除/文件传输。新快照发布及公网清单、内部版本链接、两种源码tar包核对通过后启用24h自动同步。
+    stack: ipv6
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 官方LFS下载页认可OSUOSL /pub/lfs/；精确rsync模块为/lfs/，不是将lfs-packages/内容提升到镜像根。
+    - 生产IPv6 dry-run只读挂载已发布VolumeSnapshot克隆lfs-snap-1791044076，不挂载工作PVC；5640项（5044普通文件、65目录、531链接），总字节49540570298；零创建、零删除、零文件传输。531个链接逐项检查均为根内相对路径，12.4→12.4-rc1及对应整包tar链接保留。
+    - 旧kubectl与argocd-controller共同拥有源/args/nodeSelector；先server dry-run验证旧manager只放弃这些字段且spec/annotations逐项不变，实际放弃后再次核对不变，再由argocd-controller非force
+      SSA切源并删除bootstrap nodeSelector。其他spec字段保持不变。
+    - 官方真实Job lfs-sync-1791108535的rsync exit0；10:09:15Z成功、10:09:27Z发布。activePVC=activeSnapshot=lfs-snap-1791108535，PVC来源对应VolumeSnapshot且readyToUse=true，Mirror
+      Ready=True且observedGeneration匹配。真实rsync仍零创建/删除/文件传输。
+    - 公网与OSUOSL HTTPS逐字节对比8项通过：.timestamp、lfs-packages/MD5SUMS、SHA1SUMS、13.1/md5sums、12.4/md5sums、12.4-rc1/md5sums，以及13.1的bzip2-1.0.8.tar.gz与zlib-1.3.2.tar.gz；链接别名清单与目标清单相同。
+    - bzip2源码包810029字节、SHA256=ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269；zlib源码包1502830字节、SHA256=bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16。二者同时符合版本md5sums，tar目录包含构建入口；只列目录，不解压、编译或执行。
+    - 公网验证通过后只删除sync-paused注解，恢复本地24h自动同步；检查Pod已删除、reservation已释放。
+    remaining: 此次切源、实际同步、发布和公网抽样已完成。MD5/SHA1用于源站清单一致性，另做独立HTTPS字节/SHA256比对，不宣称全仓库数字签名认证或源码构建/运行验收。

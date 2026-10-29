@@ -1,0 +1,55 @@
+metadata:
+  name: hackage
+info:
+  description: Haskell 软件包仓库
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/hackage/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 44Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://hackage.haskell.org/api
+    - https://github.com/haskell/hackage-security
+    - https://cabal.readthedocs.io/en/stable/config.html
+    policy:
+    - 保留USTC原根的四个安全JSON、01-index、legacy索引和package目录；不得混入官方更新JSON、重签元数据、关闭secure或降低Cabal官方root keys门限3。
+    - 2026-10-04旧JSON仅为历史证据；2026-10-07固定初始化快照的新root8、mirrors13及timestamp/snapshot111113已通过签名、门限、有效期与相互长度/SHA256验证。timestamp/snapshot到期2026-10-09T00:29:22Z；不得继续把旧111072到期时间作为此代次阻塞依据。
+    - Falcon v0.1.14支持无spec.publish的仅同步快照；应用顶层Kustomize对本项删除publish并设sync-paused=true，不能只用pause阻止发布。
+    - 官方增量为HTTP secure索引驱动，现有四模板尚未证明长期接续可行；此问题独立于USTC种子获取。
+  bootstrap:
+    status: succeeded-sync-only-publication-held
+    note: USTC初始化成功并保留固定快照；无spec.publish，Ready=False/HTTPDisabled是预期隔离状态，不是公开Ready。继续保持sync-paused及publish删除覆盖，未执行官方同步或发布。
+    official_interval_candidate: 24h
+    publish_gate: kustomization.yaml:hackage-remove-publish-and-pause
+    post_bootstrap_review_required: true
+    job: hackage-sync-1791287836
+    succeeded_at: '2026-10-06T19:32:45Z'
+    snapshot: hackage-snap-1791287836
+    official_cutover_blocker: 继续保持不发布及暂停：完成可信索引引用的包库存/长度闭包及代表包摘要、secure=True且官方root keys门限3的隔离客户端update/获取测试并证明命中待验副本；官方增量同步路径仍未证明。不得关闭secure、降门限、篡改mirrors.json或把新官方JSON拼入旧树。官方同步、内容验收及匹配发布验证完成前不解除暂停；发布前重验有效期（当前timestamp/snapshot至2026-10-09T00:29:22Z）。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/hackage/
+    surveyed_at: '2026-10-07'
+    status: bootstrap-complete-sync-only
+    note: USTC原范围同步成功，固定快照待内容验收，未公开；本轮仅复核已保存证据，无额外USTC请求。
+  - url: https://hackage.haskell.org/
+    surveyed_at: '2026-10-04'
+    status: official-security-chain-verified-incremental-tooling-unresolved
+    note: 官方当前安全链已验证，不能把它的更新JSON注入USTC种子；自动长期接续仍需另审。
+  verification:
+    surveyed_at: '2026-10-07'
+    checks:
+    - 证据hackage-postbootstrap-validation/metadata-validation.json于2026-10-07T05:57:09Z记录固定快照四份安全JSON验签/有效期和hash链通过；root有4个有效签名，满足门限3。
+    - 完整01-index.tar.gz长度139083350字节、SHA256 b177b0bdaf9723f9eb6634ba01cec868e88458714535ae682fcb511d8c9178b4，与同套snapshot匹配，index_verified=true。不能把索引通过扩展为全部package包体或客户端通过。
+    - 父任务报告临时验证clone已清理；本轮只读取上述证据和既有官方文档调查，无集群操作或网络传输。
+    remaining: 继续保持不发布及暂停：完成可信索引引用的包库存/长度闭包及代表包摘要、secure=True且官方root keys门限3的隔离客户端update/获取测试并证明命中待验副本；官方增量同步路径仍未证明。不得关闭secure、降门限、篡改mirrors.json或把新官方JSON拼入旧树。官方同步、内容验收及匹配发布验证完成前不解除暂停；发布前重验有效期（当前timestamp/snapshot至2026-10-09T00:29:22Z）。

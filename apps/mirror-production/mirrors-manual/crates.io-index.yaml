@@ -1,0 +1,234 @@
+# comment:
+#   official:
+#     surveyed_at: 2026-09-19
+#     docs:
+#       - https://github.com/rust-lang/crates.io-index
+#       - https://doc.rust-lang.org/cargo/reference/registry-index.html
+#       - https://doc.rust-lang.org/cargo/reference/source-replacement.html
+#       - https://crates.io/data-access
+#     policy:
+#       - sparse 索引通过 HTTP 按需获取单个包的元数据文件；Cargo 1.68 稳定支持该协议，并自 1.70 起默认使用。
+#       - sparse 索引目前无访问频率限制，并应支持 ETag 或 Last-Modified 条件请求。
+#       - config.json 的 dl 决定包体下载地址；不含占位符时 Cargo 会追加 /{crate}/{version}/download。
+#       - 源替换必须提供与原注册表完全相同的包内容。
+#   upstreams:
+#     - url: https://github.com/rust-lang/crates.io-index.git
+#       stack: ipv4
+#       surveyed_at: 2026-09-19
+#       metrics: IPv4 RTT 约 144ms；smart HTTP 探测约 0.59s
+#       note: 官方索引 Git 仓库；本地选择检出其文件树并作为 sparse HTTP 索引发布。
+#     - url: https://index.crates.io/
+#       stack: dual
+#       surveyed_at: 2026-09-19
+#       metrics: IPv4 RTT 约 98–103ms；IPv6 RTT 约 62ms
+#       note: crates.io 官方 sparse 服务端点，用于按需读取而非全量同步。
+# TODO: 将包体切换到本站前，使用含占位符的 https://mirrors.zju.edu.cn/crates.io/{crate}/{crate}-{version}.crate，
+#   并保证仅在对应包体完成下载和校验后发布索引提交；当前继续使用官方 CDN。
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: crates.io-index
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Rust 语言软件包稀疏索引 crates.io
+    upstream: https://github.com/rust-lang/crates.io-index.git
+  storage:
+    retention: 1
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      volumeMode: Filesystem
+      resources:
+        requests:
+          storage: 32Gi
+      volumeName: pvc-310fe7cc-5bab-46cb-bf17-0cf4f0a67ed1
+  sync:
+    interval: 30m
+    retryInterval: 15m
+    timeout: 6h
+    failureRetryLimit: 3
+    keepJobs: 1
+    podTemplate:
+      spec:
+        securityContext:
+          fsGroup: 65532
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
+          - name: init-sync-volume
+            image: busybox:1.37
+            imagePullPolicy: Always
+            command: [sh, /init/init-sync-volume.sh]
+            env:
+              - name: SYNC_UID
+                value: "65532"
+            securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN]
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: sync-volume-init
+                mountPath: /init
+                readOnly: true
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+              limits: {cpu: 100m, memory: 32Mi}
+        containers:
+          - name: gitsync
+            image: docker.io/ustcmirror/crates-io-index:latest
+            imagePullPolicy: Always
+            # 绕过 ustcmirror base 的 entry（su-exec 在无特权容器内致命失败，
+            # 2026-09-14 排障）；直跑镜像的 SYNC_SCRIPT，输出直达 stdout
+            command: [/bin/bash, /sync-crates-index.sh]
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 65532
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              # ustcmirror base 的 entry 有容器内运行态写入（su-exec 告警
+              # 非致命，fedora 已实测）；git 的 HOME 指向临时层
+              readOnlyRootFilesystem: false
+            env:
+              # entry.sh 原本 export DEBUG=${DEBUG:-false}，set -u 下脚本裸引用
+              - name: DEBUG
+                value: "false"
+              # GitHub 访问走集群代理（同 homebrew 的模式）
+              - name: HTTP_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: HTTPS_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: NO_PROXY
+                value: localhost,127.0.0.1,::1,10.0.0.0/8,172.26.0.0/16,172.27.0.0/16,fda8:d4b1:99d0:100::/56,fda8:d4b1:99d0:200::/112,.svc,.cluster.local
+              - name: GITSYNC_URL
+                value: https://github.com/rust-lang/crates.io-index.git
+              - name: GITSYNC_CHECKOUT
+                value: "true"
+              - name: TO
+                value: /data
+              - name: LOGDIR
+                value: /tmp
+              - name: OWNER
+                value: 65532:65532
+              - name: HOME
+                value: /tmp
+              # 当前保持官方 CDN；切换本站时须使用带 Cargo 占位符的 URL，
+              # 并与包体完成状态协调发布。
+              - name: CRATES_PROXY
+                value: https://static.crates.io/crates
+              - name: CRATES_GITNAME
+                value: mirrors.zju.edu.cn
+              - name: CRATES_GITMAIL
+                value: mirrors@zju.edu.cn
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
+  publish:
+    http:
+      replicas: 1
+      podTemplate:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: nginx
+              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              imagePullPolicy: Always
+              command: [sh, -ec]
+              args:
+                - |
+                  sed 's/worker_processes  auto;/worker_processes  2;/' /etc/nginx/nginx.conf > /tmp/nginx.conf
+                  exec nginx -c /tmp/nginx.conf -g 'daemon off;'
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              ports:
+                - containerPort: 8080
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /crates.io-index/config.json
+                  port: http
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /crates.io-index/config.json
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 3
+              volumeMounts:
+                - name: nginx-conf
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+                - name: mirror-data
+                  mountPath: /usr/share/nginx/html/crates.io-index
+                  readOnly: true
+                - name: nginx-locations
+                  mountPath: /etc/nginx/locations
+                  readOnly: true
+              resources:
+                requests: {cpu: 50m, memory: 64Mi}
+                limits: {cpu: "4", memory: 256Mi}
+          volumes:
+            - name: nginx-conf
+              configMap:
+                name: nginx-conf
+            - name: tmp
+              emptyDir: {}
+            - name: nginx-locations
+              configMap:
+                name: crates-io-index-nginx-locations
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crates-io-index-nginx-locations
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  # 数据集根 = worktree + .git（gitsync CHECKOUT 布局）；稀疏协议客户端
+  # 只需要文件树，.git 不对公网暴露（git 协议由 crates.io-index.git 镜像提供）
+  hide-git.conf: |
+    location = /crates.io-index/.git {
+        return 404;
+    }
+    location ^~ /crates.io-index/.git/ {
+        return 404;
+    }

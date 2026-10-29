@@ -1,0 +1,43 @@
+metadata:
+  name: gentoo-portage-prefix
+info:
+  description: Gentoo Prefix ebuild 仓库
+  upstream: rsync://rsync.prefix.bitzolder.nl/gentoo-portage-prefix/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://wiki.gentoo.org/wiki/Project:Prefix
+    - https://wiki.gentoo.org/wiki/Project:Prefix/FAQ
+    - https://gitweb.gentoo.org/repo/proj/prefix.git/plain/scripts/bootstrap-prefix.sh
+    - https://rsync.prefix.bitzolder.nl/
+    policy:
+    - 官方 Prefix 页面链接 bootstrap-prefix.sh；该官方脚本把 rsync.prefix.bitzolder.nl 作为非 RAP Prefix 的快照及补丁源。镜像内容为生成后的 ebuild/metadata/profiles
+      树，不是 Gentoo distfiles 或 Git 源仓库。
+    - 官方 FAQ 说明 rsync 树在每小时 01/31 分开始生成，通常 5 分钟、最长 25 分钟，变更最迟约一小时后可同步；本次模块 MOTD 更具体说明当前服务器自行生成树并在每小时 26/56 分刷新。
+    - 未在已读 Prefix 文档发现对外部镜像明确的强制轮询间隔；现行配置仍为 24h，建议据半小时生成节奏调整为 1h，以低于上游产出频率的轮询减少软件树滞后；本次调研仅提出建议，尚未修改运行间隔。
+    - 使用 gentoo-portage-prefix 模块根目录；实际回源已验证与 TUNA ebuild 树兼容。dry-run 文件数 159,939，新增 8、删除 0；大量文件 mtime 差异不能据此误判为全量内容变化。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/gentoo-portage-prefix/
+    stack: ipv6
+    status: bootstrap-complete
+    surveyed_at: '2026-10-02'
+    note: TUNA 首轮同步已成功，仅作本次初始化源。
+  - url: rsync://rsync.prefix.bitzolder.nl/gentoo-portage-prefix/
+    stack: ipv6
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: Gentoo 开发者运营的 Prefix rsync 节点；MOTD 联系人为 grobian@gentoo.org。生产 IPv6 真实回源及发布验收已成功；建议把当前 24h 改为 1h，与生成树节奏相称。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、官方源真实同步、快照发布及 HTTP 文件内容校验均已通过，已恢复自动同步。
+    reported_size: 243.99M

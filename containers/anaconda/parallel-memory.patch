@@ -1,0 +1,179 @@
+--- a/anaconda.py
++++ b/anaconda.py
+@@ -7,0 +8 @@
++from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+@@ -23,2 +24,5 @@
+-CONDA_REPO_BASE_URL = os.getenv("CONDA_REPO_URL", "https://repo.continuum.io")
++CONDA_REPO_BASE_URL = os.getenv("CONDA_REPO_URL", "https://repo.anaconda.com")
+ CONDA_CLOUD_BASE_URL = os.getenv("CONDA_CLOUD_URL", "https://conda.anaconda.org")
++
++# Keep upstream load bounded while allowing a few package downloads in parallel.
++DOWNLOAD_WORKERS = max(1, min(8, int(os.getenv("ANACONDA_DOWNLOAD_WORKERS", "4"))))
+@@ -135,0 +140,31 @@
++def sync_package(
++    repo_url: str,
++    local_dir: Path,
++    filename: str,
++    file_size: int,
++    sha256: str = None,
++    md5: str = None,
++):
++    pkg_url = "/".join([repo_url, filename])
++    dst_file = local_dir / filename
++    dst_file_wip = local_dir / (".downloading." + filename)
++
++    if dst_file.is_file():
++        if file_size == dst_file.stat().st_size:
++            return "skipped"
++        dst_file.unlink()
++
++    for retry in range(3):
++        logging.info("Downloading {}".format(filename))
++        try:
++            err = curl_download(pkg_url, dst_file_wip, sha256=sha256, md5=md5)
++            if err is None:
++                dst_file_wip.rename(dst_file)
++                return "downloaded"
++        except sp.CalledProcessError:
++            err = "CalledProcessError"
++        logging.error("Failed to download {}: {}".format(filename, err))
++
++    return "failed"
++
++
+@@ -159 +194 @@
+-    except:
++    except Exception:
+@@ -163 +198 @@
+-    except:
++    except Exception:
+@@ -169 +204,5 @@
+-    remote_filelist = []
++    # Process the two package maps independently. The old implementation merged
++    # them into another large dictionary and retained a Path for every package.
++    # Keep only filename strings for the optional deletion pass and bound the
++    # number of active curl processes.
++    remote_filenames = set()
+@@ -170,0 +211,2 @@
++    pending = set()
++    counts = {"skipped": 0, "downloaded": 0, "failed": 0}
+@@ -172,0 +215 @@
++    conda_legacy_names = set()
+@@ -174,2 +217 @@
+-        # https://github.com/anaconda/conda/blob/0dbf85e0546e0b0dc060c8265ec936591ccbe980/conda/core/subdir_data.py#L440-L442
+-        use_legacy_packages = set(legacy_packages.keys()) - set(
++        conda_legacy_names = {
+@@ -177,26 +219 @@
+-        )
+-        legacy_packages = {k: legacy_packages[k] for k in use_legacy_packages}
+-    packages = {**legacy_packages, **conda_packages}
+-
+-    for filename, meta in packages.items():
+-        if meta["name"] in EXCLUDED_PACKAGES:
+-            continue
+-
+-        file_size = meta["size"]
+-        # prefer sha256 over md5
+-        sha256 = None
+-        md5 = None
+-        if "sha256" in meta:
+-            sha256 = meta["sha256"]
+-        elif "md5" in meta:
+-            md5 = meta["md5"]
+-        total_size += file_size
+-
+-        pkg_url = "/".join([repo_url, filename])
+-        dst_file = local_dir / filename
+-        dst_file_wip = local_dir / (".downloading." + filename)
+-        remote_filelist.append(dst_file)
+-
+-        if dst_file.is_file():
+-            stat = dst_file.stat()
+-            local_filesize = stat.st_size
++        }
+@@ -204,2 +221,6 @@
+-            if file_size == local_filesize:
+-                logging.info("Skipping {}".format(filename))
++    def submit_packages(executor, packages, skip_legacy=False):
++        nonlocal total_size
++        for filename, meta in packages.items():
++            if skip_legacy and filename in conda_legacy_names:
++                continue
++            if meta["name"] in EXCLUDED_PACKAGES:
+@@ -208 +231,18 @@
+-            dst_file.unlink()
++            file_size = meta["size"]
++            sha256 = meta.get("sha256")
++            md5 = None if sha256 else meta.get("md5")
++            total_size += file_size
++            remote_filenames.add(filename)
++            pending.add(
++                executor.submit(
++                    sync_package,
++                    repo_url,
++                    local_dir,
++                    filename,
++                    file_size,
++                    sha256,
++                    md5,
++                )
++            )
++            if len(pending) >= DOWNLOAD_WORKERS * 2:
++                collect_completed()
+@@ -210,11 +251,15 @@
+-        for retry in range(3):
+-            logging.info("Downloading {}".format(filename))
+-            try:
+-                err = curl_download(pkg_url, dst_file_wip, sha256=sha256, md5=md5)
+-                if err is None:
+-                    dst_file_wip.rename(dst_file)
+-            except sp.CalledProcessError:
+-                err = "CalledProcessError"
+-            if err is None:
+-                break
+-            logging.error("Failed to download {}: {}".format(filename, err))
++    def collect_completed():
++        if not pending:
++            return
++        done, _ = wait(pending, return_when=FIRST_COMPLETED)
++        for future in done:
++            pending.remove(future)
++            counts[future.result()] += 1
++
++    with ThreadPoolExecutor(max_workers=DOWNLOAD_WORKERS) as executor:
++        submit_packages(executor, conda_packages)
++        submit_packages(executor, legacy_packages, skip_legacy=True)
++        # Release the large metadata maps before waiting for the final downloads.
++        del repodata, legacy_packages, conda_packages, conda_legacy_names
++        while pending:
++            collect_completed()
+@@ -233 +278 @@
+-    except:
++    except Exception:
+@@ -252 +296,0 @@
+-        local_filelist = []
+@@ -254,8 +298,6 @@
+-        for i in local_dir.glob("*.tar.bz2"):
+-            local_filelist.append(i)
+-        for i in local_dir.glob("*.conda"):
+-            local_filelist.append(i)
+-        for i in set(local_filelist) - set(remote_filelist):
+-            logging.info("Deleting {}".format(i))
+-            i.unlink()
+-            delete_count += 1
++        for pattern in ("*.tar.bz2", "*.conda"):
++            for file_path in local_dir.glob(pattern):
++                if file_path.name not in remote_filenames:
++                    logging.info("Deleting {}".format(file_path))
++                    file_path.unlink()
++                    delete_count += 1
+@@ -265,2 +307,7 @@
+-        "{}: {} files, {} in total".format(
+-            repodata_url, len(remote_filelist), sizeof_fmt(total_size)
++        "{}: {} files, {} in total ({} skipped, {} downloaded, {} failed)".format(
++            repodata_url,
++            len(remote_filenames),
++            sizeof_fmt(total_size),
++            counts["skipped"],
++            counts["downloaded"],
++            counts["failed"],

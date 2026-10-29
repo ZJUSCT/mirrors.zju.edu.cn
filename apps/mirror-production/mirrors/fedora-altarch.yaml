@@ -1,0 +1,38 @@
+metadata:
+  name: fedora-altarch
+info:
+  description: Fedora Linux 次级架构软件仓库
+  upstream: rsync://dl.fedoraproject.org/fedora-secondary/ # 逻辑内容模块；QFM 实际经同主机的 fedora-buffet 传输
+sync:
+  type: qfm
+  interval: 1h
+  timeout: 24h
+  qfm:
+    module: fedora-secondary
+storage:
+  size: 3Ti
+publish:
+  http:
+    tier: standard
+    replicas: 1
+    subPath: fedora-secondary
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://fedoraproject.org/wiki/Infrastructure/Mirroring
+      - https://fedoraproject.org/wiki/Architectures
+      - https://forge.fedoraproject.org/infra/quick-fedora-mirror
+      - https://dl.fedoraproject.org/pub/DIRECTORY_SIZES.txt
+    policy:
+      - 官方将 fedora-secondary 定义为 Fedora Secondary Arches，对应主服务器上的 /pub/fedora-secondary；当前发布树主要包含 ppc64le 与 s390x 内容。
+      - fedora-secondary 与 fedora-alt 不同；后者是位于 /pub/alt 的 Fedora Other 内容，不应作为 fedora-altarch 的同步模块。
+      - 官方优先推荐 quick-fedora-mirror；该工具依赖提供 fedora-buffet 模块的上源，可每 10 分钟检查一次。使用普通 rsync 时应每日同步数次。
+      - Fedora 架构文档说明替代架构的 compose 树发布于 /pub/fedora-secondary，镜像可按架构选择同步内容；本镜像同步完整 fedora-secondary 模块。
+      - 官方目录统计显示 fedora-secondary 当前约为 2.0TiB。
+  upstreams:
+    - url: rsync://dl.fedoraproject.org/fedora-buffet/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 274–282ms、8.0MiB/s；IPv6 RTT 约 254–257ms、9.1MiB/s
+      note: Fedora 官方 master；quick-fedora-mirror 经 fedora-buffet 同步，本镜像仅选择 fedora-secondary（/pub/fedora-secondary）。

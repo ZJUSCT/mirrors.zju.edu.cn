@@ -1,0 +1,50 @@
+metadata:
+  name: ius
+info:
+  description: IUS 企业 Linux 补充软件仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/ius/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://ius.io/
+    - https://ius.io/faq
+    - https://repo.ius.io/
+    - https://vault.ius.io/
+    policy:
+    - IUS 官方首页明确项目自 2024 年起退役；FAQ 声明不再维护，历史包放在 IUS Vault，旧版 RHEL/CentOS 包不再获得安全更新。
+    - FAQ 的历史镜像说明曾允许私有镜像从 origin.repo.ius.io 经 HTTP、HTTPS、rsync 拉取；2019 年转为 CDN 后不再需要公共镜像，该历史说明不代表项目恢复维护。
+    - 当前 repo.ius.io 仅返回退役提示及 https://vault.ius.io；TUNA 本次实际只同步一个 114 字节 index.txt，而非容量报告中的完整 RPM 仓库。
+    - Vault 当前目录含 el4/、el5/、el6/、el7/ 及签名密钥，是另一完整历史归档范围，不应直接替换仅提示文件的 ius 入口。
+    - 已阅读官方首页、FAQ、仓库提示和 Vault，未找到当前有效的官方同步间隔；24h 为本站原配置，当前暂停。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/ius/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-02'
+    note: 已完成的一次性 TUNA 初始化来源；当前暂停自动同步。
+  - url: rsync://origin.repo.ius.io/ius/
+    stack: ipv4
+    status: retired
+    surveyed_at: '2026-10-02'
+    note: 官方 FAQ 曾记录的 rsync 原站；项目已退役，当前仓库入口只保留退役说明。
+  - url: https://vault.ius.io/
+    stack: ipv4
+    status: available
+    surveyed_at: '2026-10-02'
+    note: 官方 HTTPS 历史归档，可浏览 el4 至 el7；切换将扩大当前 114 字节入口的镜像范围，需最终确认归档策略。
+  bootstrap:
+    note: 已完成 TUNA 初始化，当前保持 sync-paused；IUS 已于 2024 年退役；本次只得到退役说明文件。若需新增完整 IUS Vault，应另行确认归档范围及容量，现保持暂停。 保留现有初始化数据并等待最终处理，不自动恢复同步。
+    reported_size: 173K

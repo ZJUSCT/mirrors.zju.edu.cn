@@ -1,0 +1,73 @@
+{# spec.sync 的 rsync 形态(基缩进 4 空格)。参数集说明见仓库 README;
+   -6 由 sync.ipv6(默认 true)决定,extra_args 为标准集之外的增量。 #}
+    podTemplate:
+      spec:
+{% if m.sync.nodeSelector %}
+        # 仅用于 WaitForFirstConsumer PVC 的首次落盘；PV 绑定后应从清单移除
+        nodeSelector:
+{% for key, value in m.sync.nodeSelector.items() %}
+          {{ key | ys }}: {{ value | ys }}
+{% endfor %}
+{% endif %}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: {{ sync_uid }}
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+{% include 'init-sync-volume.yaml.j2' %}
+        containers:
+          - name: rsync
+            image: ghcr.io/zjusct/rsync:latest
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command: [rsync]
+            args:
+              - -aH
+{% if ipv6 %}
+              - "-6"
+{% endif %}
+              - --no-o
+              - --no-g
+              - --stats
+              - -h
+              - --itemize-changes
+              - --partial-dir=.rsync-partial
+              - --filter=P .rsync-partial/
+              - --exclude=.~tmp~/
+              - --delete
+              - --delete-excluded
+              - --safe-links
+              - --timeout=120
+              - --contimeout=120
+{% for a in rsync_extra_args %}
+              - {{ a | ys }}
+{% endfor %}
+              - {{ m.info.upstream }}
+              - /data/
+{% if sync_rsync.password_secret is defined %}
+            env:
+              - name: RSYNC_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ sync_rsync.password_secret }}
+                    key: RSYNC_PASSWORD
+{% endif %}
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: sync-data
+                mountPath: /data
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+              limits: {cpu: "4", memory: 4Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}

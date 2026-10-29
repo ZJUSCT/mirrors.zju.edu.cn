@@ -1,0 +1,33 @@
+metadata:
+  name: rpmfusion
+info:
+  description: Fedora 与 RHEL 兼容发行版的 RPM Fusion 附加软件仓库
+  upstream: rsync://download1.rpmfusion.org/rpmfusion/ # RPM Fusion 官方主同步源
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 300Gi
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://rpmfusion.org/
+      - https://rpmfusion.org/Mirrors
+      - https://rpmfusion.org/FoundingPrinciples
+      - https://rpmfusion.org/FAQ
+    policy:
+      - 官方为 Fedora 与 RHEL 兼容发行版提供 Fedora 或 Red Hat 未收录的附加软件包，并分为 free 与 nonfree 仓库。
+      - 官方提供 download1.rpmfusion.org 的 rpmfusion rsync 模块作为主同步源，但未规定同步周期或镜像层级。
+      - 公共镜像需联系管理员创建 MirrorManager 账号，并分别登记所提供的 Fedora、EL、free 与 nonfree 内容。
+  upstreams:
+    - url: rsync://download1.rpmfusion.org/rpmfusion/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 246ms、7.2MiB/s；IPv6 RTT 约 257ms
+      note: 官方主同步源；模块包含完整 free/nonfree 与 Fedora/EL 仓库，无额外 MOTD。

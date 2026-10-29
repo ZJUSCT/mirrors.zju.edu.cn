@@ -1,0 +1,33 @@
+metadata:
+  name: gentoo-portage
+info:
+  description: Gentoo ebuild 仓库
+  upstream: rsync://rsync.jp.gentoo.org/gentoo-portage/ # Gentoo 官方日本国家镜像池
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 5Gi
+  volumeName: pvc-7f16d92d-2cb0-4f1f-80bf-38330899204d
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  # TODO: 若要申请加入 Gentoo 官方社区镜像，需先提供 gentoo-portage rsync 模块并满足并发、chroot 和登记要求，再将同步间隔改为 30m。
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://www.gentoo.org/support/rsync-mirrors/
+      - https://wiki.gentoo.org/wiki/Project:Infrastructure/Mirrors/Rsync
+    policy:
+      - Portage rsync 镜像只分发 Gentoo ebuild 仓库，与 distfiles 及发行版安装介质镜像相互独立。
+      - 普通 rotation 用户每日最多同步一次；已登记的公共社区镜像则必须每 30 分钟同步，并通过 gentoo-portage rsync 模块对外服务。
+      - 社区镜像须至少提供 5Mbit/s 上行、2GiB 存储和 15 个并发连接，并使用 chroot；官方强烈建议支持 IPv6。
+  upstreams:
+    - url: rsync://rsync.jp.gentoo.org/gentoo-portage/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 223ms；IPv6 RTT 约 132ms
+      note: Gentoo 官方日本国家镜像池；当前命中神奈川 Rin Cat 节点，仅提供 gentoo-portage 模块。

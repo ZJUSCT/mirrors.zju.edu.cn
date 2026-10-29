@@ -1,0 +1,32 @@
+metadata:
+  name: termux
+info:
+  description: Termux Android 终端环境的软件包仓库
+  upstream: rsync://packages.termux.dev/termux/ # Termux 官方公开 rsync 模块
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+storage:
+  size: 100Gi
+  volumeName: pvc-f22b7559-8b8a-45f7-a48e-f8474143b43c
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://github.com/termux/termux-packages/wiki/Mirrors
+      - https://github.com/termux/termux-packages/wiki/How-to-mirror-the-official-repositories
+    policy:
+      - 官方提供 packages.termux.dev 的 termux rsync 模块；默认同步 main、root、x11 与可选的 main-21 仓库。
+      - unstable、game 和 science 仓库已合并至 main，无需单独同步。
+      - 官方未规定同步周期；如条件允许，公共镜像应开放 rsync 供官方检查状态。
+  upstreams:
+    - url: rsync://packages.termux.dev/termux/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 265ms、6.4MiB/s；IPv6 RTT 约 254ms
+      note: 官方主软件包服务器；IPv4 和 IPv6 均已验证可用，无额外 MOTD。

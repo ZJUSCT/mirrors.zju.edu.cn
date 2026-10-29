@@ -1,0 +1,39 @@
+metadata:
+  name: archlinux
+info:
+  description: 简洁、轻量且灵活的 x86-64 Linux 发行版
+  upstream: rsync://taipei.mirror.pkgbuild.com/packages/ # 项目自营的 Tier 1，避免 USTC 的连接队列
+sync:
+  type: rsync
+  interval: 1h
+  timeout: 1h
+storage:
+  size: 500Gi
+  volumeName: pvc-e5fed75c-b1d4-4a7a-9291-e442b7c9766f
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://archlinux.org/
+      - https://wiki.archlinux.org/title/DeveloperWiki:NewMirrors
+      - https://archlinux.org/mirrors/tier/1/
+      - https://archlinux.org/mirrors/geo.mirror.pkgbuild.com/
+    policy:
+      - 官方采用两级镜像体系；Tier 2 必须从 Tier 1 同步，不允许直接从 archlinux.org 同步。
+      - Tier 2 同步不得频于每小时一次，且至少每日同步一次；应使用随机分钟错峰。
+      - Tier 2 必须完整同步上游内容，并提供 HTTP 或 HTTPS 服务。
+  upstreams:
+    - url: rsync://taipei.mirror.pkgbuild.com/packages/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 69ms、32MiB/s；IPv6 RTT 约 80ms、28MiB/s
+      note: 官方镜像列表中的 Tier 1 台北节点；rsync 提供 packages 模块，无额外访问限制。
+    - url: rsync://rsync.mirrors.ustc.edu.cn/archlinux/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4/IPv6 RTT 约 13ms
+      note: 官方镜像列表中的 Tier 1；实测 rsync 已达到 60 个连接上限并出现较长队列，因此不选用。

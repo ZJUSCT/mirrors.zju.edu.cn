@@ -1,0 +1,281 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: envoy-gateway-production
+spec:
+  gatewayClassName: envoy
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: mirror-production
+    annotations:
+      kube-vip.io/loadbalancerIPs: "10.202.236.97,2001:da8:e000:8936::97"
+  listeners:
+  - name: http-mirrors
+    hostname: mirrors.zju.edu.cn
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: http-mirror
+    hostname: mirror.zju.edu.cn
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https-mirrors
+    hostname: mirrors.zju.edu.cn
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - group: ''
+        kind: Secret
+        name: mirrors-zju-edu-cn-cert
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https-mirror
+    hostname: mirror.zju.edu.cn
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - group: ''
+        kind: Secret
+        name: mirrors-zju-edu-cn-cert
+    allowedRoutes:
+      namespaces:
+        from: All
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: mirror-production
+spec:
+  ipFamily: DualStack
+  logging:
+    level:
+      default: warn
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDaemonSet:
+        pod:
+          nodeSelector:
+            zjusct.io/pool: frontend
+          # affinity:
+          #   nodeAffinity:
+          #     preferredDuringSchedulingIgnoredDuringExecution:
+          #     - weight: 100
+          #       preference:
+          #         matchExpressions:
+          #         - key: zjusct.io/pool
+          #           operator: In
+          #           values:
+          #           - frontend
+        strategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxUnavailable: 0
+            maxSurge: 1
+        container:
+          env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          resources:
+            requests:
+              cpu: '1'
+              memory: 4Gi
+      envoyService:
+        type: LoadBalancer
+        externalTrafficPolicy: Local
+  telemetry:
+    tracing:
+      samplingRate: 1
+      provider:
+        type: OpenTelemetry
+        host: gateway-collector.opentelemetry.svc.cluster.local
+        port: 4317
+    accessLog:
+      settings:
+      - format:
+          text: '%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %RESPONSE_CODE% %BYTES_SENT% %REQ(USER-AGENT)%'
+          json:
+            method: '%REQ(:METHOD)%'
+            path: '%REQ_WITHOUT_QUERY(X-ENVOY-ORIGINAL-PATH?:PATH)%' # 重写前原始路径，去 query 控基数
+            host: '%REQ(:AUTHORITY)%'
+            scheme: '%REQ(:SCHEME)%'
+            protocol: '%PROTOCOL%'
+            response_code: '%RESPONSE_CODE%'
+            response_flags: '%RESPONSE_FLAGS%'
+            response_code_details: '%RESPONSE_CODE_DETAILS%'
+            connection_termination_details: '%CONNECTION_TERMINATION_DETAILS%'
+            connection_id: '%CONNECTION_ID%'
+            duration_ms: '%DURATION%' # 请求总耗时（含传输），镜像站大文件场景下单独看意义有限
+            response_duration_ms: '%RESPONSE_DURATION%' # 收到上游响应首字节耗时（TTFB），与总耗时区分
+            upstream_service_time: '%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%' # 上游处理耗时（ms，带小数）；网关本地响应（无上游）时为 "-"
+            bytes_received: '%BYTES_RECEIVED%'
+            bytes_sent: '%BYTES_SENT%'
+            downstream_wire_bytes_received: '%DOWNSTREAM_WIRE_BYTES_RECEIVED%'
+            downstream_wire_bytes_sent: '%DOWNSTREAM_WIRE_BYTES_SENT%'
+            downstream_header_bytes_received: '%DOWNSTREAM_HEADER_BYTES_RECEIVED%'
+            downstream_header_bytes_sent: '%DOWNSTREAM_HEADER_BYTES_SENT%'
+            client_ip: '%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%'
+            downstream_remote_address: '%DOWNSTREAM_REMOTE_ADDRESS%'
+            downstream_remote_port: '%DOWNSTREAM_REMOTE_PORT%'
+            downstream_direct_remote_address: '%DOWNSTREAM_DIRECT_REMOTE_ADDRESS%'
+            downstream_local_address: '%DOWNSTREAM_LOCAL_ADDRESS%'
+            downstream_local_port: '%DOWNSTREAM_LOCAL_PORT%'
+            downstream_direct_local_address: '%DOWNSTREAM_DIRECT_LOCAL_ADDRESS%'
+            filter_chain_name: '%FILTER_CHAIN_NAME%'
+            downstream_handshake_duration_ms: '%DOWNSTREAM_HANDSHAKE_DURATION%'
+            downstream_tls_version: '%DOWNSTREAM_TLS_VERSION%'
+            downstream_tls_cipher: '%DOWNSTREAM_TLS_CIPHER%'
+            downstream_transport_failure_reason: '%DOWNSTREAM_TRANSPORT_FAILURE_REASON%'
+            downstream_local_close_reason: '%DOWNSTREAM_LOCAL_CLOSE_REASON%'
+            downstream_detected_close_type: '%DOWNSTREAM_DETECTED_CLOSE_TYPE%'
+            x_forwarded_for: '%REQ(X-FORWARDED-FOR)%'
+            user_agent: '%REQ(USER-AGENT)%'
+            referer: '%REQ(REFERER)%'
+            requested_server_name: '%REQUESTED_SERVER_NAME%'
+            range: '%REQ(RANGE)%'
+            content_range: '%RESP(CONTENT-RANGE)%'
+            route_name: '%ROUTE_NAME%' # 按镜像聚合的主键（低基数）
+            upstream_cluster: '%UPSTREAM_CLUSTER%'
+            upstream_host: '%UPSTREAM_HOST%'
+            upstream_local_address: '%UPSTREAM_LOCAL_ADDRESS%'
+            upstream_protocol: '%UPSTREAM_PROTOCOL%'
+            upstream_request_attempt_count: '%UPSTREAM_REQUEST_ATTEMPT_COUNT%'
+            upstream_connection_pool_ready_duration_ms: '%UPSTREAM_CONNECTION_POOL_READY_DURATION%'
+            upstream_wire_bytes_received: '%UPSTREAM_WIRE_BYTES_RECEIVED%'
+            upstream_wire_bytes_sent: '%UPSTREAM_WIRE_BYTES_SENT%'
+            upstream_header_bytes_received: '%UPSTREAM_HEADER_BYTES_RECEIVED%'
+            upstream_header_bytes_sent: '%UPSTREAM_HEADER_BYTES_SENT%'
+            upstream_transport_failure_reason: '%UPSTREAM_TRANSPORT_FAILURE_REASON%'
+            upstream_local_close_reason: '%UPSTREAM_LOCAL_CLOSE_REASON%'
+            upstream_detected_close_type: '%UPSTREAM_DETECTED_CLOSE_TYPE%'
+            request_id: '%REQ(X-REQUEST-ID)%'
+            k8s.node.name: '%ENVIRONMENT(NODE_NAME)%' # Downward API 注入的节点名
+        sinks:
+        - type: OpenTelemetry
+          openTelemetry:
+            host: gateway-collector.opentelemetry.svc.cluster.local
+            port: 4317
+            resourceAttributes: # 静态身份；pod/node 等动态信息保留在日志 attributes 中
+              k8s.container.name: envoy
+              k8s.namespace.name: envoy-gateway
+              service.name: envoy-mirror-production
+      # mirrorz unified format
+      - format:
+          json:
+            request: '%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%'
+            # 兜底：request 行无法解析时 mirrorz 回退读取
+            method: '%REQ(:METHOD)%'
+            proto: '%PROTOCOL%'
+            url: '%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%' # 兜底：同 method
+            # remote_user/cache_status：网关无认证、无代理缓存，恒为 '-'
+            cache_status: '-'
+            remote_user: '-'
+            # 常规字段
+            body_bytes_sent: '%BYTES_SENT%'
+            clientip: '%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%'
+            http_host: '%REQ(:AUTHORITY)%'
+            http_referer: '%REQ(REFERER)%'
+            http_user_agent: '%REQ(USER-AGENT)%'
+            http_x_forwarded_for: '%REQ(X-FORWARDED-FOR)%'
+            proxy_pass: '%UPSTREAM_CLUSTER%' # 近似：Envoy 无 $proxy_host，用上游集群名标识后端
+            request_id: '%REQ(X-REQUEST-ID)%'
+            request_time: '%DURATION%'
+            scheme: '%REQ(:SCHEME)%'
+            # envoy 所在 k8s 节点名（Downward API 注入）
+            server: '%ENVIRONMENT(NODE_NAME)%'
+            sent_http_content_type: '%RESP(CONTENT-TYPE)%'
+            status: '%RESPONSE_CODE%'
+            timestamp: '%START_TIME(%s.%3f)%'
+            upstream_addr: '%UPSTREAM_HOST%'
+            upstream_connect_time: '%UPSTREAM_CONNECTION_POOL_READY_DURATION%' # 近似：Envoy 无连接耗时 token，此为连接池就绪时延，复用连接时≈0
+            upstream_header_time: '%RESPONSE_DURATION%' # 近似：收到上游响应首字节的耗时
+            upstream_response_time: '%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%'
+            upstream_status: '%RESPONSE_CODE%' # 近似：Envoy response code 即上游返回码；网关本地响应（无上游）时也记该值
+        sinks:
+        - openTelemetry:
+            host: vector-mirrorz.vector.svc.cluster.local
+            port: 4317
+            resourceAttributes:
+              k8s.container.name: envoy
+              k8s.namespace.name: envoy-gateway
+              service.name: envoy-gateway-production
+          type: OpenTelemetry
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: mirror-production
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: envoy-gateway-production
+  clientIPDetection:
+    directSourceIP: {}
+  connection:
+    connectionLimit:
+      value: 32768
+      maxStreamDuration: 10m
+  tls:
+    # The two production certificates have overlapping SANs; without an
+    # explicit ALPN list Envoy falls back to HTTP/1.1 for this listener.
+    alpnProtocols:
+    - h2
+    - http/1.1
+  timeout:
+    http:
+      streamIdleTimeout: 60s
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: mirror-production
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: envoy-gateway-production
+  circuitBreaker:
+    maxConnections: 32768
+    maxPendingRequests: 8192
+    maxParallelRequests: 32768
+  timeout:
+    http:
+      requestTimeout: 10m
+      maxStreamDuration: 0s
+      connectionIdleTimeout: 60s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-data-plane
+spec:
+  namespaceSelector:
+    any: true
+  selector:
+    matchLabels:
+      gateway.envoyproxy.io/owning-gateway-name: envoy-gateway-production
+      gateway.envoyproxy.io/owning-gateway-namespace: mirror-production
+  podMetricsEndpoints:
+  - port: metrics
+    path: /stats/prometheus
+    interval: 15s
+    scrapeTimeout: 10s
+    relabelings:
+    - action: replace
+      replacement: mirrors
+      targetLabel: scrape_profile

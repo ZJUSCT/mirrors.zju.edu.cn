@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: collectors
+  namespace: opentelemetry
+spec:
+  podMetricsEndpoints:
+  - interval: 15s
+    port: metrics
+    scrapeTimeout: 10s
+    relabelings:
+    - action: replace
+      replacement: mirrors
+      targetLabel: scrape_profile
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: opentelemetry-collector

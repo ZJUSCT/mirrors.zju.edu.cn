@@ -1,0 +1,42 @@
+metadata:
+  name: llvm-apt
+info:
+  description: LLVM 工具链的 Debian 与 Ubuntu 夜间软件包
+  upstream: rsync://mirrors.nju.edu.cn/llvm-apt/ # 官方仅提供 HTTP；现阶段暂用较快的 NJU rsync 副本
+sync:
+  type: rsync
+  interval: 12h
+  timeout: 12h
+storage:
+  size: 200Gi
+  volumeName: pvc-79cd4b1f-f025-4ece-ba34-bda451d9e25c
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  # TODO: 实现 APT 仓库的 HTTP 同步工具后，改为直接从 https://apt.llvm.org/ 同步并复核存储容量。
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://apt.llvm.org/
+    policy:
+      - 官方提供 LLVM、Clang 及完整 LLVM 工具链的 Debian 与 Ubuntu 夜间软件包。
+      - 官方以尽力而为方式维护开发分支、最近两个 LLVM 版本及当前受支持的 Debian 和 Ubuntu 版本。
+      - 构建任务每日运行两次；官方未提供 rsync 服务，也未发布镜像同步间隔或登记规范。
+  upstreams:
+    - url: https://apt.llvm.org/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 222–226ms、9.1MiB/s；IPv6 RTT 约 208–211ms、8.9MiB/s
+      note: LLVM Foundation 托管、Fastly CDN 分发的官方源；仅提供 HTTP 和 HTTPS，无法供当前 rsync 同步器直接使用。
+    - url: rsync://mirrors.nju.edu.cn/llvm-apt/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 12ms、71MiB/s；IPv6 RTT 约 11ms、93MiB/s
+      note: 当前 Release 文件与官方一致，但只同步部分发行版和架构，并非官方完整仓库；MOTD 未声明额外访问限制。
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/llvm-apt/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 30ms、33MiB/s；IPv6 RTT 约 30ms、45MiB/s
+      note: 内容范围与 NJU 相同；考虑站点压力且本次实测较慢，仅作备选。

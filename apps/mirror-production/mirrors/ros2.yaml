@@ -1,0 +1,38 @@
+metadata:
+  name: ros2
+info:
+  description: ROS 2 Ubuntu 软件包仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/ros2/ # 官方验证的亚洲镜像，且保持 ubuntu/ 布局
+sync:
+  type: rsync
+  interval: 12h
+  timeout: 12h
+storage:
+  size: 500Gi
+  volumeName: pvc-3b830a60-0726-4929-9b70-5d806ffc6055
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  # TODO: 实现布局感知的同步工具后，将官方 ros2-main 模块同步至 ubuntu/ 子目录。
+  official:
+    surveyed_at: 2026-09-19
+    docs:
+      - https://docs.ros.org/en/rolling/Get-Started/Installation/ROS-2-Mirrors.html
+      - http://packages.ros.org/ros2/ubuntu/
+    policy:
+      - 官方要求从 rsync.osuosl.org::ros2-main 同步，并建议每 6 至 12 小时运行一次。
+      - 官方建议预留至少 500GB；列入官方列表的镜像必须支持 HTTPS、至少每日同步一次并提供联系邮箱。
+      - 官方 ros2-main 模块直接暴露 APT 仓库根目录，当前同步控制器无法将其发布到客户端所需的 ubuntu/ 子目录。
+  upstreams:
+    - url: rsync://rsync.osuosl.org/ros2-main/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4 RTT 约 276ms；IPv6 RTT 约 233ms、3.9MiB/s
+      note: ROS 2 官方主归档；根目录布局与现有公开 URL 不兼容。
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/ros2/
+      stack: dual
+      surveyed_at: 2026-09-19
+      metrics: IPv4/IPv6 RTT 约 30–31ms、rsync 约 30MiB/s
+      note: ROS 2 官方列表验证的亚洲镜像；内容与官方一致，并保持客户端所需的 ubuntu/ 布局。

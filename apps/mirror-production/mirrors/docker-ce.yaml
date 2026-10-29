@@ -1,0 +1,40 @@
+metadata:
+  name: docker-ce
+info:
+  description: Docker Engine、CLI 与容器运行时软件包仓库
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/docker-ce/ # 官方仅提供 HTTP，沿用已验证的 TUNA rsync 上游
+sync:
+  type: rsync
+  interval: 12h
+  timeout: 12h
+storage:
+  size: 2Ti
+  volumeName: pvc-51cb04b1-0952-4898-b5fa-dd38694ae5d2
+publish:
+  http:
+    tier: standard
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://docs.docker.com/engine/install/
+      - https://download.docker.com/
+    policy:
+      - Docker 通过 download.docker.com 发布各平台的软件包；官方未提供 rsync 服务或镜像同步指南。
+      - 官方未规定第三方镜像的同步间隔、存储规模或登记流程。
+  upstreams:
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/docker-ce/
+      stack: dual
+      surveyed_at: 2026-09-16
+      metrics: IPv4 RTT 约 35ms、单文件约 5MB/s
+      note: 完整包含 Linux 各发行版、静态二进制及 macOS、Windows 软件包；现有数据已完成 APT 哈希链验证。
+    - url: rsync://mirrors.nju.edu.cn/docker-ce/
+      stack: dual
+      surveyed_at: 2026-09-16
+      metrics: IPv4 RTT 约 17ms、单文件约 8.3MB/s
+      note: 目录结构与 TUNA 一致且实测更快，但本站既往同步质量不稳定，仅作备选。
+    - url: https://download.docker.com/
+      stack: dual
+      surveyed_at: 2026-09-18
+      note: Docker 官方软件包源，仅提供 HTTP 服务，当前同步器无法直接使用。

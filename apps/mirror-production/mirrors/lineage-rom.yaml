@@ -1,0 +1,35 @@
+metadata:
+  name: lineage-rom
+info:
+  description: LineageOS 社区 Android 系统安装镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/lineageos/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 3Ti
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://lineageos.org/mirroring/
+    policy:
+    - 官方 rsync 需要登记出口；生产访问被拒，获得权限前不得切源；初始化后保持暂停，交用户最终处理。
+  bootstrap:
+    note: 用户已通知 USTC；先初始化，官方源可行时验证后切换；初始任务暂停自动排程并按批次手动放行。
+    official_interval: 15m
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/lineageos/
+    surveyed_at: '2026-09-30'
+    status: selected
+    note: 模块根已在前期调查验证，首次初始化源。
+  - url: rsync://mirror-sync.lineageos.org/mirror/
+    surveyed_at: '2026-09-30'
+    note: 后续官方源；须先验证访问、新鲜度、路径、删除集与完整性。

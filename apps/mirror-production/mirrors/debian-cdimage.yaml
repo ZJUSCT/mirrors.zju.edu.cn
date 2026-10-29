@@ -1,0 +1,70 @@
+metadata:
+  name: debian-cdimage
+info:
+  description: Debian 安装、Live、云及测试构建镜像归档
+  upstream: rsync://cdimage.debian.org/cdimage/ # 官方入口；release 由本镜像统一提供
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 72h
+  rsync:
+    extra_args:
+      - --block-size=8192
+      - --exclude=/.*/ # 排除发布机内部目录，包括嵌套的完整 Debian 主仓 .debian-mirror
+      # 上游当前拒绝访问的路径：永久保留，不能作为阶段开关移除。
+      - --filter=-sr /cloud/**/.*/
+      - --filter=-sr /cloud/stretch/***
+      - --filter=-sr /cloud/stretch-backports/***
+      - --filter=-sr /ports/debian-installer/2024-01-30/alpha/***
+      - --filter=-sr /ports/debian-installer/2024-01-30/hppa/***
+      - --filter=-sr /ports/debian-installer/2024-01-30/ia64/***
+      - --filter=-sr /ports/debian-installer/2024-01-30/m68k/***
+      - --filter=-sr /ports/debian-installer/2024-01-30/powerpc/***
+      - --filter=-sr /ports/debian-installer/2024-01-30/ppc64/***
+      - --filter=-sr /ports/debian-installer/2024-01-30/sh4/***
+      - --filter=-sr /ports/debian-installer/2024-01-30/sparc64/***
+      # 暂缓子树使用双向保护过滤；否则 --delete-excluded 会删除已经下载的数据。
+      - --filter=-sr /ports/***
+      - --filter=-sr /trixie_di_rc1/***
+      - --filter=-sr /trixie_di_rc2/***
+      - --filter=-sr /unofficial/***
+      - --filter=-sr /weekly-builds/***
+storage:
+  size: 80Ti
+  volumeName: pvc-7c31ac0f-bbe7-4e05-82b0-0b392695b054
+publish:
+  aliases:
+    # debian-nonfree 是本镜像 unofficial/non-free 子树的独立目录学条目：
+    # 301 至 /debian-cdimage/unofficial/non-free/<后缀>，并以独立 cname 进入 mirrorz.json。
+    - path: /debian-nonfree
+      subset:
+        subpath: unofficial/non-free
+        cname: debian-nonfree
+        description: Debian 含非自由固件组件的安装镜像
+        upstream: rsync://cdimage.debian.org/cdimage/unofficial/non-free/
+    # debian-cd 与官方 cdimage/release 是同一棵发布树，合并后只保留父镜像同步。
+    - path: /debian-cd
+      subset:
+        subpath: release
+        cname: debian-cd
+        description: Debian 稳定版官方安装与 Live 镜像
+        upstream: rsync://cdimage.debian.org/debian-cd/
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://cdimage.debian.org/cdimage/
+      - https://www.debian.org/CD/mirroring/
+    policy:
+      - 官方分别提供 stable、weekly 和 daily 镜像的 rsync 路径，并提醒镜像数据量很大；未建议同步整个 cdimage 模块。
+      - 官方建议尽量从附近镜像同步；cdimage.debian.org 在发布期间可能限制访问。
+      - 使用 rsync 时至少应启用 --times、--links、--hard-links、--partial 和 --block-size=8192；官方未注明整个 cdimage 树的同步间隔。
+  upstreams:
+    - url: rsync://cdimage.debian.org/cdimage/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 347–351ms、3.6MiB/s；IPv6 RTT 约 342–343ms、4.4MiB/s
+      note: Debian 官方完整入口；除公开镜像树外还暴露内部工作目录，其中 .debian-mirror 是供 jigdo 构建使用的完整 Debian 主软件包仓镜像。

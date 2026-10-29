@@ -1,0 +1,66 @@
+metadata:
+  name: voidlinux
+info:
+  description: Void Linux 软件仓库与安装镜像
+  upstream: rsync://repo-sync.voidlinux.org/voidlinux/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+    - --exclude=/current/debug/
+    - --exclude=/current/musl/debug/
+    - --exclude=/current/aarch64/debug/
+    - --filter=P /current/stime-start
+    - --filter=P /current/stime-end
+storage:
+  size: 920Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://xmirror.voidlinux.org/
+    - https://docs.voidlinux.org/xbps/repositories/mirrors/index.html
+    - https://mirrors.summithq.com/voidlinux/
+    policy:
+    - Void 官方 xmirror 将 mirrors.summithq.com/voidlinux/ 列为 Tier 1；Tier 1 由 Void Linux Infrastructure Team 维护、直接从
+      build servers 同步，并承诺可获得最新 packages。官方文档说明 repo-default.voidlinux.org 可能映射任意 Tier 1。
+    - 既有 SummitHQ dry-run 发现 TUNA 未同步 current/debug、current/musl/debug、current/aarch64/debug：新增普通文件中 211,924 个属于这些
+      debug 子树，不能仅凭根目录相同判断范围等价。官方 Creating a Mirror 允许部分镜像并明确建议排除 debug 以节约 Tier 1 带宽；保留 TUNA 原覆盖范围，排除上述三个子树，允许新增
+      docs。
+    - 官方 mirror 页面未规定镜像必须采用的轮询间隔；采用 24h 保守同步。Tier 1 的“最新 packages”承诺不等于固定 cron 周期，不能虚构更短官方要求。
+    - 官方 Creating a Mirror 指定 rsync://repo-sync.voidlinux.org/voidlinux/；其 IPv4 根 list-only 成功。采用 -4、24h 与三个明确的
+      debug 子树排除项；必须重新完整 dry-run、核对删除与配额，并通过真实同步和 HTTP 验收后恢复自动同步。
+    - stime-start/end 仅保留初始化历史时间戳，不代表本地当前同步时间；采用接收端保护，不伪造替代路径。新增删除仍须重新审查。
+    - 22:45 UTC 最新 dry-run 的 3384 个删除已按当前官方 repodata/Git pack 全部核验；后续仅允许逐文件动态复核，不批准索引删除或无替代路径删除。
+    - 每轮成功 dry-run 后按当前 repo-sync 官方 repodata 逐项复审包及签名删除；Git pack 只接受已人工审查的精确映射。索引删除、未知路径、元数据失败或替代缺失一律停止；代码摘要、源
+      URL、过滤规则与 dry-run 日志摘要均固定校验。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/voidlinux/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-03'
+    note: 当前 TUNA 源；官方 xmirror 将 TUNA 列为 Tier 2，TUNA 根与候选相比少 docs。
+  - url: rsync://mirrors.summithq.com/voidlinux/
+    stack: ipv4
+    status: previous-candidate-tier1
+    surveyed_at: '2026-10-03'
+    note: 官方 xmirror 明确列为 Tier 1，由 Void Infrastructure Team 维护并直接从 build servers 同步；生产 IPv4 rsync 根 list-only
+      成功。
+  - url: rsync://repo-sync.voidlinux.org/voidlinux/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: 官方 Creating a Mirror 明确指定的同步入口，IPv4 根 list-only 成功；须排除三个 debug 子树并重新验证。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
+    reported_size: 575G

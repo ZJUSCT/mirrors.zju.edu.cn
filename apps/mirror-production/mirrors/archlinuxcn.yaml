@@ -1,0 +1,39 @@
+metadata:
+  name: archlinuxcn
+info:
+  description: 由 Arch Linux 中文社区驱动的非官方软件仓库
+  upstream: rsync://zju@sync.repo.archlinuxcn.org/repo/ # 官方认证 rsync 服务
+sync:
+  type: rsync
+  interval: 6h
+  timeout: 6h
+  rsync:
+    password_secret: archlinuxcn-rsync
+storage:
+  size: 300Gi
+  volumeName: pvc-f5d2c7d6-79cc-4309-a2af-f041aa60a27b
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: 2026-09-18
+    docs:
+      - https://www.archlinuxcn.org/archlinux-cn-repo-and-mirror/
+      - https://github.com/archlinuxcn/mirrorlist-repo
+      - https://github.com/archlinuxcn/mirrorlist-repo/blob/master/application.md
+    policy:
+      - 官方同步源为需要用户名和密码的 sync.repo.archlinuxcn.org::repo；镜像需通过 PR 或邮件申请凭据。
+      - 官方建议每 6 至 7 小时同步一次，并尽量避开每日 04:00、12:00、20:00（Asia/Shanghai）之后的打包时段。
+  upstreams:
+    - url: rsync://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/
+      stack: dual
+      surveyed_at: 2026-09-18
+      metrics: IPv4 RTT 约 30ms、33MiB/s；IPv6 RTT 约 30ms、20MiB/s
+      note: 官方镜像列表收录的清华大学镜像；MOTD 提供 archlinuxcn 模块。官方凭据失效时的备用上游。
+    - url: rsync://zju@sync.repo.archlinuxcn.org/repo/
+      stack: dual
+      surveyed_at: 2026-09-28
+      metrics: IPv4 RTT 约 224ms；IPv6 RTT 约 245ms
+      note: 官方同步源；zju 账号凭据 2017-06-05 创建，2026-09-28 验证有效。

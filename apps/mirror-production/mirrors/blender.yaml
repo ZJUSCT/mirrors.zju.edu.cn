@@ -1,0 +1,51 @@
+metadata:
+  name: blender
+info:
+  description: Blender 三维创作软件、源码与演示资源
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/blender/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 72h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 632Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.blender.org/download/
+    - https://download.blender.org/
+    - rsync://rsync.download.blender.org/blender/
+    policy:
+    - Blender 官方 download.blender.org 页面明确说明开放浏览大多禁用，并通过官网链接访问 binary/source downloads；当前官方 HTTP 根只公开 release/
+      和 source/ 等目录。
+    - TUNA 初始化树按公开抓取保留 demo/release/source 等多根，而官方 rsync 模块 rsync://rsync.download.blender.org/blender/ 需要认证：本次
+      IPv4 返回 @ERROR auth failed，IPv6 无可用地址。不能把 TUNA 的 demo/release/source 根直接当作已确认官方 rsync 目录。
+    - 官方文档未公开同步间隔；24h 只能作为暂停前配置，不能在无凭据时恢复自动同步。
+    - 需要向 Blender Foundation/下载站申请 rsync 用户凭据并确认允许的模块范围、目录前缀和并发/频率；或者为公开 HTTP release/source/demo 设计专用多根同步。现有单根匿名
+      rsync 模板不满足这些条件。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/blender/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: TUNA 395G 初始同步成功；scope 与公开 HTTP parser 记录见 evidence/blender。
+  - url: rsync://tuna@rsync.download.blender.org/blender/
+    stack: ipv4
+    status: auth-required
+    surveyed_at: '2026-10-03'
+    note: '官方候选；list-only 返回 @ERROR: auth failed on module blender，未配置凭据。'
+  - url: https://download.blender.org/
+    stack: dual
+    status: public-reference
+    surveyed_at: '2026-10-03'
+    note: 官方公开 HTTP 参考根；浏览受限，HTTP parser 只确认 release/source，不能证明完整 TUNA 根布局。
+  bootstrap:
+    note: TUNA 首轮初始化已成功（blender-sync-1790977303）；当前仍处于官方上游研究门禁，保持 sync-paused，须按 recommendation 完成回源 dry-run、真实同步和发布验收后再恢复自动同步。
+    reported_size: 395G

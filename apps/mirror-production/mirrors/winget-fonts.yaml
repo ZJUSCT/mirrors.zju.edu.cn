@@ -1,0 +1,51 @@
+metadata:
+  name: winget-fonts
+info:
+  description: WinGet 字体源索引（不包含全部字体安装文件）
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/winget-fonts/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://learn.microsoft.com/en-us/windows/package-manager/winget/source
+    - https://raw.githubusercontent.com/microsoft/winget-cli/master/src/AppInstallerRepositoryCore/Microsoft/PreIndexedPackageSourceFactory.cpp
+    - https://cdn.winget.microsoft.com/fonts/source.msix
+    - https://cdn.winget.microsoft.com/fonts/source2.msix
+    - https://github.com/ustclug/ustcmirror-images/blob/master/winget-source/sync-repo.js
+    policy:
+    - Microsoft 官方 winget-font 源，地址 https://cdn.winget.microsoft.com/fonts，类型 Microsoft.PreIndexed.Package；提供字体源索引及其引用元数据，不是字体安装二进制全量镜像。
+    - 官方客户端按 source.msix/source2.msix 读取 Public/index.db。本站根已发布 source.msix、source2.msix、fonts/、packages/；两份 MSIX 与官方下载逐字节一致。
+    - source.msix=27183 bytes，source2.msix=24518 bytes；AppxManifest Identity=Microsoft.Winget.Fonts.Source，Publisher=CN=Microsoft
+      Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US；版本分别2025.1016.311.47和2025.1016.311.49。
+    - 两份 MSIX 均含 AppxSignature.p7x，必须原样保留。此次检查包结构和与官方字节一致性，未执行 Windows AppX 证书信任链验证或 WinGet 客户端完整安装测试，不能声称已完成这些验证。
+    - 2026-10-02 官方 /fonts 根HTTP404，source.msix与source2.msix HTTP200；无HTTP目录枚举，未发现官方rsync模块。
+    - 未找到官方对下游同步周期的要求；本地interval/timeout=24h不代表官方建议，HTTP cache-control也不是镜像同步政策。
+  bootstrap:
+    status: succeeded-and-published-paused
+    succeeded_at: '2026-10-02T16:13:22Z'
+    published_at: '2026-10-02T16:13:30Z'
+    job: winget-fonts-sync-1790957589
+    note: USTC首次同步Succeeded，Ready=True；mirrors.zjusct.io/sync-paused=true，保留已发布快照。
+    official_cutover_blocker: 既有rsync/ftpsync/qfm均不能枚举官方HTTPS源；tsumugu只解析目录索引，没有MSIX/SQLite源索引解析器。可靠官方增量需读取两代MSIX内Public/index.db，再按其路径获取packages元数据与manifest，最后发布索引，不能只固定下载两个msix文件。
+    action: 用户限定仅rsync/ftpsync/qfm/tsumugu，故保持暂停并报告阻塞。现有mirrors-manual/winget-source的ustcmirror/winget-source专用容器仍在本次允许范围外，不复制它、不新增脚本/类型、不恢复USTC自动增量。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/winget-fonts/
+    surveyed_at: '2026-10-02'
+    status: selected
+    note: 模块winget-fonts根映射本站/winget-fonts/；首次同步及发布成功，保持暂停。
+  - url: https://cdn.winget.microsoft.com/fonts
+    surveyed_at: '2026-10-02'
+    status: blocked-by-user-tool-scope
+    note: Microsoft官方预索引HTTP源；具体MSIX正常且本站逐字节一致，阻塞为四类现有模板无MSIX索引驱动增量，不是网络不可达。

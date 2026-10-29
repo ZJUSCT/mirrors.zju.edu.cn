@@ -1,0 +1,52 @@
+metadata:
+  name: sury
+info:
+  description: Ondřej Surý 维护的 Debian PHP 软件包
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/sury/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 16Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://github.com/oerdnj/deb.sury.org/wiki/Frequently-Asked-Questions#repository-mirroring
+    - https://packages.sury.org/
+    - rsync://rsync.sury.org/repositories/
+    policy:
+    - 官方FAQ明确应使用rsync（可配debmirror）降低源站流量；不要修改No-Cache头绕过CDN，也建议只同步需要的架构。
+    - 官方daemon精确模块repositories；根列出apache2、php、bind版本目录、内部bind symlink、debsuryorg-archive-keyring.deb、.well-known和索引文件。所有已观察symlink均指向模块内目录，不构成外部越界。
+    - 未找到官方固定同步周期；现配置24h是本地选择，不能写成官方频率。官方HTTPS php/README.txt安装示例要求debsuryorg-archive-keyring.gpg与signed-by，镜像应保留密钥/Release校验。
+    - 官方daemon/module只读列表已成功，但2026-10-04生产IPv6 rsync预检被服务器显式拒绝 --dry-run (-n)，exit12。官方入口已确认且能连通；当前阻塞是无法审阅全树差异与删除集，不是未找到官方源。不能跳过预检直接使用
+      --delete 真实同步或绕过上游限制。
+  bootstrap:
+    note: USTC初始化已完成，仍发布sury-snap-1790989901并保持sync-paused=true。2026-10-04官方IPv6 dry-run在已发布只读VolumeSnapshot克隆上执行，被服务器拒绝；没有修改工作PVC、切换源或执行真实官方同步，故保持现有源与暂停。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/sury/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC初始化源；Oct2状态容量6.08GiB，非官方完整容量保证。
+  - url: rsync://rsync.sury.org/repositories/
+    surveyed_at: '2026-10-04'
+    status: hold-dry-run-refused
+    stack: ipv6
+    note: 官方入口和生产IPv6连通已确认；服务器显式拒绝--dry-run，exit12。没有取得删除集、没有切源或真实官方同步。
+  validation:
+    observed_at: '2026-10-04'
+    completed:
+    - 2026-10-03已有包级证据：官方keyring的PHP公钥15058500A0235D97F5D10063B188E2B695BD4743验证公网bookworm InRelease成功，且与官方HTTPS内容相同。
+    - 已有已验签InRelease→bookworm/main/binary-amd64/Packages.xz（290308字节，SHA256=4fc6e5f3a32b44861769c63b1c81cfcb0d1310fd364ce7d636220dca6961cc60）→样例php-xlswriter
+      DEB（2424字节，SHA256=bc3d894b6e7c5bc257d25ccec5a4f75d4fe485caf6d8f456f01c91ffe445f92b）链通过；仅检查元数据，没有安装或执行包脚本。本轮查阅该记录，没有把它当成新快照验收。
+    - 2026-10-04白天并发位空出后，用生产检查Pod只读挂载sury-snap-1790989901（VolumeSnapshot克隆）执行官方IPv6 dry-run；服务器回复configured to
+      refuse --dry-run (-n)，exit12，未得到可审阅的差异/删除集。
+    - 检查Pod已删除；helper finally释放reservation，control回到0。当前Mirror仍使用USTC源，暂停且无currentSync。
+    remaining: 具体阻塞为官方daemon拒绝--dry-run；先确定允许完成范围/删除集比较的官方路径或流程，再进行真实官方同步、新快照Ready和切换后APT验收。现有历史bootstrap签名/包链通过不等于官方切源完成。本轮仅准备了新的代表PHP扩展包与隔离APT验证脚本，尚未执行；未宣称全架构、全仓库或安装运行时验收。

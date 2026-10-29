@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mirror-delivery
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: mirror-delivery
+    app.kubernetes.io/component: delivery-http
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mirror-delivery
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      appProtocol: http

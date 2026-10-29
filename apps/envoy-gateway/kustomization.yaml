@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: envoy-gateway
+resources:
+  - resources/namespace.yaml
+  - resources/gatewayclass.yaml
+  - resources/envoyproxy.yaml
+  - resources/gateway.yaml
+  - resources/trafficpolicy.yaml
+  - resources/podmonitor-envoy.yaml
+helmCharts:
+  - name: gateway-helm
+    repo: oci://docker.io/envoyproxy
+    includeCRDs: true
+    releaseName: envoy-gateway
+    namespace: envoy-gateway
+    valuesFile: values/gateway-helm-v1.9.1.yaml
+    version: v1.9.1

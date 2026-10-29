@@ -1,0 +1,52 @@
+metadata:
+  name: packaging-gitea
+info:
+  description: 社区维护的 Gitea Debian 软件包仓库
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/packaging-gitea/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 4Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-02'
+    docs:
+    - https://gitlab.com/packaging/gitea/-/raw/master/README.md
+    - https://packaging.gitlab.io/gitea/gpg.key
+    - https://packaging.gitlab.io/gitea/dists/gitea/InRelease
+    - https://github.com/taoky/tsumugu/blob/12aa51f163e18efd0fac272b2c959e46b30ccb3c/tsumugu-cli/src/cli/sync.rs
+    - https://github.com/taoky/tsumugu/blob/12aa51f163e18efd0fac272b2c959e46b30ccb3c/tsumugu-parser/src/extensions/apt.rs
+    policy:
+    - 该仓库由 morph027 的 GitLab packaging 项目维护，提供 Debian/Ubuntu 包；不是 Gitea 项目官方构建文件的直接镜像。
+    - APT suite=gitea，component=main，架构 arm64、amd64；索引 dists/gitea/InRelease、dists/gitea/main/binary-<arch>/Packages[.gz]，Packages
+      中 Filename 指向 pool/ 下相对路径。
+    - 官方文档公布密钥 https://packaging.gitlab.io/gitea/gpg.key；2026-10-02 对官方及本站 InRelease 用该 HTTPS 获取的密钥执行 gpgv 均成功；指纹 02BD5FB7BA4650D50ED69002797DFE3F4F80269B、B73FE9438F573E023086FE86D11878B3CE2B8566。未作独立带外密钥身份认证。
+    - 2026-10-02 实测官方 InRelease、Packages、gpg.key 均 HTTP 200；根、dists/、suite/、binary-amd64/ 目录均 HTTP 404，表明可按已知文件 URL 下载但不提供目录列表，不能解释为仓库不可访问。
+    - 本站 InRelease 与官方文件逐字节相同。
+    - 未查到维护者要求的镜像同步周期或公开 rsync module；当前 interval/timeout=24h 是本地配置，不是官方建议。
+  bootstrap:
+    status: succeeded-and-published-paused
+    succeeded_at: '2026-10-02T16:05:51Z'
+    published_at: '2026-10-02T16:06:01Z'
+    job: packaging-gitea-sync-1790957134
+    note: USTC 首次同步 Succeeded，发布 Ready=True；mirrors.zjusct.io/sync-paused=true，保留当前成功发布快照。
+    official_cutover_blocker: 现有 tsumugu 先将 upstream 根入队为 Listing，目录解析失败便返回；--apt-packages 仅在已经列出/处理的未压缩 Packages 文件后补充 Filename
+      下载任务，不会读取本地种子来发现 suite/architecture，也不会自行从 InRelease 开始枚举仓库。该非目录索引 APT 源不能只加 --apt-packages 直接使用现有模板；忽略404也不会建立文件列表。rsync/ftpsync要求rsync传输，qfm是Fedora专用，均无此HTTPS仓库对应接口。
+    action: 保持暂停，不切换官方 HTTP，不增加 APT 专用下载器/脚本或新同步类型；等待用户改变工具约束，或上游提供当前模板支持的可列目录/rsync入口。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/packaging-gitea/
+    surveyed_at: '2026-10-02'
+    status: selected
+    note: 模块 packaging-gitea，模块根映射本站 /packaging-gitea/；已完成首次同步和发布，自动增量仍暂停。
+  - url: https://packaging.gitlab.io/gitea/
+    surveyed_at: '2026-10-02'
+    status: blocked-by-existing-template
+    note: 官方项目发布入口；InRelease Date=2026-09-30T02:14:05Z。可访问，阻塞是目录不可枚举且现有四类模板不适配。

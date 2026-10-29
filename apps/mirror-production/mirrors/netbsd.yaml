@@ -1,0 +1,63 @@
+metadata:
+  name: netbsd
+info:
+  description: NetBSD 操作系统发布归档
+  upstream: rsync://rsync3.jp.NetBSD.org/pub/NetBSD/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  ipv6: false
+  rsync:
+    extra_args:
+    - '-4'
+storage:
+  size: 1092Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+  aliases:
+  - /NetBSD
+comment:
+  official:
+    surveyed_at: '2026-10-03'
+    docs:
+    - https://www.netbsd.org/mirrors/
+    - https://cdn.netbsd.org/pub/NetBSD/README
+    - https://rsync.NetBSD.org/
+    - https://rsync3.jp.NetBSD.org/pub/NetBSD/
+    policy:
+    - NetBSD 官方镜像页明确列出主 rsync://rsync.NetBSD.org/ 及多个区域 rsync 镜像；页面没有规定固定同步间隔，建议24小时作为本地策略，而非官方要求。
+    - 官方 CDN README 描述 pub/NetBSD 下的 NetBSD-10.x/11.x、NetBSD-current、NetBSD-daily、release 快照、images、misc、packages、security、torrent
+      等树。TUNA 初始化共1,805,669个文件、918.91G逻辑大小（传输734.09G），需要保留完整树、符号链接和硬链接。
+    - 主 rsync 当前因24个连接已满而拒绝服务；这属于临时容量问题，不是认证失败。官方页面列出的 rsync3.jp.NetBSD.org/pub/NetBSD/ 可匿名列目录，且根布局与 TUNA 根逐项一致；本次选择
+      IPv4。
+    - 官方 CDN 适合发布二进制文件，但不能证明覆盖 TUNA 的完整 pkgsrc、daily、source 和 torrent 范围；同步仍使用官方 rsync。
+    - 已对 TUNA、rsync3.jp 和官方页面记录的顶层树进行对照：均含版本目录、arch、images、misc、packages、security、torrent 及必要符号链接；完整全量 dry-run
+      仍应由 rollout 验证。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/NetBSD/
+    stack: dual
+    status: bootstrap-complete
+    surveyed_at: '2026-10-03'
+    note: TUNA 初始化已完成（1,805,669文件）；当前保持暂停。
+  - url: rsync://rsync.NetBSD.org/NetBSD/
+    stack: ipv4
+    status: temporarily-unavailable
+    surveyed_at: '2026-10-03'
+    note: 官方主 rsync；此次返回 max connections (24)，因此不切换。
+  - url: https://cdn.netbsd.org/pub/NetBSD/
+    stack: dual
+    status: reference
+    surveyed_at: '2026-10-03'
+    note: 官方 CDN HTTP 可读及 README 可读，但只作为发布范围参考，未证明等价于完整 TUNA 树。
+  - url: rsync://rsync3.jp.NetBSD.org/pub/NetBSD/
+    stack: ipv4
+    status: selected
+    surveyed_at: '2026-10-03'
+    note: 官方镜像页列出的 JAIST rsync；IPv4 列目录成功，顶层布局与 TUNA 对齐。
+    validated_at: '2026-10-02'
+    validation: 生产真实同步、快照发布与 HTTP 文件 SHA256 校验通过。note 中的探测说明保留为切源前调查记录。
+  bootstrap:
+    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。

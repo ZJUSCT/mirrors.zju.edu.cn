@@ -1,0 +1,41 @@
+metadata:
+  name: eclipse
+info:
+  description: Eclipse 软件发布与更新站点
+  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/eclipse/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 336h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 5260Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-07'
+    docs:
+    - https://www.eclipse.org/downloads/mir_request.php
+    - https://www.eclipse.org/downloads/eclipse.org-rsync.sh.txt
+    policy:
+    - 官方镜像申请页面要求 rsync、至少每日更新、HTTPS 发布及订阅维护者邮件列表；注册官方镜像需要提交站点及单个出口 IP。本次仅调查现有公开上游，不提交表单或发送邮件。页面的1.5TB容量估计已低于本次初始化数据，不能作为容量依据。
+    - 官方 rsync 脚本明确将 rsync2.osuosl.org 的 eclipse 模块列为 master 之外的备用源；无需猜测模块或凭据。保留24h同步频率。
+    - 官方脚本要求镜像根 TIME 及 ztime/ 时间戳；本方案整根同步包含二者。上游与TUNA根目录名称集合均445项且相同，ztime/ 2项、releases/ 38项、technology/epp/downloads/release/
+      6项名称集合相同。只是轻量布局检查，并非整树一致性或删除授权。
+    - 工作站2026-10-07只读 IPv6 根及抽样目录列表全部成功；既有 survey/eclipse-6.txt 另有生产网络成功证据。保持暂停直至生产完整dry-run、删除审核、实际同步、TIME/ztime及HTTP验证完成。
+  upstreams:
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/eclipse/
+    status: selected
+    surveyed_at: '2026-10-07'
+    note: 已成功完成初始化；本次调查为真实subagent执行。
+  - url: rsync://rsync2.osuosl.org/eclipse/
+    status: candidate
+    stack: ipv6
+    surveyed_at: '2026-10-07'
+    note: 官方脚本明确授权OSUOSL备用rsync源，根与关键发布目录范围一致，IPv6只读列表成功，可进入受保护验证。
+  bootstrap:
+    note: 初始化已成功；保持暂停，待官方完整dry-run、删除审核、实际同步及HTTP验证全部通过。

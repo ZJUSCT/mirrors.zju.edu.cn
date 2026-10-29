@@ -1,0 +1,50 @@
+metadata:
+  name: rfc
+info:
+  description: IETF 发布的 RFC 标准文档
+  upstream: rsync://ftp.rfc-editor.org/rfcs/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+storage:
+  size: 12Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://www.rfc-editor.org/
+    - https://www.rfc-editor.org/rfc-index/
+    - rsync://ftp.rfc-editor.org/rfcs/
+    policy:
+    - RFC Editor官方说明负责发布和归档RFC；ftp.rfc-editor.org daemon根明确提供rfcs、everything-ftp、rfcs-text-only、rfcs-pdf-only、rfcs-json-only等模块。
+    - 当前USTC路径与官方精确模块rfcs匹配，保持模块根内容到发布根的直接映射；不要误用everything-ftp或只文本/PDF/JSON子集。
+    - 官方未发布固定同步周期；RFC新增/索引变化由发布流程驱动，现配置24h是本地选择。
+    - 2026-10-03工作站官方daemon根与rfcs一级列表exit0；2026-10-04生产IPv6 dry-run、真实同步和新快照发布已完成。保留文本、PDF、JSON、XML、索引及内部链接，未改变模块范围或重写内容。
+  bootstrap:
+    note: USTC初始化完成后，2026-10-04已正式切到rsync://ftp.rfc-editor.org/rfcs/（IPv6，24h本站周期）。官方job rfc-sync-1791075102于00:52:24Z成功，00:52:33Z发布rfc-snap-1791075102；Ready=True，五项公网/官方内容一致后已解除sync-paused。GitOps自动同步未启用。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/rfc/
+    surveyed_at: '2026-10-03'
+    status: bootstrap-complete
+    note: USTC历史初始化种子；已完成官方切源，不再是日常同步上游。Oct2站点容量4.80GiB仅作历史参考。
+  - url: rsync://ftp.rfc-editor.org/rfcs/
+    surveyed_at: '2026-10-04'
+    status: selected
+    stack: ipv6
+    note: 生产dry-run和真实同步均exit0、零新增/零删除；官方新快照已发布Ready，五项公网比对通过，已解除暂停。
+  validation:
+    observed_at: '2026-10-04'
+    completed:
+    - 生产只读快照克隆dry-run exit0：45301条目，0新增、0删除，9个更新约16.50MB。8项索引mtime变化、1项inline-errata/rfc7950.html；对比官方HTTPS确认新增Verified
+      EID9187及格式换行，已审阅。
+    - 官方真实job rfc-sync-1791075102从rsync://ftp.rfc-editor.org/rfcs/通过IPv6执行，2026-10-04T00:52:24Z成功；日志同样0新增、0删除、9更新。
+    - 2026-10-04T00:52:33Z发布完成；activeSnapshot与activePVC均为rfc-snap-1791075102，lastSnapshot.jobName匹配官方job，Ready=True、Degraded=False。
+    - 公网rfc-index.txt（2026344字节）、rfc9110.txt（502941）、rfc9110.json（1479）、rfc9110.pdf（2858365）与官方HTTPS逐字节相同。
+    - 本次实际改变的inline-errata/rfc7950.html公网与官方一致：407855字节，SHA256=b2886308b5c7bc00fa10eb1646be323bb892b2f2519ab6e972a13153785f539c，证明新errata已发布。
+    - 上述验收完成后解除sync-paused；24h自动日常同步从官方源运行。检查Pod已删除，准备阶段reservation已释放。
+    remaining: 官方切源、真实发布与代表内容抽样已完成；抽样不等于全树逐文件独立认证，未宣称RFC文件数字签名验证。后续按24h本地周期同步并监控错误/删除差异。

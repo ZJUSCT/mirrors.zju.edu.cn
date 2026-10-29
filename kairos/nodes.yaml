@@ -1,0 +1,118 @@
+# Version-controlled private mirror-node inventory. It contains the K3s
+# server token (cluster join credential) and must NOT be published as-is.
+# When open-sourcing this directory, blank the token: it is always
+# recoverable from /var/lib/rancher/k3s/server/token on any server node
+# (all mirror nodes are servers) and from datastore backups, and can be
+# rotated at any time with `k3s token rotate`.
+
+release:
+  version: v0.3.4
+  k3s_version: v1.36.4+k3s1
+  base_image: zju-mirror-kairos-k3s:v0.3.4
+  auroraboot_image: quay.io/kairos/auroraboot:v0.27.1
+
+network:
+  ipv4_prefix: 24
+  ipv4_gateway: 10.202.236.1
+  ipv6_prefix: 64
+  ipv6_gateway: 2001:da8:e000:8936::1
+  dns:
+    - 10.10.0.21
+    - 2001:da8:e000:94::8
+
+bond:
+  mode: 802.3ad
+  transmit_hash_policy: layer3+4
+  lacp_transmit_rate: fast
+  mii_monitor: 100ms
+  min_links: 1
+
+k3s:
+  token: # private
+  api_vip: 10.202.236.98
+  api_hostname: k8s.mirrors.zjusct.io
+  # Mirror workloads are split into per-mirror pods; the kubelet default
+  # (110) is the scheduling bottleneck on storage nodes.
+  max_pods: 512
+  # Per-node pod CIDR block carved from the IPv4 cluster CIDR. The kubelet
+  # default (/24, ~250 addresses) would cap nodes below max_pods; a /22
+  # (~1022 addresses) fits the permanent 5-node cluster 12 times over in
+  # 172.26.0.0/16. Dual-stack clusters must use the -ipv4 suffix: the plain
+  # node-cidr-mask-size flag makes kube-controller-manager refuse to start.
+  node_cidr_mask_size_ipv4: 22
+  pod_cidrs:
+    - 172.26.0.0/16
+    - fda8:d4b1:99d0:100::/56
+  service_cidrs:
+    - 172.27.0.0/16
+    - fda8:d4b1:99d0:200::/112
+  cluster_dns:
+    - 172.27.0.10
+    - fda8:d4b1:99d0:200::a
+
+ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOrq5gq9D17lmgpNzk2xwgOkzYabiyDYZkjpwdKl5R7B bowling233
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKWXEDwLrYquCI5DdBPZZuwWkYb3KchjI9pExT3VXcxe mrhaoxx
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC6rs8kY4aqjChSWnzA72Bdkir1UxgE/Am/61HbaUCoI yoolc
+
+nodes:
+  - name: s1
+    hostname: s1.mirrors.zjusct.io
+    install_device: /dev/disk/by-id/scsi-3600508b1001c21555bb7ebf9f627aa55
+    ipv4: 10.202.236.99
+    ipv6: 2001:da8:e000:8936::99
+    bond_mac: 74:85:c4:1b:0d:70
+    bond_members:
+      - 74:85:c4:1b:0d:70
+      - 74:85:c4:1b:0d:72
+      - 88:df:9e:32:c3:58
+      - 88:df:9e:32:c3:59
+    bootstrap: false
+
+  - name: s2
+    hostname: s2.mirrors.zjusct.io
+    install_device: /dev/disk/by-id/scsi-3600508b1001cfe3cf8f56c65a7f59687
+    ipv4: 10.202.236.100
+    ipv6: 2001:da8:e000:8936::100
+    bond_mac: 74:85:c4:1a:f7:fc
+    bond_members:
+      - 74:85:c4:1a:f7:fc
+      - 74:85:c4:1a:f7:fe
+      - 88:df:9e:32:c3:72
+      - 88:df:9e:32:c3:73
+    bootstrap: false
+
+  - name: s3
+    hostname: s3.mirrors.zjusct.io
+    install_device: /dev/disk/by-id/scsi-3600508b1001c42e98bc90c5ec189e2a1
+    ipv4: 10.202.236.101
+    ipv6: 2001:da8:e000:8936::101
+    bond_mac: 74:85:c4:1b:35:0c
+    bond_members:
+      - 74:85:c4:1b:35:0c
+      - 74:85:c4:1b:35:0e
+      - 88:df:9e:32:c5:30
+      - 88:df:9e:32:c5:31
+    bootstrap: false
+
+  - name: f1
+    hostname: f1.mirrors.zjusct.io
+    install_device: /dev/disk/by-id/scsi-3600508b1001cd18323f38c0273186f62
+    ipv4: 10.202.236.102
+    ipv6: 2001:da8:e000:8936::102
+    bond_mac: b0:26:28:37:02:00
+    bond_members:
+      - b0:26:28:37:02:00
+      - b0:26:28:37:02:01
+    bootstrap: false
+
+  - name: f2
+    hostname: f2.mirrors.zjusct.io
+    install_device: /dev/disk/by-id/scsi-3600508b1001cfbacfc9a5bac43ca435b
+    ipv4: 10.202.236.103
+    ipv6: 2001:da8:e000:8936::103
+    bond_mac: b0:26:28:37:0a:10
+    bond_members:
+      - b0:26:28:37:0a:10
+      - b0:26:28:37:0a:11
+    bootstrap: false

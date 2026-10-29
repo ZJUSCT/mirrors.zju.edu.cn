@@ -1,0 +1,56 @@
+metadata:
+  name: archlinuxarm
+info:
+  description: 面向 ARM 平台的 Arch Linux 软件包与系统镜像
+  upstream: rsync://rsync.mirrors.ustc.edu.cn/archlinuxarm/
+sync:
+  type: rsync
+  interval: 24h
+  timeout: 24h
+  nodeSelector:
+    kubernetes.io/hostname: s1.mirrors.zjusct.io
+storage:
+  size: 300Gi
+publish:
+  http:
+    tier: small
+    replicas: 1
+comment:
+  official:
+    surveyed_at: '2026-10-04'
+    docs:
+    - https://archlinuxarm.org/about/mirrors
+    policy:
+    - 官方 Mirrors 页面明确：镜像由项目服务器主动推送更新；镜像主机必须能够通过 rsyncd 或 SSH 接收 rsync push，且原文强调“We do not make use of rsync pull for mirroring.”
+      这不是仅用于公开列表登记的联系要求，而是官方镜像的同步方式要求。
+    - 成为官方镜像还要接入 GeoIP 重定向及项目分配的地区子域名；文档请运营者通过 IRC 或 contact@archlinuxarm.org 联系，可索取 rsyncd.conf 示例。本次没有发消息、申请或开放入站服务。
+    - 默认客户端入口 mirror.archlinuxarm.org 按 GeoIP 选择下载节点；它不是官方文档指定的 pull 同步端点。本次 HTTP 根重定向到 nj.us.mirror.archlinuxarm.org，区域节点根只有
+      aarch64/ 与 armv7h/。不能据此认定其完整范围与 USTC 初始化树一致或据此删除其他树。
+    - 官方不规定轮询小时数，更新由上游 push 触发。现有 24h 是 USTC 初始化时的本地排程，不能写成官方周期或官方长期方案。
+    - 当前 rsync、ftpsync、qfm、tsumugu 都是主动拉取作业；rsync/ftpsync 不是入站 rsyncd/SSH 接收服务，qfm 面向 Fedora，tsumugu 即使可解析区域节点 HTTP 索引也不能代替项目规定的
+      push 接入。现有四类模板内没有已获官方支持的直接 handoff。
+  bootstrap:
+    status: succeeded-and-published-paused
+    job: archlinuxarm-sync-1791064759
+    succeeded_at: '2026-10-04T00:18:12Z'
+    published_at: '2026-10-04T00:18:22Z'
+    note: USTC 首次同步与快照发布成功，Ready=True、Degraded=False，自动同步保持暂停；尚未切到官方源。
+    official_cutover_blocker: 官方明确使用入站 rsync push，不使用 rsync pull；当前四类拉取模板无法接收官方推送。
+    action: 保留已发布 USTC 快照并暂停自动增量。需要用户裁定是否允许项目联系及入站 rsyncd/SSH 推送架构，或批准另一个有明确授权的长期第三方来源；本次不擅自新增接收器或绕过官方同步政策。
+  upstreams:
+  - url: rsync://rsync.mirrors.ustc.edu.cn/archlinuxarm/
+    surveyed_at: '2026-10-04'
+    status: bootstrap-complete
+    note: USTC 初始化种子，仍为当前配置但自动同步暂停；不是官方日常源。
+  - url: http://mirror.archlinuxarm.org/
+    surveyed_at: '2026-10-04'
+    status: client-reference-not-sync-candidate
+    note: 官方客户端 GeoIP 选择器；本次返回 302 到 http://nj.us.mirror.archlinuxarm.org/，不是公开文档支持的 pull 镜像入口。
+  verification:
+    surveyed_at: '2026-10-04'
+    checks:
+    - 官方 Mirrors 文档 HTTP 200，保存原 HTML/解析文本；未向 USTC 发起请求或传输。
+    - 有界 HTTP 探测：默认选择器 302，指定美国区域节点根 HTTP 200，仅显示 aarch64/ 与 armv7h/；未递归下载，不代表完整树已比对。
+    - HTTPS 选择器触发证书主机名不匹配，本次未绕过校验；该技术错误不用于推断全体区域节点不可用。
+    - 官网镜像表脚本请求 /data/mirrors/list（POST）；本次返回 404，不能据此宣布官方无镜像，也不替代页面明确的 push 政策。
+    remaining: 无可直接执行的官方拉取切源；具体阻塞为官方接入方式与当前工具架构不匹配，不是工作站 rsync 超时、HTTP 目录不可解析或等待一般登记。
