@@ -1,0 +1,94 @@
+name: Build K8s dev container
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'containers/devcontainer/**'
+      - '.github/workflows/devcontainer.yaml'
+  pull_request:
+    paths:
+      - 'containers/devcontainer/**'
+      - '.github/workflows/devcontainer.yaml'
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: devcontainer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/devcontainer" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: containers/devcontainer
+          platforms: linux/${{ matrix.arch }}
+          load: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}-${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=devcontainer-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=devcontainer-${{ matrix.arch }}
+          # 上游 latest 下载和 apk 包更新需要在每日构建时重新拉取。
+          pull: true
+          no-cache: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+          provenance: false
+      - name: Push architecture image
+        if: github.event_name != 'pull_request'
+        run: docker push "$IMAGE:${{ github.sha }}-${{ matrix.arch }}"
+
+  manifest:
+    name: Publish multi-platform image
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create manifest
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/devcontainer"
+          docker buildx imagetools create \
+            --tag "$image:latest" \
+            --tag "$image:${GITHUB_SHA:0:7}" \
+            "$image:$GITHUB_SHA-amd64" \
+            "$image:$GITHUB_SHA-arm64"

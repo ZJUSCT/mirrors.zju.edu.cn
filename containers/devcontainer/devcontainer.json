@@ -1,0 +1,10 @@
+{
+  "name": "mirrors.zju.edu.cn",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "REGISTRY_MIRROR": "${localEnv:REGISTRY_MIRROR}",
+      "ALPINE_MIRROR": "${localEnv:ALPINE_MIRROR}"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "mirrors.zju.edu.cn",
+  "image": "ghcr.io/zjusct/devcontainer:latest",
+  "init": true,
+  "shutdownAction": "none",
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  "containerEnv": {
+    "KUBECONFIG": "${containerWorkspaceFolder}/.kube/config",
+    "OPENCODE_CONFIG_DIR": "${containerWorkspaceFolder}/.opencode",
+    "CODEX_HOME": "${containerWorkspaceFolder}/.codex",
+    "GROK_HOME": "${containerWorkspaceFolder}/.grok",
+    "CLAUDE_CONFIG_DIR": "${containerWorkspaceFolder}/.claude",
+    "GO111MODULE": "on",
+    "GOPROXY": "https://goproxy.cn,direct"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "dev.containers.dockerCredentialHelper": false
+      },
+      "extensions": [
+        "redhat.vscode-yaml",
+        "editorconfig.editorconfig",
+        "ms-kubernetes-tools.vscode-kubernetes-tools"
+      ]
+    }
+  }
+}
