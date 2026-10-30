@@ -1,11 +1,8 @@
 {
   "name": "mirrors.zju.edu.cn",
-  "image": "ghcr.io/zjusct/devcontainer:latest",
+  "image": "registry.mirrors.zjusct.io/ghcr.io/zjusct/devcontainer:latest",
   "init": true,
   "shutdownAction": "none",
-  "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-  ],
   "containerEnv": {
     "KUBECONFIG": "${containerWorkspaceFolder}/.kube/config",
     "OPENCODE_CONFIG_DIR": "${containerWorkspaceFolder}/.opencode",

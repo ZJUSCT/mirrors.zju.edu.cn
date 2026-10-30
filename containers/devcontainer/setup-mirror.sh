@@ -3,24 +3,13 @@
 
 set -euo pipefail
 
-MIRROR="${MIRROR:-mirrors.cernet.edu.cn}"
-ALPINE_MIRROR="https://${MIRROR}/alpine"
+MIRROR="${MIRROR:-mirrors.zju.edu.cn}"
+DEBIAN_MIRROR="https://${MIRROR}/debian"
 PYPI_MIRROR="https://${MIRROR}/pypi/web/simple"
 NPM_REGISTRY="https://registry.npmmirror.com/"
 
-# shellcheck disable=SC1091
-. /etc/os-release
-
-if [ "${ID:-}" != "alpine" ]; then
-    echo "setup-mirror.sh only supports Alpine-based devcontainer images" >&2
-    exit 1
-fi
-
-# Alpine 默认的 BusyBox sed 不支持 GNU 扩展 \?，需分别匹配 http 与 https
-sed -i \
-    -e "s#http://dl-cdn.alpinelinux.org/alpine#${ALPINE_MIRROR}#g" \
-    -e "s#https://dl-cdn.alpinelinux.org/alpine#${ALPINE_MIRROR}#g" \
-    /etc/apk/repositories
+sed -i "s#http://deb.debian.org/debian#${DEBIAN_MIRROR}#g" \
+    /etc/apt/sources.list.d/debian.sources
 
 cat >/etc/pip.conf <<EOF
 [global]

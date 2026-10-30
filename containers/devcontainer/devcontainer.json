@@ -4,7 +4,15 @@
     "dockerfile": "Dockerfile",
     "args": {
       "REGISTRY_MIRROR": "${localEnv:REGISTRY_MIRROR}",
-      "ALPINE_MIRROR": "${localEnv:ALPINE_MIRROR}"
+      "DEBIAN_MIRROR": "${localEnv:DEBIAN_MIRROR}"
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false
+    },
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "minikube": "none"
     }
   }
 }

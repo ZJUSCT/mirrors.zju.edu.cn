@@ -49,25 +49,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build
-        uses: docker/build-push-action@v6
+      - name: Build dev container with Features
+        uses: devcontainers/ci@v0.3
         with:
-          context: containers/devcontainer
-          platforms: linux/${{ matrix.arch }}
-          load: true
-          tags: ${{ env.IMAGE }}:${{ github.sha }}-${{ matrix.arch }}
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-          cache-from: type=gha,scope=devcontainer-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=devcontainer-${{ matrix.arch }}
-          # 上游 latest 下载和 apk 包更新需要在每日构建时重新拉取。
-          pull: true
-          no-cache: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-          provenance: false
-      - name: Push architecture image
-        if: github.event_name != 'pull_request'
-        run: docker push "$IMAGE:${{ github.sha }}-${{ matrix.arch }}"
+          configFile: containers/devcontainer/devcontainer.json
+          imageName: ${{ env.IMAGE }}
+          imageTag: ${{ github.sha }}-${{ matrix.arch }}
+          platform: linux/${{ matrix.arch }}
+          cacheFrom: ${{ env.IMAGE }}:latest
+          push: ${{ github.event_name != 'pull_request' && 'always' || 'never' }}
 
   manifest:
     name: Publish multi-platform image
