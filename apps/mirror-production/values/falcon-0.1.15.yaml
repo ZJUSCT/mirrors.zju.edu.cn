@@ -55,7 +55,7 @@ controller:
         disk: "654TB"
         note: "公网上行 v4/v6 各 100Mbps；校内链路 10Gbps"
         big: ""
-        disable: true
+        disable: false
     sync:
       maxConcurrent: 0
     # Per-protocol publishing topology. An empty http.hostnames list
