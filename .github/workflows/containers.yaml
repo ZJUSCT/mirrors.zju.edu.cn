@@ -19,19 +19,64 @@ permissions:
   packages: write
 
 jobs:
+  changes:
+    name: Detect changed container images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      images: ${{ steps.matrix.outputs.images }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect changed container folders
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            git-http-backend:
+              - 'containers/git-http-backend/**'
+            archvsync:
+              - 'containers/archvsync/**'
+            anaconda:
+              - 'containers/anaconda/**'
+            quick-fedora-mirror:
+              - 'containers/quick-fedora-mirror/**'
+            rsync:
+              - 'containers/rsync/**'
+            tsumugu:
+              - 'containers/tsumugu/**'
+            workflow:
+              - '.github/workflows/containers.yaml'
+      - name: Build the selected matrix
+        id: matrix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CHANGED_IMAGES: ${{ steps.filter.outputs.changes }}
+          WORKFLOW_CHANGED: ${{ steps.filter.outputs.workflow }}
+        run: |
+          set -eu
+
+          if [ "$EVENT_NAME" = schedule ] || [ "$EVENT_NAME" = workflow_dispatch ] || [ "$WORKFLOW_CHANGED" = true ]; then
+              images='["git-http-backend","archvsync","anaconda","quick-fedora-mirror","rsync","tsumugu"]'
+          else
+              images="$CHANGED_IMAGES"
+          fi
+
+          echo "images=$images" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build ${{ matrix.image }}
+    needs: changes
+    if: needs.changes.outputs.images != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        image:
-          - git-http-backend
-          - archvsync
-          - anaconda
-          - quick-fedora-mirror
-          - rsync
-          - tsumugu
+        image: ${{ fromJSON(needs.changes.outputs.images) }}
     concurrency:
       group: containers-${{ matrix.image }}-${{ github.ref }}
       cancel-in-progress: true
@@ -75,5 +120,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           owner: ${{ github.repository_owner }}
           package: ${{ matrix.image }}
-          keep-n-tagged: 10
+          keep-n-tagged: 1
           delete-untagged: true

@@ -82,3 +82,11 @@ jobs:
             --tag "$image:${GITHUB_SHA:0:7}" \
             "$image:$GITHUB_SHA-amd64" \
             "$image:$GITHUB_SHA-arm64"
+      - name: Clean up old image versions
+        uses: dataaxiom/ghcr-cleanup-action@v1.2.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          package: devcontainer
+          keep-n-tagged: 1
+          delete-untagged: true
