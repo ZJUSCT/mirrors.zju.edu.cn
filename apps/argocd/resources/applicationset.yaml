@@ -1,44 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: default
-spec:
-  sourceRepos:
-    - "*"
-  destinations:
-    - namespace: "*"
-      server: "*"
-  clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
-  sourceNamespaces:
-    - "*"
----
-apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: mirror-config
+  name: mirrors
 spec:
-  # Allow temporarily toggling auto-sync for maintenance
-  # https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Controlling-Resource-Modification/#allow-temporarily-toggling-auto-sync
+  # Allow temporarily pausing an Application without ignoring other sync settings.
   ignoreApplicationDifferences:
     - jsonPointers:
-        - /spec/syncPolicy
+        - /spec/syncPolicy/automated/enabled
   generators:
-    - git:
-        repoURL: git@github.com:ZJUSCT/mirror-config.git
-        revision: main
-        requeueAfterSeconds: 120
-        directories:
-          - path: argocd/*
-        values:
-          repoURL: git@github.com:ZJUSCT/mirror-config.git
     - git:
         repoURL: git@github.com:ZJUSCT/mirrors.zju.edu.cn.git
         revision: main
         requeueAfterSeconds: 120
         directories:
-          - path: apps/argocd
+          # apps/argocd is managed by the independent root Application.
           - path: apps/cert-manager
           - path: apps/clickhouse
           - path: apps/envoy-gateway
@@ -53,18 +28,16 @@ spec:
           - path: apps/opentelemetry
           - path: apps/reloader
           - path: apps/rook-ceph
-        values:
-          repoURL: git@github.com:ZJUSCT/mirrors.zju.edu.cn.git
   template:
     metadata:
       name: "{{path.basename}}"
-      namespace: "{{path.basename}}"
+      namespace: argocd
       annotations:
         argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
     spec:
       project: default
       source:
-        repoURL: "{{values.repoURL}}"
+        repoURL: git@github.com:ZJUSCT/mirrors.zju.edu.cn.git
         targetRevision: main
         path: "{{path}}"
       destination:
@@ -72,6 +45,7 @@ spec:
         namespace: "{{path.basename}}"
       syncPolicy:
         automated:
+          enabled: true
           prune: true
           selfHeal: true
         syncOptions:

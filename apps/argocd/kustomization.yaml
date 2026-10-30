@@ -6,7 +6,8 @@ resources:
   - resources/sealedsecret-argocd.yaml
   - resources/sealedsecret-repo.yaml
   - resources/referencegrant.yaml
-  - resources/apps.yaml
+  - resources/project.yaml
+  - resources/applicationset.yaml
 helmCharts:
   - name: argo-cd
     repo: oci://ghcr.io/argoproj/argo-helm

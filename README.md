@@ -379,6 +379,17 @@ Secret 和 ConfigMap 变动时往往需要重启相应的 Workload，相关机�
 
 [ArgoCD](https://argo-cd.readthedocs.io/en/stable/) 是用于 K8s 的 GitOps CI/CD 工具。对于本仓库，它读取 `apps/` 下的 [Kustomization](https://kubectl.docs.kubernetes.io/references/kustomize/) 项目并将其部署到集群。
 
+公开仓库和私有配置仓库各自维护一个独立的根 Application，以及只扫描本仓库的 ApplicationSet：
+
+| 仓库 | 根 Application | 根 Application 管理的目录 | ApplicationSet |
+| --- | --- | --- | --- |
+| `mirrors.zju.edu.cn` | `argocd` | `apps/argocd/`：Argo CD 部署、公共配置及公库 ApplicationSet | `mirrors` |
+| `mirror-config`（私有） | `mirror-config-root` | `apps/argocd/`：私库访问凭据及私库 ApplicationSet | `mirror-config` |
+
+根 Application 的声明放在各自仓库的 `apps/bootstrap.yaml`，由管理员显式创建和更新。两个根目录均不参与 ApplicationSet 生成，避免形成「根 Application → ApplicationSet → 根 Application」的循环。所有 Application 和 ApplicationSet 都位于 `argocd` 命名空间，共用权限充足的 `default` AppProject；业务资源的部署位置由 Application 的 `spec.destination.namespace` 决定。这个设计用于分开维护两个仓库的配置，不做多租户权限隔离。
+
+根 Application 和业务 Application 均启用自动同步、prune、self-heal 和 server-side apply。ApplicationSet 仅忽略业务 Application 的 `spec.syncPolicy.automated.enabled`，以便临时暂停自动同步，其他同步策略仍由 Git 管理。暂停同步不会阻止 ApplicationSet 删除应用或 finalizer 级联删除资源；调整管理关系或将应用转为手动管理时，需要单独安排资源保留和归属交接。
+
 我们约定 Kustomization 项目的布局如下：
 
 ```text
@@ -387,7 +398,7 @@ argocd
 ├── charts
 ├── kustomization.yaml
 ├── resources
-│   ├── apps.yaml
+│   ├── applicationset.yaml
 │   ├── configmap.yaml
 │   ├── namespace.yaml
 │   └── secret.yaml
@@ -415,7 +426,7 @@ argocd
 
 其他：
 
-- 可以通过移除 Application 的 `spec.syncPolicy.automated` 或者添加 `automated.enabled: false` 来暂停 ArgoCD 对该应用的自动同步，用于临时绕过 GitOps。
+- 可以设置 Application 的 `spec.syncPolicy.automated.enabled: false` 来暂停 ArgoCD 对该应用的自动同步，用于临时绕过 GitOps。
 - 使用 `argocd.argoproj.io/refresh: "hard"` Annotation 强制刷新应用。
 - 手动生成 K8s 资源：在相应目录下运行
 
