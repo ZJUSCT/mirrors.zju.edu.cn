@@ -8,7 +8,7 @@ sync:
   interval: 4h
   timeout: 4h
 storage:
-  size: 4Ti
+  size: 6Ti
   volumeName: pvc-fddfa2ed-75e9-492e-9738-94240a46ecd0
 publish:
   http:

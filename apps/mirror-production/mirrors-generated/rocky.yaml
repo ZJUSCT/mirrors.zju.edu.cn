@@ -98,7 +98,7 @@ spec:
       accessModes: [ReadWriteOnce]
       resources:
         requests:
-          storage: 4Ti
+          storage: 6Ti
       volumeMode: Filesystem
       volumeName: pvc-fddfa2ed-75e9-492e-9738-94240a46ecd0
     volumeSnapshotClassName: openebs-zfs-snapshot
