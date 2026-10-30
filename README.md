@@ -762,3 +762,12 @@ publish:
 
 - 子集路径指向的子树必须真实位于父镜像的同步范围内。`debian-cd` 已与 `debian-cdimage/release` 合并，由父镜像统一同步和发布。
 - 语义与机制细节见 Falcon 仓库 README 的「别名与重定向」。
+
+## 使用
+
+推荐使用 DevContainer：
+
+- 镜像打包了常用工具
+- 持久化数据放在本仓库文件夹下
+    - Agent 配置目录已通过环境变量（如 `CODEX_HOME` 等）指定到本文件夹下。
+    - 推荐 Agent 通过 Shallow clone 方式拉取需要用到的仓库至 `./tmp/<repo_path>`，例如 `./tmp/github.com/ustclug/mirror-docker-unified`，然后本地读取。这比在线查询 GitHub 快，也避免了速率限制。搜索社区项目等应使用配置的 GitHub MCP。避免不带凭据直接访问 GitHub API。
