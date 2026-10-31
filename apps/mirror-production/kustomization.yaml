@@ -12,8 +12,6 @@ resources:
   # Mirror 和相关资源
   - mirrors-generated/
   - mirrors-manual/
-  # 静态投递（活动页面等），见 delivery/README.md
-  - delivery/
   - resources/sealedsecret-anolis-rsync.yaml
   - resources/sealedsecret-archlinuxcn-rsync.yaml
   - resources/sealedsecret-immortalwrt-rsync.yaml
