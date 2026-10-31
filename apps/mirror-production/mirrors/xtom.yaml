@@ -10,7 +10,7 @@ sync:
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
 storage:
-  size: 4Gi
+  size: 16Gi # 2026-10-31：上游约5.37Gi，4Gi配额已写满；预留同步临时文件及增长空间。
 publish:
   http:
     tier: small
