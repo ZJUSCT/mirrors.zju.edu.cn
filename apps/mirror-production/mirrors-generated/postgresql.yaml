@@ -66,7 +66,7 @@ spec:
               - --threads
               - '16'
               - --max-delete
-              - '5000'
+              - '50000'
               - --timezone
               - '0'
               - --exclusion-v2

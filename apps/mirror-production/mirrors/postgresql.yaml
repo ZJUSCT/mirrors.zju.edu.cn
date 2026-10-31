@@ -10,7 +10,7 @@ sync:
   tsumugu:
     parser: nginx
     threads: 16
-    max_delete: 5000
+    max_delete: 50000
     extra_args:
       - --timezone
       - "0"

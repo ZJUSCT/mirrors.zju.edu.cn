@@ -101,7 +101,7 @@ spec:
       accessModes: [ReadWriteOnce]
       resources:
         requests:
-          storage: 4Gi
+          storage: 16Gi
       volumeMode: Filesystem
     volumeSnapshotClassName: openebs-zfs-snapshot
     retention: 1

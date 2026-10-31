@@ -164,16 +164,24 @@ spec:
               ports:
                 - containerPort: 8080
                   name: http
+              startupProbe:
+                httpGet:
+                  path: /healthz
+                  port: http
+                periodSeconds: 2
+                timeoutSeconds: 2
+                failureThreshold: 30
               readinessProbe:
                 httpGet:
-                  path: /pypi/web/
+                  # 直接检查本地 simple 索引，避免依赖 mirror-front 浏览页面。
+                  path: /pypi/web/simple/pip/
                   port: http
                 periodSeconds: 5
                 timeoutSeconds: 2
                 failureThreshold: 3
               livenessProbe:
                 httpGet:
-                  path: /pypi/web/
+                  path: /healthz
                   port: http
                 periodSeconds: 10
                 timeoutSeconds: 2

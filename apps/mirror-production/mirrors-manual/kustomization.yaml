@@ -7,6 +7,7 @@ resources:
   - crates.io.yaml
   - homebrew.yaml
   - homebrew-bottles.yaml
+  - libnvidia-container.yaml
   - pypi.yaml
   - rosdistro.yaml
   - winget-source.yaml

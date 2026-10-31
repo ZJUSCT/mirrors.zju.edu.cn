@@ -2,7 +2,7 @@ metadata:
   name: centos-cloud
 info:
   description: 适用于云平台的 CentOS 通用系统镜像
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/centos-cloud/
+  upstream: rsync://mirrors.nju.edu.cn/centos-cloud/
 sync:
   type: rsync
   interval: 24h
@@ -10,43 +10,33 @@ sync:
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
 storage:
-  size: 864Gi
+  size: 3Ti
 publish:
   http:
     tier: small
     replicas: 1
 comment:
   official:
-    surveyed_at: '2026-10-07'
+    surveyed_at: '2026-10-31'
     docs:
     - https://cloud.centos.org/
     - https://cloud.centos.org/centos/
+    - https://mirrors.nju.edu.cn/centos-cloud/
     policy:
-    - 范围为cloud.centos.org原根：altarch/、centos/、TIME、timestamp.txt；centos/当前含6、7、8、8-stream、9-stream、10-stream、scos，保留历史目录，不静默只选当前Stream，也不混入ubuntu-cloud-images。
-    - 官方HTTPS根及centos/9-stream/x86_64/images/代表叶目录通过现有tsumugu apache-f2非递归list；这是可继续验证的允许同步器候选，不需要先引入新同步工具。
-    - 需保留各树内原始校验和及签名；完整核对镜像文件、别名/链接、历史归档和删除集合，使用可信CentOS签名密钥验证后再核对镜像摘要。
-    - 本轮官方目录没有给出可确认的rsync端点或固定同步周期，24h仅为本地候选；未从普通目录访问推断注册要求。
-  bootstrap:
-    status: succeeded-and-published-paused
-    job: centos-cloud-sync-1791196852
-    succeeded_at: '2026-10-05T15:49:46Z'
-    published_at: '2026-10-05T15:49:56Z'
-    note: hourly-live.json确认USTC初始化成功且匹配快照已发布；仍暂停，未执行官方切源。
-    official_interval_candidate: 24h
-    official_cutover_blocker: tsumugu apache-f2仅根及代表叶目录列表通过；仍需生产镜像全树范围/精确容量/删除集对比，校验和签名与镜像摘要验证，真实官方同步及匹配快照发布验收。属于可推进技术待办。
+    - 完整同步根目录的altarch/、centos/、TIME和timestamp.txt，保留全部架构及6、7、8、8-stream、9-stream、10-stream、scos历史目录。
+    - 原样保留校验和、签名及文件内容；使用rsync -aH保留上游硬链接，避免为同一硬链接重复分配空间。
+    - 未查到官方明确公开的rsync端点或固定同步周期；24h为本站同步间隔。
   upstreams:
-  - url: rsync://rsync.mirrors.ustc.edu.cn/centos-cloud/
-    surveyed_at: '2026-10-07'
-    status: bootstrap-complete
-    note: 成功发布并暂停；本轮未向USTC发起请求。
-  - url: https://cloud.centos.org/
-    surveyed_at: '2026-10-07'
-    status: documented-candidate-not-cut-over
-    note: tsumugu apache-f2仅根及代表叶目录列表通过；仍需生产镜像全树范围/精确容量/删除集对比，校验和签名与镜像摘要验证，真实官方同步及匹配快照发布验收。属于可推进技术待办。
+  - url: rsync://mirrors.nju.edu.cn/centos-cloud/
+    surveyed_at: '2026-10-31'
+    status: selected
+    stack: ipv6
+    note: 从s1节点对已发布副本执行只读全树dry-run，约8秒完成，退出0；无目录或架构排除项。
   verification:
-    surveyed_at: '2026-10-07'
+    surveyed_at: '2026-10-31'
     checks:
-    - 官方根和centos/目录HTTP200，根解析准确列出TIME、altarch、centos、timestamp.txt。
-    - 现有tsumugu apache-f2根及代表叶目录list退出0；命令、返回码和输出保存review-backlog.evidence/parser-results.json及centos-*.list；未传输镜像内容。
-    - 成功发布状态依据hourly-live.json；本轮没有集群修改、传输预留或公网发布验收。
-    remaining: tsumugu apache-f2仅根及代表叶目录列表通过；仍需生产镜像全树范围/精确容量/删除集对比，校验和签名与镜像摘要验证，真实官方同步及匹配快照发布验收。属于可推进技术待办。
+    - NJU全树列出7893项（7704个普通文件、189个目录），路径逻辑大小合计约2.63TB；该总量包含硬链接重复计数，不等于实际占用。
+    - 相对2026-10-05发布副本，预演新增6688个文件路径（含1467个硬链接）、148个目录，删除214个文件；需要传输的5331个文件逻辑大小约1.55TB，不等于实际网络流量。
+    - 旧副本仅含centos/下部分Stream及SCOS目录。用户确认改为完整同步NJU，并将864Gi配额提高到3Ti。
+    - 抽查Stream 9及10的x86_64/images目录，文件名集合及CHECKSUM文件与官方完全一致；未全量下载镜像或验证镜像文件摘要。
+    - NJU时间戳为2026-10-30T14:24:01Z，检查时官方为2026-10-31T08:12:01Z；时间戳滞后约18小时，不代表每个镜像文件均落后。

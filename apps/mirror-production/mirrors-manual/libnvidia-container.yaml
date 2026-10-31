@@ -1,3 +1,14 @@
+# 官方来源（2026-10-31 复核）：
+# - https://github.com/NVIDIA/libnvidia-container/tree/gh-pages
+# - https://nvidia.github.io/libnvidia-container/
+# - https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+# - https://mirrors.ustc.edu.cn/help/libnvidia-container.html
+# gh-pages 是 APT/RPM 软件包发布工作树；直接检出，无需构建 Jekyll。
+# 保留 stable/experimental、旧发行版及全部架构，Git 原样维护内部符号链接。
+# .list/.repo 保留官方 URL，客户端按本站路径改源；不改写签名元数据或软件包。
+# 复用 USTC rsync 种子中的 .git，后续 fetch/reset 直接访问 NVIDIA GitHub。
+# .git 仅供同步使用，HTTP 禁止访问。首次空卷由 gitsync 执行 treeless clone。
+# 6h 为本站同步间隔，未查到官方规定的固定间隔。
 apiVersion: mirrors.zjusct.io/v1alpha1
 kind: Mirror
 metadata:
@@ -8,7 +19,7 @@ metadata:
 spec:
   info:
     description: NVIDIA Container Toolkit 的 APT/RPM 软件包仓库
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/libnvidia-container/
+    upstream: https://github.com/NVIDIA/libnvidia-container.git
   sync:
     interval: 6h
     retryInterval: 15m
@@ -17,9 +28,6 @@ spec:
     keepJobs: 1
     podTemplate:
       spec:
-        # 仅用于 WaitForFirstConsumer PVC 的首次落盘；PV 绑定后应从清单移除
-        nodeSelector:
-          kubernetes.io/hostname: s1.mirrors.zjusct.io
         securityContext:
           runAsNonRoot: true
           runAsUser: 65532
@@ -53,33 +61,39 @@ spec:
               requests: {cpu: 10m, memory: 16Mi}
               limits: {cpu: 100m, memory: 32Mi}
         containers:
-          - name: rsync
-            image: ghcr.io/zjusct/rsync:latest
+          - name: gitsync
+            image: ustcmirror/gitsync:latest
             imagePullPolicy: Always
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: [ALL]
               readOnlyRootFilesystem: true
-            command: [rsync]
-            args:
-              - -aH
-              - "-6"
-              - --no-o
-              - --no-g
-              - --stats
-              - -h
-              - --itemize-changes
-              - --partial-dir=.rsync-partial
-              - --filter=P .rsync-partial/
-              - --exclude=.~tmp~/
-              - --delete
-              - --delete-excluded
-              - --safe-links
-              - --timeout=120
-              - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/libnvidia-container/
-              - /data/
+            # 跳过需要 root 的 entry.sh，直接以同步 UID 执行 Git 同步。
+            command: [/sync.sh]
+            env:
+              - name: TO
+                value: /data/
+              - name: GITSYNC_URL
+                value: https://github.com/NVIDIA/libnvidia-container.git
+              - name: GITSYNC_REMOTE
+                value: origin
+              - name: GITSYNC_BRANCH
+                value: gh-pages:gh-pages
+              - name: GITSYNC_CHECKOUT
+                value: "true"
+              - name: GITSYNC_MIRROR
+                value: "false"
+              - name: GITSYNC_TREELESS
+                value: "true"
+              - name: DEBUG
+                value: "false"
+              - name: HTTP_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: HTTPS_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: NO_PROXY
+                value: localhost,127.0.0.1,::1,10.0.0.0/8,172.26.0.0/16,172.27.0.0/16,fda8:d4b1:99d0:100::/56,fda8:d4b1:99d0:200::/112,.svc,.cluster.local
             volumeMounts:
               - name: tmp
                 mountPath: /tmp
@@ -164,6 +178,9 @@ spec:
                 - name: mirror-data
                   mountPath: /usr/share/nginx/html/libnvidia-container
                   readOnly: true
+                - name: nginx-locations
+                  mountPath: /etc/nginx/locations
+                  readOnly: true
           volumes:
             - name: nginx-conf
               configMap:
@@ -172,3 +189,22 @@ spec:
               # 目录缓存上限 512Mi，额外空间用于正在填充的响应及其他临时文件。
               emptyDir:
                 sizeLimit: 1Gi
+            - name: nginx-locations
+              configMap:
+                name: libnvidia-container-nginx-locations
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: libnvidia-container-nginx-locations
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  hide-git.conf: |
+    location = /libnvidia-container/.git {
+        return 404;
+    }
+    location ^~ /libnvidia-container/.git/ {
+        return 404;
+    }

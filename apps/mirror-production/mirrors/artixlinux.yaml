@@ -2,7 +2,7 @@ metadata:
   name: artixlinux
 info:
   description: 不依赖 systemd 的滚动更新 Linux 发行版软件仓库
-  upstream: rsync://mirror2.artixlinux.org/repos/
+  upstream: rsync://mirror1.artixlinux.org/repos/
 sync:
   type: rsync
   interval: 24h
@@ -19,39 +19,41 @@ publish:
     replicas: 1
 comment:
   official:
-    surveyed_at: '2026-10-03'
+    surveyed_at: '2026-10-31'
     docs:
     - https://artixlinux.org/download.php
     - https://packages.artixlinux.org/mirrorlist/
     - https://packages.artixlinux.org/mirrorlist/all/https/
     - rsync://mirror2.artixlinux.org/repos/
+    - rsync://mirror1.artixlinux.org/repos/
     policy:
     - Artix 官方下载页说明发行版提供 stable、weekly/testing 等不同内容；stable 仓库应保持 asteroids、galaxy、lib32、system、world 及 goblins
       变体的完整目录，不要把 ISO 树混入此模块。
     - 官方 packages.artixlinux.org mirrorlist generator 明确说明数据来自开发者维护的 mirror database，并生成当前有效镜像列表；2026-10-03 的
-      HTTPS 列表列出 mirror2.artixlinux.org/$repo/os/$arch。其 rsync daemon 的 repos 模块根含 lastsync 与 16 个 asteroids/galaxy/lib32/system/world（含
-      goblins）目录，和 TUNA artixlinux 根逐项同名。
-    - 官方页面未发现强制同步周期；采用 24h 保守周期。mirror2 repos 模块的生产 IPv4 rsync list-only 成功，IPv6 未作为本次切换依据。
+      HTTPS 列表列出 mirror2.artixlinux.org/$repo/os/$arch。其 rsync daemon 的 repos 模块根含 lastsync 与 15 个 asteroids/galaxy/lib32/system/world（含
+      goblins、gremlins）目录，和 TUNA artixlinux 根逐项同名。
+    - 官方页面未发现强制同步周期；采用 24h 保守周期。mirror1 repos 模块已通过生产节点 IPv4 单文件读取与完整 dry-run，继续使用 IPv4。
     - Artix 包签名和 pacman 数据库必须与仓库一同保持；只读 dry-run 应检查仓库数据库、签名和 symlink/删除，不得仅比较单个 package 文件。
-    - 2026-10-03 mirror2 源端 links.tar.gz 权限错误必须由上游修复或经验证更换完整等价源；不通过排除数据库/元数据绕过。
+    - 2026-10-31 mirror2 的 world-goblins.links.tar.gz 仍报源端 Permission denied，HTTPS 返回 403；改用完整的 mirror1 repos 模块，不排除数据库或元数据。
   upstreams:
   - url: rsync://mirrors.tuna.tsinghua.edu.cn/artixlinux/
     stack: dual
-    status: bootstrap-complete
+    status: fallback
     surveyed_at: '2026-10-03'
-    note: 当前初始化源；根目录 16 项与官方 mirror2/repos 根逐项同名。
+    note: 历史初始化源；根目录 16 项与官方 mirror2/repos 根逐项同名。
   - url: rsync://mirror2.artixlinux.org/repos/
     stack: ipv4
-    status: selected
-    surveyed_at: '2026-10-03'
+    status: rejected-permission-denied
+    surveyed_at: '2026-10-31'
     note: 官方 mirror2 实际同步因 world-goblins/os/x86_64/world-goblins.links.tar.gz 源端 Permission denied 失败（code 23）；单文件
-      rsync 复现，HTTPS 同文件也返回 403，属于上游权限问题而非本地删除门槛。 当前仍是本地和线上已选源，未恢复自动同步。
+      rsync 复现，HTTPS 同文件也返回 403；2026-10-31 再次确认未修复，停止使用。
   - url: rsync://mirror1.artixlinux.org/repos/
     stack: ipv4
-    status: candidate-unverified
-    surveyed_at: '2026-10-03'
-    note: 项目域名 daemon 公布 Artix repositories；根目录与 mirror2 同为 lastsync+15 个仓库目录，错误涉及的 174 字节 links.tar.gz 实际读取成功。但当前官方
-      mirrorlist 未列此主机，未完成生产完整 dry-run，不据此自动切换。
+    status: selected
+    surveyed_at: '2026-10-31'
+    note: 项目域名 daemon 公布 Artix repositories；根目录与 mirror2 同为 lastsync+15 个仓库目录。生产节点实际读取 world-goblins.links.tar.gz 成功，
+      完整 dry-run 退出 0，无删除，数据库及元数据可同步，另有 2 个数据库符号链接待恢复及文件权限差异。当前官方 HTTPS mirrorlist 未列此主机，按运维指定选用。
+      HTTPS 对应路径为 /repos/，不同于 mirror2 的网站根路径。
   bootstrap:
-    note: TUNA 初始化已成功，mirror2 回源删除审查已完成（306 条），但真实同步因上游元数据权限失败，当前保持暂停。
+    note: 历史上由 TUNA 完成初始化，随后 mirror2 同步因上游元数据权限失败；2026-10-31 改用 mirror1。
     reported_size: 54.5G
