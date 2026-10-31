@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: 不依赖 systemd 的滚动更新 Linux 发行版软件仓库
-    upstream: rsync://mirror2.artixlinux.org/repos/
+    upstream: rsync://mirror1.artixlinux.org/repos/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -75,7 +75,7 @@ spec:
               - --timeout=120
               - --contimeout=120
               - '-4'
-              - rsync://mirror2.artixlinux.org/repos/
+              - rsync://mirror1.artixlinux.org/repos/
               - /data/
             volumeMounts:
               - name: tmp
