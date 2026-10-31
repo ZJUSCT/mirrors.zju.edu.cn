@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: 适用于云平台的 CentOS 通用系统镜像
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/centos-cloud/
+    upstream: rsync://mirrors.nju.edu.cn/centos-cloud/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/centos-cloud/
+              - rsync://mirrors.nju.edu.cn/centos-cloud/
               - /data/
             volumeMounts:
               - name: tmp
@@ -101,7 +101,7 @@ spec:
       accessModes: [ReadWriteOnce]
       resources:
         requests:
-          storage: 864Gi
+          storage: 3Ti
       volumeMode: Filesystem
     volumeSnapshotClassName: openebs-zfs-snapshot
     retention: 1
