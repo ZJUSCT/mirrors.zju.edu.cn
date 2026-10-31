@@ -90,7 +90,6 @@ resources:
   - kodi.yaml
   - kubernetes.yaml
   - lfs.yaml
-  - libnvidia-container.yaml
   - libreelec.yaml
   - libreoffice.yaml
   - lineage-rom.yaml
