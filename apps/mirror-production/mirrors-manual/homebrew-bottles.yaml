@@ -92,8 +92,10 @@ spec:
             env:
               - name: TO
                 value: /data
+              # GHCR 上的部分 bottle（例如 joern）超过 1.6 GiB；并发下载会
+              # 让单个请求超过同步器 10 分钟的请求超时。
               - name: HOMEBREW_BOTTLES_JOBS
-                value: "8"
+                value: "1"
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
