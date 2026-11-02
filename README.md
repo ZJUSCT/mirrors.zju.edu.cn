@@ -379,17 +379,6 @@ Secret 和 ConfigMap 变动时往往需要重启相应的 Workload，相关机�
 
 [ArgoCD](https://argo-cd.readthedocs.io/en/stable/) 是用于 K8s 的 GitOps CI/CD 工具。对于本仓库，它读取 `apps/` 下的 [Kustomization](https://kubectl.docs.kubernetes.io/references/kustomize/) 项目并将其部署到集群。
 
-公开仓库和私有配置仓库各自维护一个独立的根 Application，以及只扫描本仓库的 ApplicationSet：
-
-| 仓库 | 根 Application | 根 Application 管理的目录 | ApplicationSet |
-| --- | --- | --- | --- |
-| `mirrors.zju.edu.cn` | `argocd` | `apps/argocd/`：Argo CD 部署、公共配置及公库 ApplicationSet | `mirrors` |
-| `mirror-config`（私有） | `mirror-config-root` | `apps/argocd/`：私库访问凭据及私库 ApplicationSet | `mirror-config` |
-
-根 Application 的声明放在各自仓库的 `apps/bootstrap.yaml`，由管理员显式创建和更新。两个根目录均不参与 ApplicationSet 生成，避免形成「根 Application → ApplicationSet → 根 Application」的循环。所有 Application 和 ApplicationSet 都位于 `argocd` 命名空间，共用权限充足的 `default` AppProject；业务资源的部署位置由 Application 的 `spec.destination.namespace` 决定。这个设计用于分开维护两个仓库的配置，不做多租户权限隔离。
-
-根 Application 和业务 Application 均启用自动同步、prune、self-heal 和 server-side apply。ApplicationSet 仅忽略业务 Application 的 `spec.syncPolicy.automated.enabled`，以便临时暂停自动同步，其他同步策略仍由 Git 管理。暂停同步不会阻止 ApplicationSet 删除应用或 finalizer 级联删除资源；调整管理关系或将应用转为手动管理时，需要单独安排资源保留和归属交接。
-
 我们约定 Kustomization 项目的布局如下：
 
 ```text
@@ -466,13 +455,13 @@ TODO：解释 SSA 和处理事项
 
 第三代 ZJU Mirror 使用的同步管理器是 [Falcon](https://github.com/ZJUSCT/falcon/)，详细信息请移步相应仓库。
 
-同步管理器的基础功能是：管理、调度下文将介绍的各种同步、服务，展示镜像状态等。
+同步管理器的基础功能是：管理、调度同步任务和服务实例，展示镜像状态等。
 
 ### 同步卷根目录的属主
 
 zfs-localpv 新建 PVC 的根目录默认由 root 持有。`fsGroup` 可以提供组写权限，但非 owner 仍不能设置根目录的任意 mtime，rsync 会报 `failed to set times ... Operation not permitted`。
 
-所有 Mirror 的 sync Pod 都先运行 `init-sync-volume`，通过共享 ConfigMap 中的 [init-sync-volume.sh](apps/mirror-production/configs/init-sync-volume.sh) 仅修正 `/data` 根目录的 owner。它不递归修改内容、不调整 group/mode；ftpsync 的锁清理在此之后执行。初始化容器以 UID 0 运行，丢弃所有能力后仅添加 `CHOWN`；实际同步容器仍以非 root 身份运行。发布 Pod 不运行此初始化。
+所有 Mirror 的 sync Pod 都先运行 `init-sync-volume`，通过共享 ConfigMap 中的 [init-sync-volume.sh](apps/mirror-production/configs/init-sync-volume.sh) 仅修正 `/data` 根目录的 owner。它不递归修改内容、不调整 group/mode；ftpsync 的锁清理在此之后执行。初始化容器以 UID 0 运行，丢弃所有能力后仅添加 `CHOWN`；实际同步容器仍以非 root 身份运行。
 
 生成配置使用 `sync.uid` 指定同步 UID，默认 65532，QFM 默认 65432；同一数值同时用于同步容器和初始化容器的 `SYNC_UID`。手工维护的 Mirror 也必须保持这两者一致。QFM 的发布 UID 继续为 65532，以保持 bitflip 的读权限隔离。
 
@@ -711,14 +700,6 @@ comment:
       readOnlyRootFilesystem: true
     ```
 
-### 部署与验证约定
-
-集群只保留 `mirror-production` 一个 Falcon 实例，对外服务域名为 `mirrors.zju.edu.cn`、`mirror.zju.edu.cn`。
-
-Falcon 的 `Mirror` CRD 定义是集群级资源，`Mirror` 实例位于各自的命名空间。不同命名空间中的实例共享同一份 schema，无法通过同集群的测试实例隔离 CRD 升级。新版 Falcon 先运行本地 `make check`，再通过 `make e2e` 在独立 kind 集群中验证；发布前等待分支 CI 通过，再推送版本 tag，由 GitHub Actions 构建镜像和 Chart。
-
-生产升级前检查 CRD 字段变化、现有 CR 迁移以及回退方案，协调更新 CRD、控制器和镜像配置；升级后验证同步、快照、发布、路由与 MirrorZ 输出。新镜像的同步和服务配置也应先完成验证，再纳入生产配置。
-
 ### 可观测性
 
 - 指标：Prometheus 保留 48 小时本地缓冲，通过 remote_write 写入 Mimir；Mimir 在 Ceph 对象存储保留 180 天，作为 Grafana 默认指标源。
@@ -740,9 +721,9 @@ Falcon 的 `Mirror` CRD 定义是集群级资源，`Mirror` 实例位于各自�
 
 ### 一些上游经验
 
-- mirrors.yandex.ru：不好用
+- `mirrors.yandex.ru`：不好用
     - 线路绕路欧洲，甚至比不上美国
-    - rsync 临时文件没有好好处理，经常出现 [sender] send_files failed to open "/releases/ppc/autobuilds/20260916T034558Z/.stage3-power9le-desktop-systemd-20260916T034558Z.tar.xz.BMMFnM" (in gentoo-distfiles): Permission denied (13) 等错误
+    - rsync 临时文件没有好好处理，经常出现 `[sender] send_files failed to open "/releases/ppc/autobuilds/20260916T034558Z/.stage3-power9le-desktop-systemd-20260916T034558Z.tar.xz.BMMFnM" (in gentoo-distfiles): Permission denied (13)` 等错误
 
 ### 镜像间的子集关系
 
@@ -773,12 +754,3 @@ publish:
 
 - 子集路径指向的子树必须真实位于父镜像的同步范围内。`debian-cd` 已与 `debian-cdimage/release` 合并，由父镜像统一同步和发布。
 - 语义与机制细节见 Falcon 仓库 README 的「别名与重定向」。
-
-## 使用
-
-推荐使用 DevContainer：
-
-- 镜像打包了常用工具
-- 持久化数据放在本仓库文件夹下
-    - Agent 配置目录已通过环境变量（如 `CODEX_HOME` 等）指定到本文件夹下。
-    - 推荐 Agent 通过 Shallow clone 方式拉取需要用到的仓库至 `./tmp/<repo_path>`，例如 `./tmp/github.com/ustclug/mirror-docker-unified`，然后本地读取。这比在线查询 GitHub 快，也避免了速率限制。搜索社区项目等应使用配置的 GitHub MCP。避免不带凭据直接访问 GitHub API。

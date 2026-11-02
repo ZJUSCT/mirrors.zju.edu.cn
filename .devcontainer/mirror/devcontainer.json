@@ -1,5 +1,5 @@
 {
-  "name": "mirrors.zju.edu.cn",
+  "name": "ZJU Mirror · 镜像源",
   "image": "registry.mirrors.zjusct.io/ghcr.io/zjusct/devcontainer:latest",
   "init": true,
   "shutdownAction": "none",
@@ -23,5 +23,6 @@
         "ms-kubernetes-tools.vscode-kubernetes-tools"
       ]
     }
-  }
+  },
+  "postCreateCommand": "sudo /opt/setup-mirror.sh"
 }
