@@ -395,9 +395,11 @@ argocd
     └── argo-cd-9.5.2.yaml
 ```
 
-- Kustomization 总是将 Helm Chart 缓存到 `charts/` 下。由上游维护的 Helm Chart 一般不纳入本 Git 仓库。
-- `helmCharts.repo` 应优先使用 OCI 地址，上游不提供 OCI 再考虑传统 HTTP Chart 仓库。OCI 可以按名称和版本直接拉取 Chart，避免下载整个仓库索引、拖慢 ArgoCD 生成 manifest。
-- `values/` 下的文件应当从 `charts/` 中具有完整默认值的 `values.yaml` 复制而来，然后根据实际情况修改。这是为了给 AI 提供更多的上下文信息，也方便对比默认值。这一点也约束接下来要介绍的「更新流程」。
+- Helm Chart 管理：
+    - Kustomize 总是将 Helm Chart 缓存到 `charts/` 下。由上游维护的 Helm Chart 一般不纳入本 Git 仓库。
+    - `helmCharts.repo` 应优先使用 OCI 地址，上游不提供 OCI 再考虑传统 HTTP Chart 仓库。OCI 可以按名称和版本直接拉取 Chart，避免下载整个仓库索引、拖慢 ArgoCD 生成 manifest。
+    - `values/` 下的文件应当从 `charts/` 中具有完整默认值的 `values.yaml` 复制而来，然后根据实际情况修改。这是为了给 AI 提供更多的上下文信息，也方便对比默认值。这一点也约束接下来要介绍的「更新流程」。
+- 配置文件管理：使用 Kustomize 的 `configMapGenerator` 和 `secretGenerator` 生成，一般应关闭生成器的哈希后缀，需要滚动更新的工作负载通过 Reloader 响应配置变化。
 
 应用的更新流程（一般由 AI 辅助）：
 
