@@ -40,7 +40,7 @@ spec:
       - ReadWriteOnce
       resources:
         requests:
-          storage: 50Ti
+          storage: 60Ti
       volumeMode: Filesystem
       volumeName: pvc-a2fd5764-fd7e-402a-93ed-8fefb70e5f0c
     syncStorageClassName: zfs-hdd-retain-immediate
