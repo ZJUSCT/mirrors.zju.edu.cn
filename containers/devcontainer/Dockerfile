@@ -26,6 +26,7 @@ apt-get install -y --no-install-recommends \
     git \
     fish \
     python3 \
+    python-is-python3 \
     build-essential \
     pkgconf \
     patch \
