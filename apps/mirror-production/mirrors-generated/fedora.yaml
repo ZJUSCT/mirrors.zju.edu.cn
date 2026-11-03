@@ -10,9 +10,9 @@ spec:
     description: Fedora Linux 发行版软件仓库
     upstream: rsync://dl.fedoraproject.org/fedora-enchilada/
   sync:
-    interval: 1h
-    retryInterval: 15m
-    timeout: 1h
+    interval: 10m
+    retryInterval: 10m
+    timeout: 12h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:

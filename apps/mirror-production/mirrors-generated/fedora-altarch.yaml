@@ -10,9 +10,9 @@ spec:
     description: Fedora Linux 次级架构软件仓库
     upstream: rsync://dl.fedoraproject.org/fedora-secondary/
   sync:
-    interval: 1h
-    retryInterval: 15m
-    timeout: 24h
+    interval: 10m
+    retryInterval: 10m
+    timeout: 12h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:

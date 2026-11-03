@@ -5,8 +5,8 @@ info:
   upstream: rsync://dl.fedoraproject.org/fedora-secondary/ # 逻辑内容模块；QFM 实际经同主机的 fedora-buffet 传输
 sync:
   type: qfm
-  interval: 1h
-  timeout: 24h
+  interval: 10m
+  timeout: 12h
   qfm:
     module: fedora-secondary
 storage:

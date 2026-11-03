@@ -1,0 +1,158 @@
+From dcdecd1d364b8b2ea6c0c5210c563350b54bff63 Mon Sep 17 00:00:00 2001
+From: Baolin Zhu <zhubaolin@zju.edu.com>
+Date: Tue, 3 Nov 2026 18:59:38 +0000
+Subject: [PATCH] Trust only completed syncs and fail closed on final rsync
+ errors
+
+A downloaded file list can reach the destination before its payload.
+Track the lists used by a complete run in a separate receipt, invalidate
+it before changing data, and commit it atomically only after transfer,
+deletion and directory timestamp restoration succeed.
+
+Recheck existing mirrors without a receipt so interrupted transfers
+recover without forcing every normal run to scan the tree. Keep the
+synchronization lock on a stable inode and abort on incomplete lists or
+finalization errors.
+---
+ quick-fedora-mirror | 63 +++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 55 insertions(+), 8 deletions(-)
+
+diff --git a/quick-fedora-mirror b/quick-fedora-mirror
+index 7249312..264af09 100755
+--- a/quick-fedora-mirror
++++ b/quick-fedora-mirror
+@@ -111,6 +111,39 @@ save_state () {
+     fi
+ }
+ 
++# A downloaded file list is not proof that its payload was synchronized.
++# Keep a receipt of the lists used by the last complete run, outside DESTD's
++# mirrored modules. Invalidate it before any changes; SIGKILL needs no trap.
++load_sync_receipt () {
++    typeset -g -A successful_checksums current_checksums
++    local module checksum
++    if [[ -r $TIMEFILE.checksums ]]; then
++        while IFS=$'\t' read -r module checksum; do
++            successful_checksums[$module]=$checksum
++        done < $TIMEFILE.checksums
++    fi
++    if (( ${#successful_checksums} == 0 )); then
++        # Also repair installations whose old file lists already got ahead of
++        # their data. Recheck old, same-size files as well as missing paths.
++        LASTTIME=0
++    fi
++    if [[ -z $rsyncdryrun ]]; then
++        rm -f $TIMEFILE.checksums || finish 1
++    fi
++}
++
++save_sync_receipt () {
++    # Dry runs and transfer-only runs must not authorize the fast path.
++    [[ -n $skiptimestamp ]] && return 0
++    local module
++    {
++        for module in $MODULES; do
++            printf '%s\t%s\n' "$module" "$current_checksums[$module]" || return 1
++        done
++    } > $TIMEFILE.checksums.tmp || return 1
++    mv -f $TIMEFILE.checksums.tmp $TIMEFILE.checksums
++}
++
+ append_state () {
+     # Think about how to save extra state in the timestamp file or some
+     # associated file.  Should we even do this?
+@@ -1395,9 +1428,14 @@ process_module () {
+     local cntmissingfiles cntmissingdirs cntsizechanged cntupdatetimestamps cntchecksumfailed
+     local extra
+ 
++    # A newly configured module has no trusted completion time either.
++    local LASTTIME=$LASTTIME
++    [[ -z $successful_checksums[$module] ]] && LASTTIME=0
++    current_checksums[$module]=$(sha1sum $fl | cut -d' ' -f1)
+     if [[ -z $alwayscheck && \
+-            -n $checksums[$module] && \
+-            $(sha1sum $fl | cut -d' ' -f1) == $checksums[$module] ]]; then
++            -n $successful_checksums[$module] && \
++            $checksums[$module] == $successful_checksums[$module] && \
++            $current_checksums[$module] == $successful_checksums[$module] ]]; then
+         logit N No change in file list for $module
+         db2 No change in file list checksum.  Skipping $module.
+         continue
+@@ -1411,10 +1449,10 @@ process_module () {
+     # Make sure the list is complete.
+     tail -2 $fl | grep -q '^\[End\]$'
+     if (( ? != 0 )); then
+-        logit e "Invalid file list; skipping $module"
++        logit E "Invalid file list; aborting $module"
+         (>&2 echo "No end marker.  Corrupted file list?"
+-        echo Skipping $module.)
+-        return
++        echo Aborting $module.)
++        finish 1
+     fi
+ 
+     process_remote_file_list $fl $module $moduledir
+@@ -1554,7 +1592,8 @@ touch $tempd/started-run
+ cd $tempd
+ 
+ # At this point we can acquire the lock
+-lock $TIMEFILE
++# Keep the lock on a stable inode while save_state replaces TIMEFILE.
++lock $TIMEFILE.lock
+ if (( ? != 0 )); then
+     db4 Could not acquire lock.
+     logit k lock contention
+@@ -1606,6 +1645,7 @@ fi
+ (( VERBOSE >= 8 )) && set -x
+ 
+ fetch_file_lists
++load_sync_receipt
+ 
+ logit p Processing start
+ changed_modules=()
+@@ -1616,6 +1656,7 @@ done
+ if [[ ! -e master-transferlist ]]; then
+     logit n No changes to synchronize
+     db2 No changed files.
++    save_sync_receipt || finish 1
+     finish 0
+ fi
+ 
+@@ -1693,7 +1734,7 @@ if [[ -s master-deletedirs ]]; then
+             if [[ -d "$DESTD/$nuke" ]]; then
+                 logit D Deleting directory $nuke
+                 db4 Removing $nuke
+-                rm -rf "$DESTD/$nuke"
++                rm -rf "$DESTD/$nuke" || finish 1
+                 deletedsomething=1
+             fi
+         done
+@@ -1717,7 +1758,8 @@ if [[ -s master-deletefiles ]]; then
+         # xopts=()
+         # (( VERBOSE >= 4 )) && xopts=(-t)
+         tr '\n' '\0' < master-deletefiles \
+-            | (pushd $DESTD; xargs $xopts -0 rm -f ; popd)
++            | (cd $DESTD && xargs $xopts -0 rm -f)
++        (( ? == 0 )) || finish 1
+         # for nuke in $(cat master-deletefiles); do
+         #     logit D Deleting file $nuke
+         #     rm -f "$DESTD/$nuke"
+@@ -1736,10 +1778,15 @@ if [[ ( -n $KEEPDIRTIMES || -n $updatealldirtimes ) && -s master-updatetimestamp
+     fi
+     logit d "Updating timestamps on $(wc -l < master-updatetimestamps) dirs"
+     do_rsync $REMOTE/$MASTERMODULE/ $DESTD master-updatetimestamps extra
++    if (( ? != 0 )); then
++        logit E "Directory timestamp synchronization failed; aborting run."
++        finish 1
++    fi
+ fi
+ 
+ # We've completed a run, so save the timestamp
+ save_state
++save_sync_receipt || finish 1
+ 
+ # Mirrormanager Checkin and Callout
+ # =================================
+-- 
+2.56.0
+

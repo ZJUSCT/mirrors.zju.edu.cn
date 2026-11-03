@@ -13,7 +13,7 @@ spec:
     upstream: {{ m.info.upstream }}
   sync:
     interval: {{ m.sync.interval }}
-    retryInterval: 15m
+    retryInterval: {{ '10m' if m.sync.type == 'qfm' else '15m' }}
     timeout: {{ m.sync.timeout }}
     failureRetryLimit: 3
     keepJobs: 1

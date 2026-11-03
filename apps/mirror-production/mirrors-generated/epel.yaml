@@ -10,9 +10,9 @@ spec:
     description: EPEL 企业级 Linux 附加软件包仓库
     upstream: rsync://dl.fedoraproject.org/fedora-epel/
   sync:
-    interval: 1h
-    retryInterval: 15m
-    timeout: 6h
+    interval: 10m
+    retryInterval: 10m
+    timeout: 12h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:
