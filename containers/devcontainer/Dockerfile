@@ -41,7 +41,10 @@ apt-get install -y --no-install-recommends \
     shellcheck \
     shfmt \
     ripgrep \
-    nodejs
+    nodejs \
+    npm \
+    chromium \
+    chromium-sandbox
 
 apt-get distclean -y
 EOF
