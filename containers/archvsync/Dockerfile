@@ -1,6 +1,11 @@
-FROM alpine AS source
+FROM debian:stable-slim AS source
 
-RUN apk add --no-cache git
+RUN <<'EOF'
+set -xe
+apt-get update
+apt-get install -y --no-install-recommends ca-certificates git
+rm -rf /var/lib/apt/lists/*
+EOF
 
 ADD --keep-git-dir=true https://ftp-master.debian.org/git/archvsync.git /ftpsync
 
@@ -16,9 +21,14 @@ git -C /ftpsync apply /tmp/archvsync-upstream-uip-recheck.patch
 rm -rf /ftpsync/.git /tmp/archvsync-container-logging.patch /tmp/archvsync-upstream-uip-recheck.patch
 EOF
 
-FROM alpine
+FROM debian:stable-slim
 
-RUN apk add --no-cache bash rsync
+RUN <<'EOF'
+set -xe
+apt-get update
+apt-get install -y --no-install-recommends bash rsync gawk hostname
+rm -rf /var/lib/apt/lists/*
+EOF
 
 COPY --from=source /ftpsync /ftpsync
 
