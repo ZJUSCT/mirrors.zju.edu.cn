@@ -1,12 +1,15 @@
-FROM rust:1-alpine AS builder
-
-RUN apk add --no-cache build-base
+FROM rust:1-trixie AS builder
 
 RUN cargo install tsumugu --locked --root /out
 
-FROM alpine
+FROM debian:stable-slim
 
-RUN apk add --no-cache ca-certificates
+RUN <<'EOF'
+set -xe
+apt-get update
+apt-get install -y --no-install-recommends ca-certificates libgcc-s1
+rm -rf /var/lib/apt/lists/*
+EOF
 
 COPY --from=builder /out/bin/tsumugu /usr/local/bin/tsumugu
 

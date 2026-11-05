@@ -151,7 +151,7 @@ spec:
               args:
                 - |
                   sed 's/worker_processes  auto;/worker_processes  2;/' /etc/nginx/nginx.conf > /tmp/nginx.conf
-                  spawn-fcgi -s /tmp/fcgiwrap.socket -M 0660 -- /usr/bin/fcgiwrap
+                  spawn-fcgi -s /tmp/fcgiwrap.socket -M 0660 -- /usr/sbin/fcgiwrap
                   exec nginx -c /tmp/nginx.conf -g 'daemon off;'
               securityContext:
                 allowPrivilegeEscalation: false
@@ -218,7 +218,7 @@ data:
     location ^~ /crates.io-index.git/ {
         fastcgi_pass unix:/tmp/fcgiwrap.socket;
         include /etc/nginx/fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME /usr/libexec/git-core/git-http-backend;
+        fastcgi_param SCRIPT_FILENAME /usr/lib/git-core/git-http-backend;
         fastcgi_param GIT_HTTP_EXPORT_ALL "";
         fastcgi_param GIT_PROJECT_ROOT /srv/git;
         fastcgi_param PATH_INFO $uri;

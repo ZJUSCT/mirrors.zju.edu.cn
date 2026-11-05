@@ -299,7 +299,7 @@ data:
         fastcgi_send_timeout 600s;
 
         include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME /usr/libexec/git-core/git-http-backend;
+        fastcgi_param SCRIPT_FILENAME /usr/lib/git-core/git-http-backend;
         fastcgi_param GIT_HTTP_EXPORT_ALL "";
         fastcgi_param GIT_PROJECT_ROOT /srv/git;
         fastcgi_param PATH_INFO $1;
@@ -320,5 +320,5 @@ data:
     set -eu
     # fcgiwrap 以 4 进程承接并发 smart-http 请求；
     # socket 与 nginx 同 uid（65532，与 sync 一致），无需求助宽权限
-    spawn-fcgi -s /tmp/fcgiwrap.sock -F 4 -- /usr/bin/fcgiwrap
+    spawn-fcgi -s /tmp/fcgiwrap.sock -F 4 -- /usr/sbin/fcgiwrap
     exec nginx -g 'daemon off;'
