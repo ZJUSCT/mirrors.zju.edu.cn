@@ -92,10 +92,16 @@ spec:
             env:
               - name: TO
                 value: /data
-              # GHCR 上的部分 bottle（例如 joern）超过 1.6 GiB；并发下载会
-              # 让单个请求超过同步器 10 分钟的请求超时。
+              # 通过 sing-box 以 4 并发同步；部分 bottle（例如 joern）超过
+              # 1.6 GiB，调高并发需留意同步器 10 分钟的单请求超时。
               - name: HOMEBREW_BOTTLES_JOBS
-                value: "1"
+                value: "4"
+              - name: HTTP_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: HTTPS_PROXY
+                value: http://sing-box.sing-box.svc.cluster.local:7890
+              - name: NO_PROXY
+                value: localhost,127.0.0.1,::1,10.0.0.0/8,172.26.0.0/16,172.27.0.0/16,fda8:d4b1:99d0:100::/56,fda8:d4b1:99d0:200::/112,.svc,.cluster.local
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
