@@ -71,7 +71,6 @@ resources:
   - gmtdata.yaml
   - gnu.yaml
   - gnu-alpha.yaml
-  - grid.yaml
   - hackage.yaml
   - immortalwrt.yaml
   - incus.yaml
