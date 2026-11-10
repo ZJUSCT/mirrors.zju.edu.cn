@@ -24,7 +24,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 
 HERE = Path(__file__).resolve().parent
-KNOWN_TYPES = {"rsync", "ftpsync", "qfm", "tsumugu"}
+KNOWN_TYPES = {"rsync", "ftpsync", "qfm", "tsumugu", "ostree"}
 TIERS = {"small", "standard", "hot"}
 QFM_MODULES = {
     "fedora-alt",
@@ -68,10 +68,11 @@ def validate(entry):
     uid = sync.get("uid", 65432 if sync_type == "qfm" else 65532)
     if type(uid) is not int or not 0 < uid < 4294967295:
         problems.append("sync.uid must be a non-zero numeric UID")
-    if sync_type == "tsumugu":
+    if sync_type == "tsumugu" or sync_type == "ostree":
         upstream = entry.get("info", {}).get("upstream", "")
         if not upstream.startswith(("http://", "https://")):
-            problems.append("tsumugu upstream must be an HTTP(S) URL")
+            problems.append(f"{sync_type} upstream must be an HTTP(S) URL")
+    if sync_type == "tsumugu":
         options = sync.get("tsumugu", {})
         for field, default, minimum in [("threads", 4, 1), ("max_delete", 100, 0)]:
             value = options.get(field, default)
@@ -154,7 +155,7 @@ def render(entry):
     sync = entry["sync"]
     upstream = entry["info"]["upstream"]
     host = path = ""
-    if sync["type"] != "tsumugu":
+    if sync["type"] not in ("tsumugu", "ostree"):
         if not upstream.startswith("rsync://"):
             raise SystemExit(f"[{entry['metadata']['name']}] upstream 必须是 rsync:// URL: {upstream}")
         stripped = upstream[len("rsync://"):].rstrip("/")
