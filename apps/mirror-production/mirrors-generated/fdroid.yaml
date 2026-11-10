@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: F-Droid 自由 Android 应用仓库
-    upstream: rsync://mirrors.tuna.tsinghua.edu.cn/fdroid/
+    upstream: rsync://mirror.freedif.org/fdroid/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://mirrors.tuna.tsinghua.edu.cn/fdroid/
+              - rsync://mirror.freedif.org/fdroid/
               - /data/
             volumeMounts:
               - name: tmp

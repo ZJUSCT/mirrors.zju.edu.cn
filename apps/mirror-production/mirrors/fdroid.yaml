@@ -2,7 +2,7 @@ metadata:
   name: fdroid
 info:
   description: F-Droid 自由 Android 应用仓库
-  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/fdroid/
+  upstream: rsync://mirror.freedif.org/fdroid/
 sync:
   type: rsync
   interval: 24h
@@ -17,32 +17,42 @@ publish:
     replicas: 1
 comment:
   official:
-    surveyed_at: '2026-10-07'
+    surveyed_at: '2026-11-10'
     docs:
-    - https://f-droid.org/docs/Building_the_Server/
-    - https://f-droid.org/docs/Included_Build_Metadata/
-    - https://f-droid.org/repo/
-    - https://f-droid.org/archive/
+    - https://f-droid.org/en/docs/Running_a_Mirror/
+    - https://gitlab.com/fdroid/web-services/-/blob/master/origin-04-mirror-push.yml
+    - https://fdroid.gitlab.io/mirror-monitor/
     policy:
-    - F-Droid 官方服务器文档描述由 fdroidserver 根据 build metadata 构建仓库，发布 index-v1.jar/index.xml、APK、签名和图标等派生文件；官方网页仓库是
-      HTTPS 发布树，没有公开 rsync 模块或稳定的镜像拉取协议。
-    - 仓库索引是签名元数据，客户端必须验证 repo key、索引版本和 APK 签名；仅递归同步文件不能替代 fdroidserver 的索引一致性和签名校验。
-    - repo 与 archive 是不同范围，archive 保存已归档版本；同步范围、删除策略和索引生成必须由专用 fdroidserver 流程明确，通用 rsync 模板无法安全表达。
+    - 官方支持使用 rsync 复制已发布的仓库；下游镜像保留上游索引、APK、签名和目录结构，无需自行构建 APK 或重新生成索引。
+    - 官方直接向 ftp.agdsn.de、ftp.lysator.liu.se 和 plug-mirror.rcac.purdue.edu 三个主镜像推送，二级镜像定期从主镜像拉取。
+    - origin 的 cron 每 10 分钟触发一次向主镜像推送 repo，每天触发一次 archive 推送；触发不代表传输完成，Freedif 等下游镜像的更新还取决于其拉取调度。
+    - repo 保存当前应用，archive 保存已归档版本；从 fdroid 模块根目录同步两者，不能用仅提供 repo 的镜像直接替换整库上游。
+    - 客户端仍须验证仓库签名和 APK 签名；rsync 传输及文件 SHA-256 校验不替代签名验证。
   upstreams:
+  - url: rsync://mirror.freedif.org/fdroid/
+    stack: ipv6
+    status: selected
+    surveyed_at: '2026-11-10'
+    metrics: IPv6 单连接完整索引下载，repo 两次为 10.59–17.93MiB/s，archive 为 13.56MiB/s；文件 SHA-256 校验通过。
+    validated_at: '2026-11-10'
+    validation: rsync 根目录含 repo 与 archive；两部分索引版本与主镜像一致，完整下载的索引 SHA-256 与 entry.json 一致。
+    note: 新加坡镜像，提供完整 fdroid 模块；本次 IPv6 测速快于 Purdue，选为上游，继续每天同步一次。
+  - url: rsync://plug-mirror.rcac.purdue.edu/fdroid/
+    stack: ipv6
+    status: candidate
+    surveyed_at: '2026-11-10'
+    metrics: IPv6 单连接完整下载 72,509,659 字节的 repo/index-v2.json，两次分别耗时 16.99 秒、11.89 秒，平均 4.07–5.81MiB/s，含连接开销。
+    validated_at: '2026-11-10'
+    validation: rsync 根目录含 repo 与 archive；下载的 repo 索引 SHA-256 与 entry.json 一致，两部分 entry.json 的版本与 Lysator、AGDSN 主镜像一致。
+    note: F-Droid 官方直接推送的主镜像，提供完整 fdroid 模块；本次 IPv6 测速慢于 Freedif，保留为候选。
   - url: rsync://mirrors.tuna.tsinghua.edu.cn/fdroid/
     stack: dual
-    status: selected
-    surveyed_at: '2026-10-07'
-    note: TUNA 初始化及一次授权重试均因远端连接重置失败（rsync code 10）；不再重复重试。
-  - url: https://f-droid.org/repo/
-    stack: unknown
+    status: previous
+    surveyed_at: '2026-11-10'
+    note: 同步及 IPv6 只读探测均报 didn't get server startup line（rsync code 5）；其他模块仍可访问，不能据此认定整站封禁，改用 Freedif。
+  - url: rsync://ftp.lysator.liu.se/pub/fdroid/
+    stack: ipv6
     status: candidate
-    surveyed_at: '2026-10-07'
-    note: 官方 HTTPS 发布入口；尚未进行生产同步，需专用索引/签名验收。
-  - url: https://f-droid.org/archive/
-    stack: unknown
-    status: candidate
-    surveyed_at: '2026-10-07'
-    note: 官方归档入口，范围独立于 repo。
-  bootstrap:
-    note: TUNA 初始化失败且重试后仍为远端连接重置；快照保持暂停，未改变集群配置。
+    surveyed_at: '2026-11-10'
+    metrics: IPv6 单连接完整下载 repo/index-v2.json，平均 3.34MiB/s；文件 SHA-256 校验通过。
+    note: F-Droid 官方直接推送的主镜像，提供 repo 与 archive；本次测速慢于 Purdue，保留为候选。
