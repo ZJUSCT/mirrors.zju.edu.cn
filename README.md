@@ -563,6 +563,23 @@ tsumugu 由 USTC 镜像站成员开发，用于同步 HTTP(S) 类型的上游目
 - PostgreSQL 镜像完整 `/pub/` 树；SRPM 子树需要 `s3-indexbuilder` parser override，三个已失效的历史 SRPM 目录明确 exclude。不要以全局忽略 HTTP 错误替代这些规则；只有完整同步成功，Falcon 才会发布新快照；
 - 实测：PostgreSQL 官方树（64 万文件 / 12,940 目录 / 800 GB）一轮全量 listing 扫描 4 分 53 秒（threads 6）。
 
+### 同步工具：[ostree](https://ostreedev.org/ostree/)
+
+OSTree 仓库使用 `ostree pull --mirror` 同步，适用于 Fedora Atomic Desktop 基础层（`ostree.fedoraproject.org`）、Fedora IoT（同主机 `/iot` 子仓库）与 Flathub（`dl.flathub.org/repo`）等上游。此类上游由 S3/CDN 分发，不提供 rsync 服务，也没有可遍历的目录列表，ostree mirror 协议是唯一的同步通道。
+
+工作原理：
+
+- 同步容器在 `/data` 上维护 archive 仓库：首帧 `ostree init --mode=archive`，此后每轮执行 `ostree pull --mirror`，按 summary 增量拉取 refs、objects 与 static deltas；
+- pull 为单事务模型：refs 在事务末原子更新，返回 0 即完整落盘；中断后下一轮对 summary 全量差量重算，无需断点状态文件。任一环节失败以非零码退出；
+- GPG 校验由最终客户端负责（commit 签名），镜像层以 `--no-gpg-verify` 拉取，产物为可直接静态发布的文件树。
+
+使用要点：
+
+- 生成器使用 `sync.type: ostree`，参数置于 `sync.ostree`（`remote_name`，repo config 内的 remote 命名，仅影响本地标识，客户端不感知）；上游地址记录在 `info.upstream`，须为 HTTP(S) URL；
+- `containers/ostree` 构建时安装发行版 ostree 包；同步 Pod 使用 `ghcr.io/zjusct/ostree:latest` 和 `imagePullPolicy: Always`；
+- remote 配置随卷持久化，上游地址不一致时先删后建；ostree 无 IPv6 显式选项，地址族取决于上游 DNS 解析；
+- 实测：`ostree.fedoraproject.org` 主仓库 267 refs（五个 Atomic Desktop 变体 × base/updates/testing 通道，另含 coreos 历史分支）；Flathub summary 12.8 MB、19,350 refs。
+
 ### 同步工具：[git](https://github.com/git/git)
 
 TODO
