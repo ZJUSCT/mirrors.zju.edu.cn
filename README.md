@@ -572,13 +572,7 @@ OSTree 仓库使用 `ostree pull --mirror` 同步，适用于 Fedora Atomic Desk
 - 同步容器在 `/data` 上维护 archive 仓库：首帧 `ostree init --mode=archive`，此后每轮执行 `ostree pull --mirror`，按 summary 增量拉取 refs、objects 与 static deltas；
 - pull 为单事务模型：refs 在事务末原子更新，返回 0 即完整落盘；中断后下一轮对 summary 全量差量重算，无需断点状态文件。任一环节失败以非零码退出；
 - GPG 校验由最终客户端负责（commit 签名），镜像层以 `--no-gpg-verify` 拉取，产物为可直接静态发布的文件树。
-
-使用要点：
-
-- 生成器使用 `sync.type: ostree`，参数置于 `sync.ostree`（`remote_name`，repo config 内的 remote 命名，仅影响本地标识，客户端不感知）；上游地址记录在 `info.upstream`，须为 HTTP(S) URL；
-- `containers/ostree` 构建时安装发行版 ostree 包；同步 Pod 使用 `ghcr.io/zjusct/ostree:latest` 和 `imagePullPolicy: Always`；
 - remote 配置随卷持久化，上游地址不一致时先删后建；ostree 无 IPv6 显式选项，地址族取决于上游 DNS 解析；
-- 实测：`ostree.fedoraproject.org` 主仓库 267 refs（五个 Atomic Desktop 变体 × base/updates/testing 通道，另含 coreos 历史分支）；Flathub summary 12.8 MB、19,350 refs。
 
 ### 同步工具：[git](https://github.com/git/git)
 
