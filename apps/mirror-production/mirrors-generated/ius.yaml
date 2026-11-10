@@ -7,8 +7,8 @@ metadata:
     app.kubernetes.io/name: falcon
 spec:
   info:
-    description: IUS 企业 Linux 补充软件仓库
-    upstream: rsync://mirrors.tuna.tsinghua.edu.cn/ius/
+    description: IUS 企业 Linux 软件仓库退役说明
+    upstream: rsync://origin.repo.ius.io/ius/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://mirrors.tuna.tsinghua.edu.cn/ius/
+              - rsync://origin.repo.ius.io/ius/
               - /data/
             volumeMounts:
               - name: tmp
