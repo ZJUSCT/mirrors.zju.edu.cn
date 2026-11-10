@@ -1,0 +1,48 @@
+{# spec.sync 的 ostree 形态(基缩进 4 空格)：同步容器在 /data 上
+   维护 archive 仓库并执行 ostree pull --mirror；remote_name 为
+   repo config 内的 remote 命名，仅影响本地标识，客户端不感知。 #}
+    podTemplate:
+      spec:
+{% if m.sync.nodeSelector %}
+        # 仅用于首次落盘；绑定后由 PVC 的 nodeAffinity 保持位置
+        nodeSelector:
+{% for key, value in m.sync.nodeSelector.items() %}
+          {{ key | ys }}: {{ value | ys }}
+{% endfor %}
+{% endif %}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: {{ sync_uid }}
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+{% include 'init-sync-volume.yaml.j2' %}
+        containers:
+          - name: ostree
+            image: ghcr.io/zjusct/ostree:latest
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+            command: [sync-ostree]
+            args:
+              - {{ m.info.upstream | ys }}
+            env:
+              - name: REMOTE_NAME
+                value: {{ m.sync.ostree.remote_name | ys }}
+            volumeMounts:
+              - name: sync-data
+                mountPath: /data
+              - name: tmp
+                mountPath: /tmp
+            resources:
+              requests: {cpu: 500m, memory: 512Mi}
+              limits: {cpu: "4", memory: 4Gi}
+        volumes:
+          - name: sync-volume-init
+            configMap:
+              name: sync-volume-init
+          - name: tmp
+            emptyDir: {}
