@@ -33,6 +33,15 @@
          if re.fullmatch(r'(nixos|nixpkgs)-.+[^/]', x.object_name)
      ]
  
+@@ -315,7 +315,7 @@
+                 [
+                     'nix', 'path-info',
+                     '--store', upstream_binary_cache,
+-                    '--recursive', '--json'
++                    '--recursive', '--json', '--json-format', '1'
+                 ] + batch,
+                 stdout=subprocess.PIPE
+             )
 @@ -325,6 +325,8 @@
                  break
              else:
