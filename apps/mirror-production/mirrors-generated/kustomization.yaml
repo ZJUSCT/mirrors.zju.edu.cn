@@ -55,6 +55,7 @@ resources:
   - fdroid.yaml
   - fedora.yaml
   - fedora-altarch.yaml
+  - fedora-ostree.yaml
   - flightgear.yaml
   - freebsd.yaml
   - freebsd-ports.yaml
