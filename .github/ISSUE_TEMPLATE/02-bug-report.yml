@@ -1,0 +1,86 @@
+name: 故障报告 / Bug report
+description: 报告镜像访问、同步、文件完整性或网站功能方面的问题。
+title: "[故障报告] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你帮助改进 ZJU Mirror。请提供具体地址和复现过程，方便维护者定位故障。
+        请优先粘贴报错文本；截图可以作为补充。提交前请隐去日志和配置中的密码、令牌、Cookie 等敏感信息。
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已搜索[已有 issues（含已关闭）](https://github.com/ZJUSCT/mirrors.zju.edu.cn/issues?q=is%3Aissue)；如有正在跟踪的相同故障，会优先在原 issue 中补充。
+          required: true
+
+  - type: input
+    id: affected-url
+    attributes:
+      label: 发生故障的地址
+      description: 请填写实际失败的完整 URL，尽量具体到文件或目录；多个地址可在下方补充。
+      placeholder: https://mirrors.zju.edu.cn/...
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 故障现象与预期行为
+      description: 实际发生了什么，你期望的结果是什么？如涉及同步延迟或校验失败，请注明版本、文件名或校验值。
+    validations:
+      required: true
+
+  - type: input
+    id: occurrence-time
+    attributes:
+      label: 发生时间
+      description: 请注明首次发现或最近一次复现的时间及其时区；不确定时可以填写大致时间或时间范围。
+      placeholder: YYYY-MM-DD HH:MM（UTC+8），至今仍可复现
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤或命令
+      description: 请说明使用的工具、相关源配置及操作步骤。网页问题可直接描述访问过程；偶发问题请说明复现条件。
+      placeholder: |
+        1. 使用的镜像源配置：
+        2. 执行的命令或访问步骤：
+        3. 出现的结果：
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 报错与日志（选填）
+      description: 请粘贴相关报错原文；如已获取，也可提供 HTTP 状态码、响应头或请求 ID。此处会自动使用代码块排版。
+      render: text
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 使用环境（选填）
+      description: 只需填写已知且相关的信息，不清楚的项目可略过；无需公开个人 IP 地址。
+      placeholder: |
+        操作系统及版本：
+        客户端及版本（浏览器、包管理器等）：
+        网络位置（校内/校外、所在地区与运营商）：
+        IPv4 / IPv6（如已知）：
+        是否使用代理或 VPN：
+
+  - type: textarea
+    id: comparison
+    attributes:
+      label: 对比结果（选填）
+      description: 如已测试，请提供同一内容在官方上游、其他镜像站，或不同网络、IPv4 / IPv6 下的访问结果及对应地址；未测试可留空。
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: 补充信息与截图（选填）
+      description: 可补充截图、其他受影响的地址、相关 issue，或已尝试的排查方法。

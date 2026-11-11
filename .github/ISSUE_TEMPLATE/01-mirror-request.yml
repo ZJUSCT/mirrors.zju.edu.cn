@@ -1,0 +1,80 @@
+name: 镜像请求 / Mirror request
+description: 请求新增镜像，或扩充已有镜像的同步范围。
+title: "[镜像请求] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        欢迎向 ZJU Mirror 提交镜像请求。请说明需要镜像的内容和用途，帮助维护者评估需求与同步可行性。
+        容量、同步方法等信息不了解时可以留空；已知的信息请尽量附上来源。
+        如果已有相同请求，请优先在原 issue 中补充；需要重新讨论时，请引用原 issue 并说明新情况。
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已查看 [ZJU Mirror 镜像列表](https://mirrors.zju.edu.cn/)，并搜索[已有 issues（含已关闭）](https://github.com/ZJUSCT/mirrors.zju.edu.cn/issues?q=is%3Aissue)。
+          required: true
+
+  - type: textarea
+    id: project
+    attributes:
+      label: 项目名称与简介
+      description: 请提供项目名称、简短介绍，以及官网或代码仓库链接。
+      placeholder: |
+        项目名称：
+        项目简介：
+        官方链接：
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 使用需求
+      description: 请说明用途和受益用户；如已有其他可用镜像，也请说明希望本站提供镜像的原因。
+    validations:
+      required: true
+
+  - type: textarea
+    id: upstream
+    attributes:
+      label: 上游地址与同步范围
+      description: 请提供官方上游或下载地址，并说明需要的内容、版本和架构。不清楚同步端点时，可以先提供官方下载页。
+      placeholder: |
+        上游地址：
+        希望镜像的内容与范围：
+    validations:
+      required: true
+
+  - type: textarea
+    id: sync-method
+    attributes:
+      label: 同步方法（选填）
+      description: 如已了解，请提供上游推荐的同步工具、文档或命令，以及建议的同步频率。不了解可留空。
+
+  - type: input
+    id: size
+    attributes:
+      label: 镜像大小（选填）
+      description: 如已了解，请注明全量容量及信息来源；文件数量、增长情况也可补充。不清楚可留空。
+      placeholder: 例如：约 50 GiB（附统计来源或测量方法）
+
+  - type: textarea
+    id: mirroring-policy
+    attributes:
+      label: 再分发许可与镜像政策（选填）
+      description: 如已找到，请附上许可证、官方镜像政策或授权说明的链接，并说明是否需要申请或注册。不了解可留空，由维护者进一步核实。
+
+  - type: textarea
+    id: other-mirrors
+    attributes:
+      label: 其他镜像站的收录情况（选填）
+      description: 请列出已收录该项目的镜像地址，或相关镜像请求的链接；查询后未找到也可以说明。
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: 补充信息（选填）
+      description: 可补充相关讨论、使用文档，或上线后验证镜像可用性的方法。请勿填写访问凭据等敏感信息。
