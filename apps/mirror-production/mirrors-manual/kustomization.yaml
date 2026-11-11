@@ -8,6 +8,7 @@ resources:
   - homebrew.yaml
   - homebrew-bottles.yaml
   - libnvidia-container.yaml
+  - nix-channels.yaml
   - pypi.yaml
   - rosdistro.yaml
   - winget-source.yaml

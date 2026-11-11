@@ -1,0 +1,230 @@
+# TUNA channel/closure synchronization, adapted for Falcon's snapshot publication.
+# Runtime: debian:stable-slim; script: tuna/tunasync-scripts master.
+# Discover all nixos/nixpkgs channels updated within 360 days, as upstream does.
+# RETAIN_DAYS retains binary closures, not historical release metadata directories.
+# First sync can take days; 168h is the bootstrap deadline, 6h is local polling policy.
+# Sync and publish share one snapshot so channel metadata and NARs advance together.
+# 10Ti is the dataset refquota; pool space for snapshots must be budgeted separately.
+apiVersion: mirrors.zjusct.io/v1alpha1
+kind: Mirror
+metadata:
+  name: nix-channels
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+spec:
+  info:
+    description: Nix channels 与软件包二进制缓存
+    upstream: https://channels.nixos.org/
+  sync:
+    interval: 6h
+    retryInterval: 15m
+    timeout: 168h
+    failureRetryLimit: 3
+    keepJobs: 3
+    podTemplate:
+      spec:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          seccompProfile:
+            type: RuntimeDefault
+        initContainers:
+        - name: init-sync-volume
+          image: busybox:1.37
+          imagePullPolicy: Always
+          command:
+          - sh
+          - /init/init-sync-volume.sh
+          env:
+          - name: SYNC_UID
+            value: '65532'
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+              - ALL
+              add:
+              - CHOWN
+          volumeMounts:
+          - name: sync-data
+            mountPath: /data
+          - name: sync-volume-init
+            mountPath: /init
+            readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+        containers:
+        - name: nix-channels
+          image: ghcr.io/zjusct/nix-channels:latest
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          command: [sh, -ec]
+          args:
+          - |
+            mkdir -p "$TUNASYNC_WORKING_DIR/releases" "$TUNASYNC_WORKING_DIR/store/nar"
+            exec python3 /usr/local/lib/nix-channels.py
+          env:
+          - name: TUNASYNC_WORKING_DIR
+            value: /data
+          - name: MIRROR_BASE_URL
+            value: https://mirrors.zju.edu.cn/nix-channels
+          - name: NIX_MIRROR_RETAIN_DAYS
+            value: '30'
+          - name: NIX_MIRROR_CLONE_SINCE_DAYS
+            value: '360'
+          - name: NIX_MIRROR_THREADS
+            value: '8'
+          - name: NIX_MIRROR_PATH_BATCH
+            value: '512'
+          - name: NIX_MIRROR_DELETE_OLD
+            value: '1'
+          - name: HTTP_PROXY
+            value: http://sing-box.sing-box.svc.cluster.local:7890
+          - name: HTTPS_PROXY
+            value: http://sing-box.sing-box.svc.cluster.local:7890
+          - name: NO_PROXY
+            value: localhost,127.0.0.1,::1,10.0.0.0/8,172.26.0.0/16,172.27.0.0/16,fda8:d4b1:99d0:100::/56,fda8:d4b1:99d0:200::/112,.svc,.cluster.local
+          volumeMounts:
+          - name: tmp
+            mountPath: /tmp
+          - name: sync-data
+            mountPath: /data
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              cpu: '4'
+              memory: 16Gi
+        volumes:
+        - name: sync-volume-init
+          configMap:
+            name: sync-volume-init
+        - name: tmp
+          emptyDir: {}
+        nodeSelector:
+          kubernetes.io/hostname: s1.mirrors.zjusct.io
+  storage:
+    syncStorageClassName: zfs-hdd-retain-wffc
+    publishStorageClassName: zfs-hdd-delete-immediate
+    pvcTemplate:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Ti
+      volumeMode: Filesystem
+    volumeSnapshotClassName: openebs-zfs-snapshot
+    retention: 1
+  publish:
+    http:
+      replicas: 1
+      podTemplate:
+        metadata:
+          annotations:
+            reloader.stakater.com/auto: 'true'
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: nginx
+            image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+              readOnlyRootFilesystem: true
+            ports:
+            - containerPort: 8080
+              name: http
+            startupProbe:
+              httpGet:
+                path: /healthz
+                port: http
+              periodSeconds: 2
+              timeoutSeconds: 2
+              failureThreshold: 30
+            readinessProbe:
+              httpGet:
+                path: /healthz
+                port: http
+              periodSeconds: 5
+              timeoutSeconds: 2
+              failureThreshold: 3
+            livenessProbe:
+              httpGet:
+                path: /healthz
+                port: http
+              periodSeconds: 10
+              timeoutSeconds: 2
+              failureThreshold: 6
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: '4'
+                memory: 1Gi
+            volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: mirror-data
+              mountPath: /usr/share/nginx/html/nix-channels
+              readOnly: true
+            - name: nginx-locations
+              mountPath: /etc/nginx/locations
+              readOnly: true
+          volumes:
+          - name: nginx-conf
+            configMap:
+              name: nginx-conf
+          - name: tmp
+            emptyDir:
+              sizeLimit: 1Gi
+          - name: nginx-locations
+            configMap:
+              name: nix-channels-nginx-locations
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nix-channels-nginx-locations
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  nix-channels.conf: |
+    # No directory enumeration for the large binary cache; files remain available.
+    location = /nix-channels/store { return 404; }
+    location = /nix-channels/store/ { return 404; }
+    location = /nix-channels/store/nar { return 404; }
+    location = /nix-channels/store/nar/ { return 404; }
+    location = /nix-channels/.mirror-index/store { return 404; }
+    location ^~ /nix-channels/.mirror-index/store/ { return 404; }
+    location ^~ /nix-channels/.mirror-index/. { return 404; }
+    # Internal release markers and interrupted downloads are not public artifacts.
+    location ~ ^/nix-channels/(?!\.mirror-index(?:/|$))(?:.*/)?\. { return 404; }
