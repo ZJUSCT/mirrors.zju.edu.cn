@@ -1,0 +1,32 @@
+metadata:
+  name: fedora-ostree
+info:
+  description: Fedora Atomic Desktop 的 OSTree 基础层
+  upstream: https://ostree.fedoraproject.org
+sync:
+  type: ostree
+  interval: 2h
+  timeout: 12h
+  ostree:
+    remote_name: fedora
+storage:
+  size: 5Ti
+publish:
+  http:
+    tier: standard
+    replicas: 2
+comment:
+  official:
+    surveyed_at: 2026-11-10
+    docs:
+      - https://ostree.fedoraproject.org
+      - https://docs.fedoraproject.org/en-US/atomic-desktops
+    policy:
+      - 上游经 S3/CloudFront 分发，ostree mirror 协议是唯一同步通道。
+      - 官方未规定镜像同步频率；updates 通道 compose 约每日一次。
+
+  upstreams:
+    - url: https://ostree.fedoraproject.org
+      surveyed_at: 2026-11-10
+      status: selected
+      note: 官方唯一分发点，包含所有 Atimoc Desktop 分支及 CoreOS 与 Atomic Host 历史分支。
