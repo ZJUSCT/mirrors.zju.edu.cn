@@ -64,6 +64,8 @@ spec:
             env:
               - name: REMOTE_NAME
                 value: fedora
+              - name: CONTENT_URL
+                value: 'mirrorlist=https://ostree.fedoraproject.org/mirrorlist'
             volumeMounts:
               - name: sync-data
                 mountPath: /data

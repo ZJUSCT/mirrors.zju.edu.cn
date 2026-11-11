@@ -9,6 +9,7 @@ sync:
   timeout: 12h
   ostree:
     remote_name: fedora
+    content_url: mirrorlist=https://ostree.fedoraproject.org/mirrorlist
 storage:
   size: 5Ti
 publish:
@@ -17,12 +18,15 @@ publish:
     replicas: 2
 comment:
   official:
-    surveyed_at: 2026-11-10
+    surveyed_at: 2026-11-11
     docs:
       - https://ostree.fedoraproject.org
       - https://docs.fedoraproject.org/en-US/atomic-desktops
+      - https://discussion.fedoraproject.org/t/mirrorlist-missing-error-on-kinoite-update/138912/4
+      - https://ostreedev.github.io/ostree/man/ostree.repo-config.html
     policy:
       - 上游经 S3/CloudFront 分发，ostree mirror 协议是唯一同步通道。
+      - 主地址提供 summary，objects 需通过 contenturl 的官方 mirrorlist 下载。
       - 官方未规定镜像同步频率；updates 通道 compose 约每日一次。
 
   upstreams:

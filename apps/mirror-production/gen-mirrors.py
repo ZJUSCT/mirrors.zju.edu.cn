@@ -72,6 +72,15 @@ def validate(entry):
         upstream = entry.get("info", {}).get("upstream", "")
         if not upstream.startswith(("http://", "https://")):
             problems.append(f"{sync_type} upstream must be an HTTP(S) URL")
+    if sync_type == "ostree":
+        content_url = sync.get("ostree", {}).get("content_url")
+        if content_url is not None and (
+            not isinstance(content_url, str)
+            or not content_url.removeprefix("mirrorlist=").startswith(("http://", "https://"))
+        ):
+            problems.append(
+                "sync.ostree.content_url must be an HTTP(S) URL, optionally prefixed with mirrorlist="
+            )
     if sync_type == "tsumugu":
         options = sync.get("tsumugu", {})
         for field, default, minimum in [("threads", 4, 1), ("max_delete", 100, 0)]:
