@@ -18,19 +18,19 @@ publish:
     replicas: 2
 comment:
   official:
-    surveyed_at: 2026-11-11
+    surveyed_at: 2026-11-12
     docs:
-      - https://ostree.fedoraproject.org
+      - https://src.fedoraproject.org/rpms/fedora-repos/raw/rawhide/f/fedora.conf
       - https://docs.fedoraproject.org/en-US/atomic-desktops
       - https://discussion.fedoraproject.org/t/mirrorlist-missing-error-on-kinoite-update/138912/4
       - https://ostreedev.github.io/ostree/man/ostree.repo-config.html
     policy:
-      - 上游经 S3/CloudFront 分发，ostree mirror 协议是唯一同步通道。
-      - 主地址提供 summary，objects 需通过 contenturl 的官方 mirrorlist 下载。
+      - 官方 remote 使用 HTTP(S)；主地址提供元数据，contenturl 的官方 mirrorlist 指定内容下载地址。
+      - 内容经 CloudFront 分发；使用 ostree pull --mirror 同步，不依赖目录列表。
       - 官方未规定镜像同步频率；updates 通道 compose 约每日一次。
 
   upstreams:
     - url: https://ostree.fedoraproject.org
-      surveyed_at: 2026-11-10
+      surveyed_at: 2026-11-12
       status: selected
-      note: 官方唯一分发点，包含所有 Atimoc Desktop 分支及 CoreOS 与 Atomic Host 历史分支。
+      note: 官方元数据入口，内容通过官方 mirrorlist 分发；包含 Fedora Atomic Desktops 分支及 CoreOS 与 Atomic Host 历史分支。
