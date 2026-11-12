@@ -32,6 +32,10 @@
             env:
               - name: REMOTE_NAME
                 value: {{ m.sync.ostree.remote_name | ys }}
+{% if m.sync.ostree.content_url %}
+              - name: CONTENT_URL
+                value: {{ m.sync.ostree.content_url | ys }}
+{% endif %}
             volumeMounts:
               - name: sync-data
                 mountPath: /data
