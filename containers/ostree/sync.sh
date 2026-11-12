@@ -1,6 +1,6 @@
 #!/bin/sh
-# OSTree 远程仓库镜像：首帧将 /data 初始化为 archive 仓库，随后执行
-# pull --mirror 拉取 refs/objects/deltas。用法:
+# OSTree 远程仓库镜像：首次运行时将 /data 初始化为 archive 仓库，随后执行
+# pull --mirror 拉取 refs 与当前提交所需对象，不复制 static deltas。用法:
 #   REMOTE_NAME=<name> sync-ostree <upstream-url>
 # 可选 CONTENT_URL 指定独立的内容地址，支持 mirrorlist=<url>。
 # GPG 校验由最终客户端负责，本层不验签。
