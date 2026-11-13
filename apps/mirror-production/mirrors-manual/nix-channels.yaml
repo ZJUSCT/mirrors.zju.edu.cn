@@ -1,5 +1,5 @@
-# TUNA channel/closure synchronization, adapted for Falcon's snapshot publication.
-# Runtime: debian:stable-slim; script: tuna/tunasync-scripts master.
+# Nix channel/closure synchronization for Falcon's snapshot publication.
+# Runtime: python:3-slim; script: containers/nix-channels/nix-channels.py.
 # Discover all nixos/nixpkgs channels updated within 360 days, as upstream does.
 # RETAIN_DAYS retains binary closures, not historical release metadata directories.
 # First sync can take days; 168h is the bootstrap deadline, 6h is local polling policy.
@@ -73,15 +73,11 @@ spec:
               drop:
               - ALL
             readOnlyRootFilesystem: true
-          command: [sh, -ec]
-          args:
-          - |
-            mkdir -p "$TUNASYNC_WORKING_DIR/releases" "$TUNASYNC_WORKING_DIR/store/nar"
-            exec python3 /usr/local/lib/nix-channels.py
+          command: [python3, /usr/local/lib/nix-channels.py]
           env:
-          - name: TUNASYNC_WORKING_DIR
+          - name: NIX_MIRROR_WORKING_DIR
             value: /data
-          - name: MIRROR_BASE_URL
+          - name: NIX_MIRROR_BASE_URL
             value: https://mirrors.zju.edu.cn/nix-channels
           - name: NIX_MIRROR_RETAIN_DAYS
             value: '30'
@@ -89,8 +85,8 @@ spec:
             value: '360'
           - name: NIX_MIRROR_THREADS
             value: '8'
-          - name: NIX_MIRROR_PATH_BATCH
-            value: '512'
+          - name: NIX_MIRROR_QUERY_THREADS
+            value: '32'
           - name: NIX_MIRROR_DELETE_OLD
             value: '1'
           - name: HTTP_PROXY
