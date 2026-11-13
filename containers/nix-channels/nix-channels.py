@@ -30,7 +30,7 @@ from urllib3.util.retry import Retry
 
 WORKING_DIR = os.getenv("NIX_MIRROR_WORKING_DIR", "/data")
 MIRROR_BASE_URL = os.environ["NIX_MIRROR_BASE_URL"].rstrip("/")
-QUERY_THREADS = int(os.getenv("NIX_MIRROR_QUERY_THREADS", "32"))
+QUERY_THREADS = int(os.getenv("NIX_MIRROR_QUERY_THREADS", "4"))
 THREADS = int(os.getenv("NIX_MIRROR_THREADS", "8"))
 DOWNLOAD_QUEUE = int(os.getenv("NIX_MIRROR_DOWNLOAD_QUEUE", str(max(64, THREADS * 8))))
 DELETE_OLD = os.getenv("NIX_MIRROR_DELETE_OLD", "1") == "1"
@@ -56,7 +56,7 @@ session = requests.Session()
 retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
 adapter = HTTPAdapter(
     pool_connections=16,
-    pool_maxsize=max(64, QUERY_THREADS + THREADS + 8),
+    pool_maxsize=max(16, QUERY_THREADS + THREADS + 8),
     max_retries=retries,
 )
 session.mount("http://", adapter)
