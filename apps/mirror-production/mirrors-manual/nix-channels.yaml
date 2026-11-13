@@ -86,7 +86,7 @@ spec:
           - name: NIX_MIRROR_THREADS
             value: '8'
           - name: NIX_MIRROR_QUERY_THREADS
-            value: '32'
+            value: '4'
           - name: NIX_MIRROR_DELETE_OLD
             value: '1'
           - name: HTTP_PROXY
