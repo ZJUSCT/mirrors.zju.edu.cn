@@ -11,17 +11,6 @@
 - Bug Report / 故障报告
 - Others / 其他事项
 
-如果你希望为 ZJU Mirror 作出**贡献**：
-
-- 请确保你已经完整阅读本文，了解镜像站的工作原理。
-- 本仓库对 AI 贡献的态度是「Responsible Use Of Generative AI」，可参考：
-
-    - [General resolution: LLM usage in Debian: Results](https://lists.debian.org/debian-devel-announce/2026/08/msg00005.html)
-    - [AI 工具使用注意事项 - Linux 201](https://201.ustclug.org/spec/writing/#ai-tools)
-
-- Commit 需要签名。
-- 通过 Review 和 PR 合入。
-
 ## 为什么开源本仓库？
 
 - 长久以来，各高校镜像站通过开源与技术分享交流经验，在互相借鉴与讨论中共同提升。例如：
@@ -50,11 +39,21 @@
 
 本项目的原创文档、Kubernetes 资源配置文件及脚本采用 [Apache License 2.0](LICENSE) 许可发布。
 
-本仓库中部分包含上游默认配置的文件（例如 `apps/*/values` 目录下拷贝自原 Chart 并修改的 `values.yaml` 文件）：
+本仓库中部分包含上游默认配置的文件（例如 `apps/*/values` 目录下拷贝自原 Chart 并修改的 `values.yaml` 文件），属于对应上游 Helm Chart / 开源项目的衍生作品，其版权归属于原作者/上游社区。这些文件的使用与分发严格遵循其上游项目各自对应的开源许可证。
 
-- 属于对应上游 Helm Chart / 开源项目的衍生作品。
-- 其版权归属于原作者/上游社区。
-- 这些文件的使用与分发严格遵循其上游项目各自对应的开源许可证。
+## 贡献与维护
+
+- `CODEOWNERS`：ZJU Mirror 系列仓库均在根目录放置 `CODEOWNERS`，愿意审核 PR 的维护者应当将自己的 GitHub ID 添加到文件中以及时收到 PR 审核请求。
+
+如果你希望为 ZJU Mirror 作出**贡献**：
+
+- 请确保你已经完整阅读本文，了解镜像站的工作原理。
+- 本仓库对 AI 贡献的态度是「Responsible Use Of Generative AI」，可参考：
+
+    - [General resolution: LLM usage in Debian: Results](https://lists.debian.org/debian-devel-announce/2026/08/msg00005.html)
+    - [AI 工具使用注意事项 - Linux 201](https://201.ustclug.org/spec/writing/#ai-tools)
+
+- Commit 需要签名，获得至少一位其他维护者的 Review，通过 PR 合入。
 
 ---
 
@@ -186,13 +185,13 @@
 [Kairos](https://github.com/kairos-io/kairos) 是一个专为 K8s 设计的不可变 Linux 发行版，它是镜像站所有节点上部署的 OS。
 
 - 它的声明式配置使用 [yip](https://github.com/mudler/yip)，语法基于 [cloud-init](https://github.com/canonical/cloud-init) 但不完全相同，需要仔细核对。
-- 系统仍基于 Ubuntu，包括 ZFS DKMS 等都来自上游。可以理解为 Kairos 只是帮助做好了不可变镜像打包、A/B recovery 机制、原子化升级等方便的包装。
+- 系统仍基于常见发行版（例如 Debian、Ubuntu），包括 ZFS DKMS 等都来自上游。可以理解为 Kairos 只是帮助做好了不可变镜像打包、A/B recovery 机制、原子化升级等方便的包装。
 
 选择 [K3s](https://github.com/k3s-io/k3s) 而不是标准 K8s 的原因：
 
-- Kairos 原生支持 K3s
-- K3s 核心组件简单，运维复杂度低
-- K3s 内置一些方便的功能，例如内置 [Spegel Registry](https://github.com/spegel-org/spegel)、镜像 URL 重写等
+- Kairos 原生支持 K3s。
+- K3s 核心组件简单，运维复杂度低。
+- K3s 内置一些方便的功能，例如内置 [Spegel Registry](https://github.com/spegel-org/spegel)、镜像 URL 重写等。
 
 修改现有节点的 Kairos 或 K3s 配置时，需要同时：
 
@@ -226,34 +225,10 @@ stunnel 自身仅负责 TLS 终结和到本地 22 的固定流量转发，几乎
 
 - 启用双栈网络支持。但 Pod 网络的 IPv6 是 ULA，glibc 和 musl 都按 RFC 6724 Rule 2 判 ULA 源为 scope 不匹配，把 v4 地址排在前面。为了使用 v6 网络，rsync 等工具需要显式添加 `-6` 选项。
 - 节点打 label 分为两组：
-    - `zjusct.io/pool=frontend`：适合无状态，只需要 CPU 和内存的服务（例如 Gateway 和流量分析聚合等）
+    - `zjusct.io/pool=frontend`：适合无状态，只需要 CPU 和内存的服务（例如 Gateway）
     - `zjusct.io/pool=storage`：适合需要持久化存储的服务
 
-部分 Registry 无法直连，通过 [DaoCloud/public-image-mirror](https://github.com/DaoCloud/public-image-mirror) 等可信任的公共 Registry Mirror 拉取，这由 K3s 的 `registries.yaml` 重写处理，见 [kairos/cloud-config.yaml.j2](kairos/cloud-config.yaml.j2)。
-
-- 能够直接访问的 Registry：
-
-    ```text
-    quay.io
-    ghcr.io
-    nvcr.io
-    registry.gitlab.com
-    public.ecr.aws
-    mcr.microsoft.com
-    docker.elastic.co
-    lscr.io
-    docker.osgeo.org
-    ```
-
-- 不能直接访问的 Registry：
-
-    ```text
-    docker.io
-    registry-1.docker.io
-    hub.docker.com
-    registry.k8s.io # 它本身可访问，但 302 到 pkg.dev 属于 Google 无法访问
-    *.gcr.io
-    ```
+国外 Registry 普遍无法直连、连接不稳定或者速度极慢，故由 K3s 的 `registries.yaml` 重写（见 [kairos/cloud-config.yaml.j2](kairos/cloud-config.yaml.j2)），通过集群内的 Harbor 或者 [DaoCloud/public-image-mirror](https://github.com/DaoCloud/public-image-mirror) 等可信任的公共 Registry Mirror 拉取。
 
 ### K8s 上的服务
 
@@ -309,7 +284,7 @@ Rook Ceph 用于管理存储节点上的 SSD，提供分布式高可用的块、
 - `ceph-filesystem`：适合 RWX
 - `ceph-bucket`：对象存储
 
-2026-09-21 调优后 Benchmark 结果：
+2026-09-21 调优后 Benchmark 结果，证明 Ceph 已能满足一般工作负载的需求：
 
 - RADOS Bench：
     - replicated write：971 MiB/s
@@ -369,7 +344,7 @@ Secret 和 ConfigMap 变动时往往需要重启相应的 Workload，相关机�
 
 #### 证书：[cert-manager](https://github.com/cert-manager/cert-manager)
 
-使用 DNS-01 或 HTTP-01 自动管理证书。
+使用 DNS-01 和 HTTP-01 自动管理证书。
 
 #### 容器镜像 Registry：[Harbor](https://github.com/goharbor/harbor)
 
@@ -425,23 +400,57 @@ argocd
     kubectl kustomize --load-restrictor LoadRestrictionsNone --enable-helm .
     ```
 
-- 手动部署 K8S 资源：要求使用 server-side apply
+### Server-Side Apply
 
-    ```bash
-    kubectl kustomize --load-restrictor LoadRestrictionsNone --enable-helm . | kubectl apply --server-side --force-conflicts=true -f -
-    ```
+K8s 中的同一资源可能被用户、控制器、webhook、CD 工具共同管理：
 
-TODO：解释 SSA 和处理事项
+- 默认的 Client-Side Apply 根据 `last-applied-configuration`（上一配置的快照）和 strategic-merge-patch 合并
+- KEP-555 提出 Server-Side Apply（SSA），由 K8s API Server 负责合并，逐字段记录所有权、裁决合并与冲突
 
-- 临时修改 Argo CD 管理的资源时，必须注意 server-side apply 的字段所有权。SSA 只会删除同一 field manager 先前拥有、但本次 apply 已省略的字段；由临时 manager 写入的字段不会因为 Git 中已删除而自动消失，Argo CD 甚至可能仍显示 `Synced`。Agent 或人工排障结束前必须：
+相关操作分为两类：
 
-    1. 记录临时 manager 修改过的精确字段路径；
-    2. 使用 JSON Patch 等方式只删除这些临时字段，不要为了清理而替换整个资源；
-    3. 确认 Git manager 已拥有所有应保留字段后，让原临时 manager apply 仅含 `apiVersion`、`kind`、`metadata.name` 和 `metadata.namespace` 的 identity-only 清单，以释放其余共用字段的所有权；必须先用 `--dry-run=server` 确认操作前后 `spec` 完全一致；
-    4. 对比 Git 渲染结果与 live `spec`，并通过 `kubectl get ... --show-managed-fields` 确认临时 manager 已消失；
-    5. 确认控制器已观察到新 generation、下游 Workload 已重新生成，且 Argo CD 仍为 `Synced/Healthy`。
+|  | Apply（声明式） | Update（命令式：patch/replace） |
+| --- | --- | --- |
+| 语义 | 提交完整意图 | 直接改值 |
+| 冲突 | 改动他人拥有且值不同的字段时报错 | 永不冲突，静默转移被改字段的所有权 |
+| 典型用户 | 人、GitOps、CD 工具 | 控制器 reconcile 派生字段 |
 
-    不要把 `--force-conflicts` 当作常规清理手段；它会转移清单中所有重叠字段的所有权，容易覆盖其他控制器或 Argo CD 的修改。对于应从期望状态中消失的单个字段，优先执行精确的 JSON Patch `remove`。字段删除后无需让 Argo CD“拥有不存在的字段”；将来若 Git 再次声明该字段，Argo CD 会自然取得其所有权。
+实现方式：K8s 对象的 `metadata.managedFields` 存放一个列表，每个表项是 Manager（例如 kubectl, argocd-controller, kube-controller-manager 等）和它拥有的字段和操作，例如：
+
+```yaml
+managedFields:
+- manager: kubectl
+  operation: Apply
+  apiVersion: apps/v1
+  time: "2026-09-20T08:32:29Z"
+  fieldsType: FieldsV1
+  fieldsV1:
+    f:spec:
+      f:template:
+        f:spec:
+          f:volumes:
+            k:{"name":"config"}:
+              f:configMap:
+                f:items: {}
+```
+
+- 多个 Manager 可以同时拥有一个字段。
+- Apply 省略某字段时，若无其他 owner 则字段被删除（或重置为默认值）；若他人仍持有则字段保留。
+
+不得不绕过 GitOps 修改 **ArgoCD 管理的资源**时，不要使用 `kubectl apply --server-side`，容易形成令人困惑的局面：
+
+- 在 GitOps 中删除某个字段，ArgoCD 不会删除它，因为该字段仍被其他 manager 持有。
+- ArgoCD 显示资源为 Synced，因为计算 diff 时忽略了 live 对象中非自己拥有的字段。
+- GitOps 仓库和集群状态不一致。
+
+建议：
+
+- 使用 `kubectl patch` 改动 ArgoCD 管理的资源，减小所有权影响的范围。
+- 手动 SSA 部署的资源转由 ArgoCD 管理时，检查并清理其他 manager。
+
+参考文献：
+
+- <https://github.com/kubernetes/enhancements/blob/master/keps/sig-api-machinery/555-server-side-apply/README.md>
 
 ## 镜像站的工作原理
 
@@ -459,7 +468,7 @@ TODO：解释 SSA 和处理事项
 
 同步管理器的基础功能是：管理、调度同步任务和服务实例，展示镜像状态等。
 
-### 同步卷根目录的属主
+### 同步 PV 的权限
 
 zfs-localpv 新建 PVC 的根目录默认由 root 持有。`fsGroup` 可以提供组写权限，但非 owner 仍不能设置根目录的任意 mtime，rsync 会报 `failed to set times ... Operation not permitted`。
 
@@ -641,7 +650,7 @@ crates-io
 
 ### Rsync 服务：rsyncd
 
-## 如何维护本仓库的镜像
+## 镜像编写规范
 
 ### 镜像信息约定
 
@@ -653,7 +662,7 @@ crates-io
 - 官方建议的同步间隔。如果官方有建议，那我们就应当将同步间隔设为对应值。例如，上一轮查到 almalinux 同步间隔应当为 3h，我们就改为 3h。并且一般 timeout 和 interval 设置为相同的值。
 - 镜像的描述（info.description）也可以帮我优化下，应该是简短的、精炼的描述，老的描述写得并不是很好。最好是以官方自己怎么介绍该镜像为准。
 
-#### 模板生成的镜像
+### 模板生成镜像
 
 `apps/mirror-production/mirrors/` 存放手工维护的简化源配置，每个 YAML 文件描述一个镜像。`gen-mirrors.py` 读取这些配置，结合 `snippets/` 中的模板，将完整的 `Mirror` CR 和 `kustomization.yaml` 写入 `mirrors-generated/`。不要手工修改生成文件。
 
@@ -695,10 +704,6 @@ comment:
       note: Tier 0，官方仅允许 Tier 1 镜像使用。
 ```
 
-#### 手动编写的镜像
-
-无法由通用模板表达的镜像放在 `apps/mirror-production/mirrors-manual/`，手工维护。
-
 ### 安全约定
 
 - Pod：
@@ -721,15 +726,7 @@ comment:
       readOnlyRootFilesystem: true
     ```
 
-### 可观测性
-
-- 指标：Prometheus 保留 48 小时本地缓冲，通过 remote_write 写入 Mimir；Mimir 在 Ceph 对象存储保留 180 天，作为 Grafana 默认指标源。
-- 链路：OTel collector 写入 Tempo，Ceph 对象存储保留 180 天。
-- 日志：网关 access log 经 gateway collector、节点容器日志经 node-logs → aggregator collector 写入 ClickHouse `otel.otel_logs`，TTL 为 180 天。ClickHouse 使用 ceph-block 2Ti PVC；Loki 已完全下线。
-- Grafana 的 ClickHouse 数据源使用只读 `app` 用户，collector 使用 `otelcollector` 用户；跨命名空间凭据由各自的 SealedSecret 注入。日志查询入口为 Explore 和 Infrastructure 文件夹内的 **Gateway Traffic** dashboard，可选择 Production、Staging 或全部网关；Staging 网关仍承载 Falcon、registry 等站点，与已移除的 staging 镜像实例不同。
-- Dashboard ConfigMap 用 `k8s-sidecar-target-directory` 指定目录；Grafana provider 必须开启 `foldersFromFilesStructure`，例如 Mimir mixin 的 27 个 dashboard 放入 **Mimir Dashboards**。
-
-### 镜像 e2e 可用性测试
+### 镜像 e2e 测试
 
 推荐在添加镜像时，在 `tests/mirrors-e2e/` 下为其维护一份对应的 e2e 测试，用来验证镜像是否能够正常工作。
 
