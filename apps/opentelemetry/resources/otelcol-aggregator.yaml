@@ -1,6 +1,7 @@
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
+  # Shared ingestion for internal (unauthenticated) and external (authenticated) OTLP.
   name: aggregator
 spec:
   mode: deployment
@@ -11,6 +12,16 @@ spec:
         secretKeyRef:
           name: clickhouse-otelcollector
           key: password
+    - name: OTLP_INGESTION_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: otlp-ingestion
+          key: token
+  ports:
+    - name: otlp-external
+      port: 4319
+      protocol: TCP
+      targetPort: 4319
   resources:
     requests:
       cpu: 500m
@@ -19,13 +30,28 @@ spec:
       cpu: '2'
       memory: 1Gi
   config:
+    extensions:
+      bearertokenauth/external:
+        token: ${env:OTLP_INGESTION_TOKEN}
     receivers:
+      # Internal clients use the existing unauthenticated gRPC/HTTP endpoints.
       otlp:
         protocols:
           grpc:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
+      # External HTTP requires a bearer token and skips Kubernetes pod association.
+      otlp/external:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4319
+            max_request_body_size: 4194304
+            compression_algorithms: ["", gzip]
+            read_header_timeout: 5s
+            read_timeout: 30s
+            auth:
+              authenticator: bearertokenauth/external
     processors:
       memory_limiter:
         check_interval: 1s
@@ -88,7 +114,12 @@ spec:
           enabled: true
           queue_size: 1000
           num_consumers: 4
+          batch:
+            min_size: 1024
+            max_size: 2048
+            flush_timeout: 5s
     service:
+      extensions: [bearertokenauth/external]
       pipelines:
         metrics:
           receivers: [otlp]
@@ -100,7 +131,19 @@ spec:
           exporters: [otlp/tempo]
         logs:
           receivers: [otlp]
-          processors: [memory_limiter, k8sattributes, batch]
+          processors: [memory_limiter, k8sattributes]
+          exporters: [clickhouse]
+        metrics/external:
+          receivers: [otlp/external]
+          processors: [memory_limiter, batch]
+          exporters: [otlphttp/prometheus]
+        traces/external:
+          receivers: [otlp/external]
+          processors: [memory_limiter, batch]
+          exporters: [otlp/tempo]
+        logs/external:
+          receivers: [otlp/external]
+          processors: [memory_limiter]
           exporters: [clickhouse]
       telemetry:
         metrics:

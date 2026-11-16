@@ -4,9 +4,11 @@ namespace: opentelemetry
 resources:
   - resources/namespace.yaml
   - resources/sealedsecret-clickhouse-otelcollector.yaml
+  - resources/sealedsecret-otlp-ingestion.yaml
   - resources/otelcol-aggregator.yaml
   - resources/otelcol-gateway.yaml
   - resources/otelcol-node-logs.yaml
+  - resources/httproute-otlp-ingestion.yaml
   - resources/podmonitor-collectors.yaml
 helmCharts:
   - name: opentelemetry-operator

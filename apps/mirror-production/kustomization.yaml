@@ -8,7 +8,6 @@ resources:
   - resources/certificate.yaml
   - resources/sealedsecret-falcon-github-oauth.yaml
   - resources/sealedsecret-grafana-credentials.yaml
-  # - resources/httproute-argocd-webhook.yaml
   # Mirror 和相关资源
   - mirrors-generated/
   - mirrors-manual/

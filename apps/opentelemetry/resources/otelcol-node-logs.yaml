@@ -5,6 +5,11 @@ metadata:
 spec:
   mode: daemonset
   env:
+    - name: CLICKHOUSE_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: clickhouse-otelcollector
+          key: password
     - name: K8S_NODE_NAME
       valueFrom:
         fieldRef:
@@ -84,27 +89,43 @@ spec:
             - k8s.container.name
             - container.image.name
             - container.image.tag
-      batch:
-        send_batch_size: 1024
-        send_batch_max_size: 2048
-        timeout: 5s
+            - service.namespace
+            - service.name
+            - service.version
+            - service.instance.id
     exporters:
-      otlp/aggregator:
-        endpoint: aggregator-collector.opentelemetry.svc.cluster.local:4317
-        tls:
-          insecure: true
+      clickhouse:
+        endpoint: tcp://clickhouse.clickhouse.svc:9000?dial_timeout=10s
+        username: otelcollector
+        password: ${env:CLICKHOUSE_PASSWORD}
+        database: otel
+        logs_table_name: otel_logs
+        create_schema: true
+        ttl: 4320h # 180 天
+        async_insert: true
+        timeout: 30s
         sending_queue:
           enabled: true
           storage: file_storage
+          queue_size: 1000
+          num_consumers: 4
+          # Batch after persisting records, rather than buffering them in a processor.
+          batch:
+            min_size: 1024
+            max_size: 2048
+            flush_timeout: 5s
         retry_on_failure:
           enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 0s
     service:
       extensions: [file_storage]
       pipelines:
         logs:
           receivers: [filelog]
-          processors: [memory_limiter, k8sattributes, batch]
-          exporters: [otlp/aggregator]
+          processors: [memory_limiter, k8sattributes]
+          exporters: [clickhouse]
       telemetry:
         metrics:
           readers:
