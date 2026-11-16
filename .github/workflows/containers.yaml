@@ -51,6 +51,8 @@ jobs:
               - 'containers/quick-fedora-mirror/**'
             rsync:
               - 'containers/rsync/**'
+            terra:
+              - 'containers/terra/**'
             tsumugu:
               - 'containers/tsumugu/**'
             workflow:
@@ -65,7 +67,7 @@ jobs:
           set -eu
 
           if [ "$EVENT_NAME" = schedule ] || [ "$EVENT_NAME" = workflow_dispatch ] || [ "$WORKFLOW_CHANGED" = true ]; then
-              images='["git-http-backend","archvsync","anaconda","nix-channels","ostree","quick-fedora-mirror","rsync","tsumugu"]'
+              images='["git-http-backend","archvsync","anaconda","nix-channels","ostree","quick-fedora-mirror","rsync","terra","tsumugu"]'
           else
               images="$CHANGED_IMAGES"
           fi
