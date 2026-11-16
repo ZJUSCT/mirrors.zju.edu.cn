@@ -79,23 +79,3 @@ spec:
       recordType: AAAA
       targets:
         - 2001:da8:e000:8936::103
-    - dnsName: v0.mirrors.zjusct.io
-      recordTTL: 1
-      recordType: A
-      targets:
-        - 10.203.1.200
-    - dnsName: v0.mirrors.zjusct.io
-      recordTTL: 1
-      recordType: AAAA
-      targets:
-        - 2001:da8:e000:8001::200
-    - dnsName: v1.mirrors.zjusct.io
-      recordTTL: 1
-      recordType: A
-      targets:
-        - 10.203.1.201
-    - dnsName: v1.mirrors.zjusct.io
-      recordTTL: 1
-      recordType: AAAA
-      targets:
-        - 2001:da8:e000:8001::201
