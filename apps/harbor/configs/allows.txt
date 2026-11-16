@@ -143,6 +143,7 @@ docker.io/codercom/code-server
 docker.io/codewisdom/*
 docker.io/codiumai/pr-agent
 docker.io/collabora/code
+docker.io/composer/*
 docker.io/condaforge/miniforge3
 docker.io/conductoross/*
 docker.io/conduktor/*
@@ -191,6 +192,7 @@ docker.io/diygod/*
 docker.io/docker/*
 docker.io/dockurr/*
 docker.io/dokploy/*
+docker.io/dolibarr/dolibarr
 docker.io/doocs/*
 docker.io/dorowu/ubuntu-desktop-lxde-vnc
 docker.io/dpage/*
@@ -238,6 +240,7 @@ docker.io/eugr/*
 docker.io/exadel/compreface-core
 docker.io/exceptionless/*
 docker.io/eyeblue/tank
+docker.io/f3nici/dockge
 docker.io/f5networks/*
 docker.io/falcosecurity/*
 docker.io/falkordb/falkordb
@@ -284,6 +287,7 @@ docker.io/gitpod/openvscode-server
 docker.io/gliderlabs/logspout
 docker.io/goacme/lego
 docker.io/gocd/*
+docker.io/gogost/gost
 docker.io/gogs/gogs
 docker.io/goharbor/*
 docker.io/golangci/golangci-lint
@@ -338,6 +342,7 @@ docker.io/hoppscotch/hoppscotch
 docker.io/hpcaitech/colossalai
 docker.io/hpcaitech/pytorch-cuda
 docker.io/hslr/sun-panel
+docker.io/huadream/*
 docker.io/huggingface/*
 docker.io/hugomods/hugo
 docker.io/hummingbot/hummingbot
@@ -434,9 +439,11 @@ docker.io/kubeshark/*
 docker.io/kubeskoop/*
 docker.io/kubesphere/*
 docker.io/kubespheredev/ksv-installer
+docker.io/kubevirtbmc/*
 docker.io/kusionstack/*
 docker.io/kylemanna/openvpn
 docker.io/labring/*
+docker.io/lachlanevenson/*
 docker.io/langchain/langgraph-api
 docker.io/langflowai/langflow
 docker.io/langflowai/langflow-frontend
@@ -460,6 +467,7 @@ docker.io/library/amazonlinux
 docker.io/library/api-firewall
 docker.io/library/arangodb
 docker.io/library/archlinux
+docker.io/library/azul-zulu
 docker.io/library/backdrop
 docker.io/library/bash
 docker.io/library/bonita
@@ -605,6 +613,7 @@ docker.io/libredb/libredb-studio
 docker.io/libretranslate/libretranslate
 docker.io/lightseekorg/smg
 docker.io/lihualiu/sam-6d
+docker.io/lincolnpark2000/mediasync
 docker.io/lindesvard/*
 docker.io/linkease/ddnsto
 docker.io/linkease/desktop-ubuntu-standard-amd64
@@ -648,7 +657,7 @@ docker.io/mailserver/*
 docker.io/manjarolinux/*
 docker.io/manticoresearch/manticore
 docker.io/maptiler/*
-docker.io/mariadb/maxscale
+docker.io/mariadb/*
 docker.io/martialblog/limesurvey
 docker.io/mattermost/focalboard
 docker.io/mattermost/mattermost-team-edition
@@ -777,6 +786,7 @@ docker.io/percona/*
 docker.io/pgautoupgrade/pgautoupgrade
 docker.io/pgrouting/pgrouting
 docker.io/pgsty/minio
+docker.io/pgsty/pigsty
 docker.io/pgsty/silo
 docker.io/pgvector/pgvector
 docker.io/photoprism/photoprism
@@ -791,6 +801,7 @@ docker.io/podwide/cosyvoice
 docker.io/pointcloudlibrary/env
 docker.io/polardbx/polardb-x
 docker.io/polarismesh/*
+docker.io/ponphil/litepan
 docker.io/portainer/*
 docker.io/postgis/postgis
 docker.io/postgrest/postgrest
@@ -805,6 +816,7 @@ docker.io/provectuslabs/kafka-ui
 docker.io/proxysql/proxysql
 docker.io/pymumu/smartdns
 docker.io/pytorch/*
+docker.io/qbittorrentofficial/qbittorrent-nox
 docker.io/qdrant/*
 docker.io/qdtoday/qd
 docker.io/qemux/qemu-docker
@@ -814,6 +826,7 @@ docker.io/questdb/questdb
 docker.io/quickwit/*
 docker.io/qwenllm/*
 docker.io/rabbitmqoperator/cluster-operator
+docker.io/rachelos/we-mp-rss
 docker.io/radondb/*
 docker.io/ramonvc/freegpt-webui
 docker.io/rancher/*
@@ -831,6 +844,8 @@ docker.io/redislabs/*
 docker.io/rednotehilab/dots.ocr
 docker.io/redpandadata/console
 docker.io/redpandadata/kminion
+docker.io/redpandadata/redpanda
+docker.io/redpandadata/redpanda-operator
 docker.io/redroid/redroid
 docker.io/reportportal/reportportal
 docker.io/resmoio/kubernetes-event-exporter
@@ -871,6 +886,7 @@ docker.io/sengokucola/maibot
 docker.io/senthilrch/*
 docker.io/serengil/deepface
 docker.io/serversideup/*
+docker.io/setupphp/node
 docker.io/shieldsio/shields
 docker.io/shingarey/foundationpose_custom_cuda121
 docker.io/sickcodes/docker-osx
@@ -879,6 +895,7 @@ docker.io/signoz/signoz-otel-collector
 docker.io/sigoden/dufs
 docker.io/silkeh/clang
 docker.io/simonrupf/chronyd
+docker.io/simpletracker/qbittorrent-clientblocker
 docker.io/sinamics/ztnet
 docker.io/sissbruecker/linkding
 docker.io/sj26/mailcatcher
@@ -890,12 +907,14 @@ docker.io/snowdreamtech/frps
 docker.io/solace/solace-pubsub-standard
 docker.io/solidnerd/bookstack
 docker.io/sonarsource/sonar-scanner-cli
+docker.io/sonarsource/sonarqube-mcp
 docker.io/sonatype/*
 docker.io/sonicorg/sonic-client-web-base
 docker.io/sonobuoy/*
 docker.io/soulter/astrbot
 docker.io/sourcegraph/*
 docker.io/squidfunk/*
+docker.io/stanfordvl/behavior
 docker.io/starrocks/*
 docker.io/steamcmd/*
 docker.io/stilleshan/frpc
@@ -977,6 +996,7 @@ docker.io/vdsm/virtual-dsm
 docker.io/velero/*
 docker.io/verdaccio/*
 docker.io/verlai/*
+docker.io/vernemq/*
 docker.io/vesoft/*
 docker.io/victoriametrics/*
 docker.io/viktorstrate/*
@@ -1013,6 +1033,9 @@ docker.io/yedf/dtm
 docker.io/yidadaa/chatgpt-next-web
 docker.io/ypptec/nascab
 docker.io/yuzutech/kroki
+docker.io/yuzutech/kroki-bpmn
+docker.io/yuzutech/kroki-excalidraw
+docker.io/yuzutech/kroki-mermaid
 docker.io/zabbix/*
 docker.io/zadam/trilium
 docker.io/zendesk/maxwell
@@ -1025,6 +1048,7 @@ docker.io/zlmediakit/zlmediakit
 docker.io/zmisgod/iptvchecker
 docker.io/zmister/mrdoc
 docker.io/zulip/docker-zulip
+docker.io/zxdong262/electerm-web
 docker.osgeo.org/**
 docker.stirlingpdf.com/stirlingtools/stirling-pdf
 gcr.io/**
@@ -1046,11 +1070,13 @@ ghcr.io/ansible/**
 ghcr.io/apache/**
 ghcr.io/apple/**
 ghcr.io/aquasecurity/**
+ghcr.io/argoproj/argo-helm/**
 ghcr.io/armbian/**
 ghcr.io/astral-sh/**
 ghcr.io/authzed/spicedb
 ghcr.io/authzed/spicedb-operator
 ghcr.io/autowarefoundation/autoware
+ghcr.io/axoflow/**
 ghcr.io/baizeai/**
 ghcr.io/benc-uk/kubeview
 ghcr.io/berriai/litellm
@@ -1062,6 +1088,7 @@ ghcr.io/blakeblackshear/**
 ghcr.io/brenner-tobias/cloudflared/*
 ghcr.io/browserless/chromium
 ghcr.io/canner/*
+ghcr.io/cdelivery-dev/*
 ghcr.io/chaos-mesh/**
 ghcr.io/chaosblade-io/**
 ghcr.io/chroma-core/chroma
@@ -1090,8 +1117,10 @@ ghcr.io/docling-project/*
 ghcr.io/dtzar/**
 ghcr.io/dynamia-ai/**
 ghcr.io/easytier/easytier
+ghcr.io/edgestorage/*
 ghcr.io/elastic/opentelemetry-demo
 ghcr.io/elf-io/*
+ghcr.io/emqx/emqx-operator
 ghcr.io/esphome/esphome
 ghcr.io/estrellaxd/auto_bangumi
 ghcr.io/eunomia-bpf/libbpf-template
@@ -1102,8 +1131,10 @@ ghcr.io/fish2018/pansou-web
 ghcr.io/fission/**
 ghcr.io/flannel-io/*
 ghcr.io/flexget/flexget
-ghcr.io/fluent/fluent-operator/*
+ghcr.io/fluent/**
 ghcr.io/freecodecamp/devdocs
+ghcr.io/fullstorydev/grpcui
+ghcr.io/garethgeorge/backrest
 ghcr.io/gcwing/bitfun-relay-server
 ghcr.io/germondai/trawl
 ghcr.io/gethomepage/homepage
@@ -1155,6 +1186,7 @@ ghcr.io/komari-monitor/komari
 ghcr.io/koodo-reader/koodo-reader
 ghcr.io/koordinator-sh/**
 ghcr.io/ksmartdata/**
+ghcr.io/kube-logging/**
 ghcr.io/kube-vip/**
 ghcr.io/kubean-io/**
 ghcr.io/kubeflow/**
@@ -1166,6 +1198,7 @@ ghcr.io/labring/lvscare
 ghcr.io/lemker/unifi-os-server
 ghcr.io/libredb/libredb-studio
 ghcr.io/librespeed/speedtest
+ghcr.io/limlll/codex-webui
 ghcr.io/linuxsuren/api-testing
 ghcr.io/linuxsuren/atest-ext-store-orm
 ghcr.io/llm-d/**
@@ -1191,6 +1224,7 @@ ghcr.io/mostlygeek/llama-swap
 ghcr.io/music-assistant/server
 ghcr.io/nicholas-fedor/watchtower
 ghcr.io/nousresearch/*
+ghcr.io/nvidia-ai-iot/vllm
 ghcr.io/nvidia/**
 ghcr.io/open-telemetry/**
 ghcr.io/open-webui/**
@@ -1205,6 +1239,7 @@ ghcr.io/openlistteam/openlist-git
 ghcr.io/ot-container-kit/**
 ghcr.io/parkervcp/yolks
 ghcr.io/phioranex/openclaw-docker
+ghcr.io/php/pie
 ghcr.io/plankanban/planka
 ghcr.io/presenton/presenton
 ghcr.io/project-hami/**
@@ -1255,6 +1290,7 @@ ghcr.io/wg-easy/wg-easy
 ghcr.io/wzshiming/**
 ghcr.io/yanyang-technology-group/ycomm-web
 ghcr.io/yeraze/meshmonitor
+ghcr.io/yetone/magpie
 ghcr.io/ylianst/meshcentral
 ghcr.io/zalando/**
 ghcr.io/zammad/zammad
@@ -1321,7 +1357,6 @@ quay.io/mittwald/kubernetes-replicator
 quay.io/mongodb/*
 quay.io/nmstate/*
 quay.io/nuclio/*
-quay.io/oauth2-proxy/oauth2-proxy
 quay.io/operator-framework/*
 quay.io/operatorhubio/minio-operator
 quay.io/opstree/*
@@ -1345,8 +1380,10 @@ registry.gitlab.com/purelb/purelb/purelb
 registry.heroiclabs.com/heroiclabs/nakama
 registry.jujucharms.com/**
 registry.k8s.io/**
+registry.librechat.ai/**
 registry.opensource.zalan.do/**
 registry.rocket.chat/**
+registry.supertokens.io/**
 rocks.canonical.com/**
 us-central1-docker.pkg.dev/k8s-staging-images/**
 us-central1-docker.pkg.dev/keephq/keep/keep-api

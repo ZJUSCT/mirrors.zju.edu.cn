@@ -350,6 +350,10 @@ Secret 和 ConfigMap 变动时往往需要重启相应的 Workload，相关机�
 
 搭配 [ZJUSCT/registry-gate](https://github.com/ZJUSCT/registry-gate)，提供容器镜像 Pull Through Cache。
 
+#### 可观测性：[opentelemetry-collector](https://github.com/open-telemetry/opentelemetry-collector)
+
+OpenTelemetry 协议是目前可观测性领域最通用的标准。集群内配置了多个 OpenTelemetry 实例用于不同用途的采集任务。
+
 ## ArgoCD 与 GitOps
 
 [ArgoCD](https://argo-cd.readthedocs.io/en/stable/) 是用于 K8s 的 GitOps CI/CD 工具。对于本仓库，它读取 `apps/` 下的 [Kustomization](https://kubectl.docs.kubernetes.io/references/kustomize/) 项目并将其部署到集群。
