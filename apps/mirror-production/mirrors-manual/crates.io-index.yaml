@@ -22,8 +22,7 @@
 #       surveyed_at: 2026-09-19
 #       metrics: IPv4 RTT 约 98–103ms；IPv6 RTT 约 62ms
 #       note: crates.io 官方 sparse 服务端点，用于按需读取而非全量同步。
-# TODO: 将包体切换到本站前，使用含占位符的 https://mirrors.zju.edu.cn/crates.io/{crate}/{crate}-{version}.crate，
-#   并保证仅在对应包体完成下载和校验后发布索引提交；当前继续使用官方 CDN。
+# 包体优先从本站下载；crates.io 发布服务对尚未同步的包临时跳转官方 CDN。
 apiVersion: mirrors.zjusct.io/v1alpha1
 kind: Mirror
 metadata:
@@ -127,10 +126,11 @@ spec:
                 value: 65532:65532
               - name: HOME
                 value: /tmp
-              # 当前保持官方 CDN；切换本站时须使用带 Cargo 占位符的 URL，
-              # 并与包体完成状态协调发布。
+              # Cargo 占位符与包体发布目录一致；缺包由包体服务回退官方 CDN。
               - name: CRATES_PROXY
-                value: https://static.crates.io/crates
+                value: https://mirrors.zju.edu.cn/crates.io/{crate}/{crate}-{version}.crate
+              - name: CRATES_GITMSG
+                value: Redirect crate downloads to ZJU Mirrors
               - name: CRATES_GITNAME
                 value: mirrors.zju.edu.cn
               - name: CRATES_GITMAIL

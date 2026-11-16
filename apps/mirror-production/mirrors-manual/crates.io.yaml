@@ -16,8 +16,8 @@
 #       surveyed_at: 2026-09-19
 #       metrics: IPv4 RTT 约 98–103ms、4.7MiB/s；IPv6 RTT 约 62ms、4.3MiB/s
 #       note: crates.io 官方 CDN；无 rsync，本地选择由官方索引驱动增量下载。
-# TODO: 当前同步工具未启用索引 SHA-256 校验，且不会清理仍存在包名下已删除的旧版本；
-#   完成校验和清理逻辑前，不将 sparse 索引的 dl 切换到本站。
+# TODO: 同步端补充索引 SHA-256 校验，以及仍存在包名下已删除版本的清理。
+# Cargo 按索引校验下载内容；本站快照尚未包含的包临时跳转官方 CDN。
 apiVersion: mirrors.zjusct.io/v1alpha1
 kind: Mirror
 metadata:
@@ -187,10 +187,13 @@ spec:
                   mountPath: /tmp
                 # 数据集内 tarball 树位于 crates/ 子目录（旁有内部 index/ 与
                 # state/），subPath 对齐公开路径 /crates.io/<name>/...；
-                # dl 目标 https://mirrors.zju.edu.cn/crates.io 与此对应
+                # dl 使用 /crates.io/{crate}/{crate}-{version}.crate
                 - name: mirror-data
                   mountPath: /usr/share/nginx/html/crates.io
                   subPath: crates
+                  readOnly: true
+                - name: nginx-locations
+                  mountPath: /etc/nginx/locations
                   readOnly: true
               resources:
                 requests: {cpu: 50m, memory: 64Mi}
@@ -201,3 +204,28 @@ spec:
                 name: nginx-conf
             - name: tmp
               emptyDir: {}
+            - name: nginx-locations
+              configMap:
+                name: crates-io-nginx-locations
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crates-io-nginx-locations
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  crates-download.conf: |
+    # 索引与包体独立同步；仅合法包路径的缺失文件回退到固定官方 CDN。
+    # 包名必须与文件名前缀一致，目录浏览和其它 404 沿用共享配置。
+    location ~ ^/crates\.io/(?<crate_name>[A-Za-z0-9_-]+)/(?P=crate_name)-(?<crate_version>[0-9][A-Za-z0-9.+-]*)\.crate$ {
+        try_files $uri @crates_io_upstream;
+    }
+
+    location @crates_io_upstream {
+        # 缺包只是快照暂时落后；禁止缓存，避免包同步后仍绕过本站。
+        add_header Cache-Control "no-store" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        return 302 https://static.crates.io/crates/$crate_name/$crate_name-$crate_version.crate;
+    }

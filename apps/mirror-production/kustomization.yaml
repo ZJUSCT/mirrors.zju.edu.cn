@@ -17,6 +17,14 @@ resources:
   - resources/sealedsecret-openkylin-rsync.yaml
 
 configMapGenerator:
+  - name: crates-io-index-git-hook
+    files:
+      - crates-index-git-hook.sh=configs/crates-index-git-hook.sh
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: falcon
+        app.kubernetes.io/component: sync
   # 同步 PVC 首次创建时由 root 持有；在同步前仅修正根目录 owner。
   - name: sync-volume-init
     files:
