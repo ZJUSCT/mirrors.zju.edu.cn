@@ -11,4 +11,5 @@ resources:
   - nix-channels.yaml
   - pypi.yaml
   - rosdistro.yaml
+  - terra.yaml
   - winget-source.yaml
