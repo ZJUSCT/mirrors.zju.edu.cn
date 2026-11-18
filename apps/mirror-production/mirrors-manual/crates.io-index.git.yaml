@@ -14,7 +14,7 @@
 #       stack: ipv4
 #       surveyed_at: 2026-09-19
 #       metrics: IPv4 RTT 约 144ms；smart HTTP 探测约 0.59s
-#       note: 官方旧版 Git 索引；本地以裸仓库提供 smart HTTP，config.json 仍指向官方包体 CDN。
+#       note: 官方旧版 Git 索引；本地以裸仓库提供 smart HTTP，包体优先从本站下载，缺包临时跳转官方 CDN。
 apiVersion: mirrors.zjusct.io/v1alpha1
 kind: Mirror
 metadata:
@@ -109,6 +109,14 @@ spec:
               # false = git clone --bare：数据集根即裸仓库
               - name: GITSYNC_CHECKOUT
                 value: "false"
+              - name: GITSYNC_POST_FETCH_HOOK
+                value: /hooks/crates-index-git-hook.sh
+              - name: CRATES_PROXY
+                value: https://mirrors.zju.edu.cn/crates.io/{crate}/{crate}-{version}.crate
+              - name: CRATES_GITNAME
+                value: mirrors.zju.edu.cn
+              - name: CRATES_GITMAIL
+                value: mirrors@zju.edu.cn
               - name: TO
                 value: /data
               - name: LOGDIR
@@ -122,6 +130,9 @@ spec:
                 mountPath: /tmp
               - name: sync-data
                 mountPath: /data
+              - name: crates-index-git-hook
+                mountPath: /hooks
+                readOnly: true
             resources:
               requests: {cpu: 500m, memory: 512Mi}
         volumes:
@@ -130,6 +141,10 @@ spec:
               name: sync-volume-init
           - name: tmp
             emptyDir: {}
+          - name: crates-index-git-hook
+            configMap:
+              name: crates-io-index-git-hook
+              defaultMode: 0555
   publish:
     http:
       replicas: 1

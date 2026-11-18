@@ -43,6 +43,8 @@ jobs:
               - 'containers/archvsync/**'
             anaconda:
               - 'containers/anaconda/**'
+            crates-io:
+              - 'containers/crates-io/**'
             nix-channels:
               - 'containers/nix-channels/**'
             ostree:
@@ -67,7 +69,7 @@ jobs:
           set -eu
 
           if [ "$EVENT_NAME" = schedule ] || [ "$EVENT_NAME" = workflow_dispatch ] || [ "$WORKFLOW_CHANGED" = true ]; then
-              images='["git-http-backend","archvsync","anaconda","nix-channels","ostree","quick-fedora-mirror","rsync","terra","tsumugu"]'
+              images='["git-http-backend","archvsync","anaconda","crates-io","nix-channels","ostree","quick-fedora-mirror","rsync","terra","tsumugu"]'
           else
               images="$CHANGED_IMAGES"
           fi

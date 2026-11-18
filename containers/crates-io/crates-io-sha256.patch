@@ -1,0 +1,68 @@
+diff --git a/crates-io/sync-crates.py b/crates-io/sync-crates.py
+index 2855d75..8d23d92 100755
+--- a/crates-io/sync-crates.py
++++ b/crates-io/sync-crates.py
+@@ -1,10 +1,11 @@
+ #!/usr/bin/env python3
+ 
+ import argparse
++import hashlib
++import http.client
+ import io
+ import os
+ from pathlib import Path
+-import shutil
+ import subprocess
+ import sys
+ import json
+@@ -199,20 +200,12 @@ def download_url(base: str, name: str, version: str) -> str:
+     return f"{base.rstrip('/')}/{name}/{name}-{version}.crate"
+ 
+ 
+-# def verify_sha256(path: Path, checksum: str) -> bool:
+-#     digest = hashlib.sha256()
+-#     with path.open("rb") as handle:
+-#         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+-#             digest.update(chunk)
+-#     return digest.hexdigest() == checksum
+-
+-
+ def fetch_one(
+     crates_dir: Path,
+     base_url: str,
+     item: tuple[str, str, str],
+ ) -> str:
+-    name, version, _checksum = item
++    name, version, checksum = item
+     target = crate_target(crates_dir, name, version)
+     if target.exists():
+         return "present"
+@@ -233,15 +226,24 @@ def fetch_one(
+                 urllib.request.urlopen(request, timeout=timeout) as response,
+                 tmp_path.open("wb") as handle,
+             ):
+-                shutil.copyfileobj(response, handle, length=1024 * 1024)
+-            # if not verify_sha256(tmp_path, checksum):
+-            #     raise RuntimeError(f"checksum mismatch for {name} {version}")
++                digest = hashlib.sha256()
++                for chunk in iter(lambda: response.read(1024 * 1024), b""):
++                    handle.write(chunk)
++                    digest.update(chunk)
++            if digest.hexdigest() != checksum:
++                raise RuntimeError(f"checksum mismatch for {name} {version}")
+             os.replace(tmp_path, target)
+             return "downloaded"
+-        except (urllib.error.URLError, OSError, RuntimeError) as exc:
++        except (
++            urllib.error.URLError, OSError, RuntimeError, http.client.HTTPException
++        ) as exc:
+             last_error = exc
++            if isinstance(exc, urllib.error.HTTPError):
++                exc.close()
+             if attempt == retries:
+                 break
++        finally:
++            tmp_path.unlink(missing_ok=True)
+ 
+     raise RuntimeError(f"failed to fetch {name} {version} from {url}: {last_error}")
+ 
