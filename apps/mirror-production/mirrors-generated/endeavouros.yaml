@@ -117,7 +117,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: nginx
-              image: nginxinc/nginx-unprivileged:mainline-alpine-otel
+              image: registry.mirrors.zjusct.io/docker.io/nginx/nginx-unprivileged:mainline-otel
               imagePullPolicy: Always
               securityContext:
                 allowPrivilegeEscalation: false
