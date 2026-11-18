@@ -4,7 +4,6 @@ namespace: mirror-production
 resources:
   - resources/namespace.yaml
   - resources/gateway.yaml
-  - resources/securitypolicy.yaml
   - resources/certificate.yaml
   - resources/sealedsecret-falcon-github-oauth.yaml
   - resources/sealedsecret-grafana-credentials.yaml
