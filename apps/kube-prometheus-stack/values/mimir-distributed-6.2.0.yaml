@@ -382,11 +382,11 @@ mimir:
     limits:
       compactor_blocks_retention_period: 4320h # 180 天
       name_validation_scheme: utf8
-      # 当前集群约产生 2.5 万 samples/s，保留约两倍余量并允许启动/重放时突发写入。
-      ingestion_rate: 50000
-      ingestion_burst_size: 1000000
-      # kube-prometheus-stack 当前约有 61 万活跃序列，保留增长余量。
-      max_global_series_per_user: 1000000
+      # 去除 kubelet 控制面重复抓取后稳态约 3.4 万 samples/s（去重前约 4.4 万/s），保留约三倍余量并允许突发写入。
+      ingestion_rate: 100000
+      ingestion_burst_size: 2000000
+      # 去重后 Head 序列约 78–85 万（去重前已达 108–115 万），预留两倍以上增长与滚动周转余量。
+      max_global_series_per_user: 2000000
     # 关闭 Kafka 写入路径，回到经典 push -> ingester 架构
     ingest_storage:
       enabled: false
@@ -1000,10 +1000,11 @@ ingester:
   # -- Optionally set the scheduler for pods of the ingester
   schedulerName: ""
 
+  # 实测 100 万序列下每个 ingester 稳定占用约 480–500m CPU、3.9–4.4 GiB 内存。
   resources:
     requests:
-      cpu: 100m
-      memory: 512Mi
+      cpu: 500m
+      memory: 4Gi
 
   # Additional ingester container arguments, e.g. log level (debug, info, warn, error)
   extraArgs: {}
@@ -2578,8 +2579,8 @@ compactor:
       - ReadWriteOnce
 
     # compactor data Persistent Volume size
-    #
-    size: 2Gi
+    # 压实 2h/12h/24h block 时需同时暂存输入与输出块，chart 默认的 2Gi 会在 2h 块合并阶段写满。
+    size: 30Gi
 
     # Subdirectory of compactor data Persistent Volume to mount
     # Useful if the volume's root directory is not empty
