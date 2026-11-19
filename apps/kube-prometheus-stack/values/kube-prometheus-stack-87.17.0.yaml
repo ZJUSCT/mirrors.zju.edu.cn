@@ -2177,6 +2177,12 @@ kubelet:
       - action: drop
         sourceLabels: [__name__, le]
         regex: (csi_operations|storage_operation_duration)_seconds_bucket;(0.25|2.5|15|25|120|600)(\.0)?
+      # K3s 将控制面组件内嵌在 server 进程中并与 kubelet 共用 Prometheus Registry，
+      # 这些控制面指标已由 job="apiserver"（及对应 jobNameOverride）抓取；在此丢弃重复项，
+      # 避免约 30 万冗余活跃序列以及 apiserver_request:availability30d 的双倍计数。
+      - action: drop
+        sourceLabels: [__name__]
+        regex: (aggregator|apiextensions|apiserver|authentication|authorization|etcd|field_validation|grpc|kube_apiserver|kubeproxy|lasso|scheduler|watch_cache|workqueue)_.*
     # - sourceLabels: [__name__, image]
     #   separator: ;
     #   regex: container_([a-z_]+);
