@@ -1936,6 +1936,13 @@ kubeApiServer:
         sourceLabels:
           - __name__
           - le
+      # K3s 将 kubelet 与控制面共置于同一 server 进程，apiserver (:6443) 会连带暴露
+      # kubelet/CSI/volume 指标；这些指标已由 job="kubelet" (:10250) 抓取，且在 apiserver
+      # 侧会因缺少 honorLabels 而将 PVC namespace 改写为 default（原始值移至 exported_namespace）。
+      - action: drop
+        regex: (csi_operations|kubelet|plugin_manager|storage_operation|volume_manager|volume_operation)_.*
+        sourceLabels:
+          - __name__
     # - action: keep
     #   regex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'
     #   sourceLabels: [__name__]
