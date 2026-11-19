@@ -65,7 +65,12 @@ monitoring:
   # -- Whether to create the Prometheus rules for Ceph alerts
   createPrometheusRules: true
   # -- Edit Prometheus rules for Ceph alerts
-  prometheusRuleOverrides: {}
+  # Kairos 的 / 挂载为只读的 /dev/loop0 (ext2) 根镜像，可用空间固定为 0；
+  # 与 node-exporter 内置规则保持一致，仅在根文件系统可写时触发该告警，
+  # /var/lib/rook 等可写分区继续由 NodeFilesystemAlmostOutOfSpace 监控。
+  prometheusRuleOverrides:
+    CephNodeRootFilesystemFull:
+      expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100 < 5 and node_filesystem_readonly{mountpoint="/"} == 0
     # CephHealthWarning:
     #   disabled: true
     # NVMeoFHighWriteLatency:
