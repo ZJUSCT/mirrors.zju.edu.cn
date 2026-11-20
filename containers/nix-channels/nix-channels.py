@@ -90,7 +90,7 @@ class SyncConfig(BaseSettings):
     base_url: str = Field(default="", min_length=1, validate_default=True)
     # Keep the existing environment variable names for worker counts.
     query_threads: int = Field(default=4, ge=1)
-    threads: int = Field(default=8, ge=1)
+    threads: int = Field(default=16, ge=1)
     download_queue: int = Field(
         default_factory=lambda data: max(64, data["threads"] * 8), ge=1
     )
