@@ -2,7 +2,7 @@ metadata:
   name: trisquel
 info:
   description: 完全由自由软件组成的 Trisquel GNU/Linux 软件包仓库
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/trisquel/
+  upstream: rsync://mirror.csclub.uwaterloo.ca/trisquel/packages/
 sync:
   type: rsync
   interval: 24h
@@ -27,10 +27,19 @@ comment:
     note: 用户已通知 USTC；初始放行由会话按并发上限控制。官方源可行时验证后切换，否则先记录阻塞，不擅自改写内容。
     official_interval_candidate: 6h
   upstreams:
-  - url: rsync://rsync.mirrors.ustc.edu.cn/trisquel/
-    surveyed_at: '2026-10-02'
+  - url: rsync://mirror.csclub.uwaterloo.ca/trisquel/packages/
+    stack: dual
     status: selected
-    note: USTC 首次初始化源；容量 2.35 TiB 为站点报告值，非实际占用保证。
+    surveyed_at: '2026-11-21'
+    metrics: IPv6 RTT 271.7ms、ISO 同主机单流 5.57MB/s
+    note: '加拿大滑铁卢大学 CSClub 镜像；2026-11-21 实测根目录 14 项与本地 1:1 一致，Packages 更新至 2026-11-19，走 IPv6（-6）。'
+  - url: rsync://rsync.mirrors.ustc.edu.cn/trisquel/
+    surveyed_at: '2026-11-21'
+    status: bootstrap-complete
+    note: USTC 首次初始化源；现已切至 mirror.csclub.uwaterloo.ca。
   - url: rsync://rsync.trisquel.org/trisquel.packages/
-    surveyed_at: '2026-10-02'
-    note: 官方或项目认可的后续调查入口；只有验证协议、范围、签名和完整性后才能切换。
+    stack: ipv4
+    status: too-slow
+    surveyed_at: '2026-11-21'
+    metrics: 仅 IPv4（73.249.29.27），实测约 142KB/s
+    note: 官方主站无 AAAA 记录且单流仅约 142KB/s。

@@ -2,7 +2,7 @@ metadata:
   name: trisquel-images
 info:
   description: 完全由自由软件组成的 Trisquel GNU/Linux 安装镜像
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/trisquel-images/
+  upstream: rsync://mirror.csclub.uwaterloo.ca/trisquel/iso/
 sync:
   type: rsync
   interval: 24h
@@ -36,14 +36,22 @@ comment:
     note: USTC 首次同步与快照发布成功，Ready=True；自动同步仍暂停，本次只复核官方资料和端点，没有官方切源。
     official_interval_candidate: 24h
   upstreams:
+  - url: rsync://mirror.csclub.uwaterloo.ca/trisquel/iso/
+    stack: dual
+    status: selected
+    surveyed_at: '2026-11-21'
+    metrics: IPv6 5.57MB/s；全树 dry-run 115 项（38.87GB），deletes=0、transfers=0
+    note: '加拿大滑铁卢大学 CSClub 镜像；走 IPv6（-6），与现有存量完全对齐。'
   - url: rsync://rsync.mirrors.ustc.edu.cn/trisquel-images/
-    surveyed_at: '2026-10-03'
+    surveyed_at: '2026-11-21'
     status: bootstrap-complete
-    note: USTC 首次初始化种子；当前配置仍指向此源且暂停，不代表官方日常增量已经启用。
+    note: USTC 首次初始化种子；现已切至 mirror.csclub.uwaterloo.ca。
   - url: rsync://rsync.trisquel.org/trisquel.iso/
-    surveyed_at: '2026-10-03'
-    status: candidate-verified-readonly
-    note: 工作站有界非递归 rsync 根列表成功，尚未验证生产出口、完整删除集或真实官方同步。
+    stack: ipv4
+    status: too-slow
+    surveyed_at: '2026-11-21'
+    metrics: 仅 IPv4（73.249.29.27），实测约 142KB/s；dry-run 5s 通过
+    note: 官方主站无 AAAA 记录且单流仅约 142KB/s。
   verification:
     surveyed_at: '2026-10-03'
     checks:
