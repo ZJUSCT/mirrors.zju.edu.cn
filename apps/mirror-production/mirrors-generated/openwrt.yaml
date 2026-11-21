@@ -12,7 +12,7 @@ spec:
   sync:
     interval: 4h
     retryInterval: 15m
-    timeout: 4h
+    timeout: 72h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:

@@ -6,7 +6,7 @@ info:
 sync:
   type: rsync
   interval: 6h
-  timeout: 72h
+  timeout: 168h
   rsync:
     extra_args:
       - --block-size=8192
