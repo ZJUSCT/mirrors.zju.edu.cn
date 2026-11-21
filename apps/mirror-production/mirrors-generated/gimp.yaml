@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: GIMP 图像处理软件的源码与发布文件
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/gimp/
+    upstream: rsync://rsync.mirrorservice.org/ftp.gimp.org/pub/gimp/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/gimp/
+              - rsync://rsync.mirrorservice.org/ftp.gimp.org/pub/gimp/
               - /data/
             volumeMounts:
               - name: tmp
