@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: EPEL 7 软件包归档（保留 USTC 现有架构与目录范围）
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/epel-archive/
+    upstream: rsync://ftp-stud.hs-esslingen.de/fedora-archive/epel/./7/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,16 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/epel-archive/
+              - -R
+              - --include=/7/
+              - --include=/7/aarch64/***
+              - --include=/7/source/***
+              - --include=/7/SRPMS
+              - --include=/7/SRPMS/***
+              - --include=/7/x86_64/***
+              - --include=/7/state
+              - --exclude=*
+              - rsync://ftp-stud.hs-esslingen.de/fedora-archive/epel/./7/
               - /data/
             volumeMounts:
               - name: tmp

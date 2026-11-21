@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: Vim 官方 FTP 历史发布归档（上游已停止维护）
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/vim/
+    upstream: rsync://ftp.ca.vim.org/vim/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/vim/
+              - rsync://ftp.ca.vim.org/vim/
               - /data/
             volumeMounts:
               - name: tmp

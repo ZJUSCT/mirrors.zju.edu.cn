@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: 基于 Debian 的 Live Linux 发行版 KNOPPIX
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/knoppix/
+    upstream: rsync://ftp.uni-kl.de/knoppix/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/knoppix/
+              - rsync://ftp.uni-kl.de/knoppix/
               - /data/
             volumeMounts:
               - name: tmp
