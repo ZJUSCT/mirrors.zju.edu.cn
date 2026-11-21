@@ -2,10 +2,10 @@ metadata:
   name: kde-application
 info:
   description: KDE 应用程序源码镜像
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/kde-application/
+  upstream: rsync://rsync.kde.org/applicationdata/
 sync:
   type: rsync
-  interval: 24h
+  interval: 2h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -27,10 +27,13 @@ comment:
     note: 用户已通知 USTC；初始放行由会话按并发上限控制。官方源可行时验证后切换，否则先记录阻塞，不擅自改写内容。
     official_interval_candidate: 2h
   upstreams:
-  - url: rsync://rsync.mirrors.ustc.edu.cn/kde-application/
-    surveyed_at: '2026-10-02'
-    status: selected
-    note: USTC 首次初始化源；容量 683.35 GiB 为站点报告值，非实际占用保证。
   - url: rsync://rsync.kde.org/applicationdata/
-    surveyed_at: '2026-10-02'
-    note: 官方或项目认可的后续调查入口；只有验证协议、范围、签名和完整性后才能切换。
+    stack: dual
+    status: selected
+    surveyed_at: '2026-11-21'
+    metrics: IPv6 6.1MB/s、IPv4 3.4MB/s
+    note: 'KDE 官方 applicationdata 入口；IPv6 可达且根目录 14 项与存量 1:1 一致，按官方 ftp_howto 设 interval=2h。'
+  - url: rsync://rsync.mirrors.ustc.edu.cn/kde-application/
+    surveyed_at: '2026-11-21'
+    status: bootstrap-complete
+    note: USTC 首次初始化源（上轮均速 2.45MB/s）；现已切换至官方源。
