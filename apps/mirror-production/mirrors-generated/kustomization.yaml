@@ -45,7 +45,6 @@ resources:
   - docker-ce.yaml
   - eclipse.yaml
   - elasticstack.yaml
-  - elpa.yaml
   - elrepo.yaml
   - elvish.yaml
   - endeavouros.yaml
