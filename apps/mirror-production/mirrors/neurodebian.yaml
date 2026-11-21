@@ -2,11 +2,10 @@ metadata:
   name: neurodebian
 info:
   description: 面向神经科学研究的 Debian 软件仓库与虚拟机镜像
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/neurodebian/ # 仅首次初始化；完成后切换 comment.upstreams 中的官方源
+  upstream: rsync://mirror.aarnet.edu.au/neurodebian/
 sync:
   type: rsync
-  # USTC 初始化期间按每日一次；官方源日常周期见下方注释。
-  interval: 24h
+  interval: 6h
   timeout: 24h
   # WaitForFirstConsumer 首次落盘到 s1；PVC 绑定后可移除此选择器。
   nodeSelector:
@@ -27,26 +26,25 @@ comment:
     - FAQ 标出仓库签名密钥 0x439754ED1F42AA2C；根列表显示 .timestamp、dists/、extracts/、pool/、vm/，应保持这些范围和 APT 元数据边界。
     - 未查到官方固定同步周期；6h 是本站本地排程候选，不是官方要求。
   bootstrap:
-    status: succeeded-and-published-paused
+    status: migrated-from-ustc
     job: neurodebian-sync-1790954927
     succeeded_at: '2026-10-02T19:39:35Z'
     published_at: '2026-10-02T19:39:45Z'
-    note: USTC bootstrap source neurodebian-sync-1790954927 于 2026-10-02T19:39:35Z UTC 成功，快照发布于 2026-10-02T19:39:45Z UTC；mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。此
-      URL 只记录首次初始化来源，不表示已切换到官方源。
-    official_cutover: 未执行；须先按下列候选源完成范围、删除集、新鲜度和完整性验收。
+    note: 2026-10-02由USTC初始化成功并发布；2026-11-22切换至 rsync://mirror.aarnet.edu.au/neurodebian/（保留 -6，interval=6h）。
   upstreams:
+  - url: rsync://mirror.aarnet.edu.au/neurodebian/
+    surveyed_at: '2026-11-22'
+    status: active-verified
+    note: 澳大利亚 AARNet 公共镜像；s1 节点 IPv6(-6) 测速 3.15MB/s，完整 dry-run 37s（28,586 文件 / 84.95G，0 新增，0 删除，仅同步 11B .timestamp）。
+  - url: rsync://neuro.debian.net/neurodebian/
+    surveyed_at: '2026-11-22'
+    status: candidate-ipv4-no-dryrun
+    note: 官方主站无 IPv6、IPv4 测速 1.67MB/s 且服务器拒绝 --dry-run (-n)。
   - url: rsync://rsync.mirrors.ustc.edu.cn/neurodebian/
     surveyed_at: '2026-10-03'
-    status: bootstrap-complete
-    note: USTC 仅作为本次首次同步种子；该镜像的 USTC bootstrap rsync 已成功，自动增量仍暂停。
-  - url: rsync://neuro.debian.net/neurodebian/
-    surveyed_at: '2026-10-03'
-    status: candidate-unverified
-    note: 官方 daemon 根列表 exit 0 且含 .timestamp/dists/extracts/pool/vm；尚未执行生产 dry-run、签名验收或真实切换。
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-22 已迁移至 mirror.aarnet.edu.au。
   verification:
-    surveyed_at: '2026-10-03'
+    surveyed_at: '2026-11-22'
     checks:
-    - 官方 FAQ HTTP 200；2026-10-03 04:10:02（工作站本地时间） 的 .timestamp 和 2026-09-28/08-04 的内容目录可见。
-    - 签名锚点按 FAQ 记录为 0x439754ED1F42AA2C；切换前仍须在同步快照中用该项目密钥验证 Release。
-    caveats:
-    - FAQ 未规定固定轮询周期；6h 是本站候选。
+    - 2026-11-22 在 s1.mirrors.zjusct.io 对只读挂载的 neurodebian-sync（76G 已用 / 85G 可用）执行 IPv6(-6) dry-run 耗时 37s 退出 0：28,586 文件 / 84.95G，0 新增、0 删除。

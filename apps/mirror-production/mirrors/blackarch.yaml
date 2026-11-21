@@ -2,11 +2,10 @@ metadata:
   name: blackarch
 info:
   description: 面向渗透测试与安全研究的 Arch Linux 衍生发行版
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/blackarch/ # 仅首次初始化；完成后切换 comment.upstreams 中的官方源
+  upstream: rsync://rsync.mirrorservice.org/blackarch.org/blackarch/
 sync:
   type: rsync
-  # USTC 初始化期间按每日一次；官方源日常周期见下方注释。
-  interval: 24h
+  interval: 6h
   timeout: 24h
   # WaitForFirstConsumer 首次落盘到 s1；PVC 绑定后可移除此选择器。
   nodeSelector:
@@ -27,25 +26,25 @@ comment:
     - USTC 首次树缺少 torrent/；切换候选源前必须保留官方完整顶层范围和安全链接，不能让当前快照的缺项掩盖删除差异。
     - 未查到官方固定同步周期；6h 是本站本地排程候选，不是官方要求。
   bootstrap:
-    status: succeeded-and-published-paused
+    status: migrated-from-ustc
     job: blackarch-sync-1790957622
     succeeded_at: '2026-10-02T18:12:09Z'
     published_at: '2026-10-02T18:12:18Z'
-    note: USTC bootstrap source blackarch-sync-1790957622 于 2026-10-02T18:12:09Z UTC 成功，快照发布于 2026-10-02T18:12:18Z UTC；mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。此
-      URL 只记录首次初始化来源，不表示已切换到官方源。
-    official_cutover: 未执行；须先按下列候选源完成范围、删除集、新鲜度和完整性验收。
+    note: 2026-10-02由USTC初始化成功并发布；2026-11-22切换至官方列表中的 UK Mirror Service rsync://rsync.mirrorservice.org/blackarch.org/blackarch/（保留 -6，interval=6h）。
   upstreams:
+  - url: rsync://rsync.mirrorservice.org/blackarch.org/blackarch/
+    surveyed_at: '2026-11-22'
+    status: active-verified
+    note: 官方镜像表收录站点；s1 节点 IPv6(-6) 测速 4.29MB/s，完整 dry-run 8s（19,741 文件 / 101.09G，+5 / 667.16K，0 删除）。
+  - url: rsync://ftp.halifax.rwth-aachen.de/blackarch/
+    surveyed_at: '2026-11-22'
+    status: candidate-verified-readonly
+    note: 官方镜像表收录站点；s1 节点 IPv6(-6) 测速 3.72MB/s，dry-run 5s（19,746 文件 / 101.09G，+10，0 删除）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/blackarch/
     surveyed_at: '2026-10-03'
-    status: bootstrap-complete
-    note: USTC 仅作为本次首次同步种子；该镜像的 USTC bootstrap rsync 已成功，自动增量仍暂停。
-  - url: rsync://blackarch.org/blackarch/
-    surveyed_at: '2026-10-03'
-    status: candidate-unverified
-    note: 官方 daemon 可列出完整根；尚未从该源执行生产 dry-run/真实同步，因此不宣称官方切换。
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-22 已迁移至 mirrorservice。
   verification:
-    surveyed_at: '2026-10-03'
+    surveyed_at: '2026-11-22'
     checks:
-    - 官方根列表探测成功（2026-10-03）；lastupdate 时间为 2026-09-28，目录含 blackarch、iso、ova、torrent。
-    caveats:
-    - 官方页面未规定镜像轮询周期；当前 6h 只是本地候选。
+    - 2026-11-22 在 s1.mirrors.zjusct.io 对只读挂载的 blackarch-sync（90G 已用 / 111G 可用）执行 IPv6(-6) dry-run 耗时 8s 退出 0：19,741 文件 / 101.09G，+5（667.16K），0 删除；blackarch.org 主域名无 IPv6 解析。
