@@ -2,10 +2,11 @@ metadata:
   name: armbian-releases
 info:
   description: Armbian 单板计算机系统镜像
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/armbian-dl/
+  upstream: rsync://rsync.armbian.com/dl/ # Armbian 官方 dl 模块（ipv6: false 避开失效/低速 IPv6 节点）
 sync:
   type: rsync
-  interval: 24h
+  ipv6: false # 2605:6400:: 873 超时、2001:bb8:: 仅 ~500 KB/s，不传 -6 由双栈优先走 IPv4
+  interval: 4h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -17,36 +18,34 @@ publish:
     replicas: 1
 comment:
   official:
-    surveyed_at: '2026-10-05'
+    surveyed_at: '2026-11-21'
     docs:
     - https://docs.armbian.com/contribute/run-a-mirror/
+    - https://docs.armbian.com/status/mirrors/
     policy:
-    - 官方文档要求镜像提供可访问的 HTTPS（也接受 HTTP）主机，并从官方 rsync 模块拉取要发布的内容。
-    - 官方当前镜像模块为 dl（当前镜像）、apt（软件包）、archive 和 oldarchive；本条目对应 dl，命令为 rsync -av rsync://rsync.armbian.com/dl，文档标注所需空间约 556G。
-    - 官方要求通过 cron 每 2–4 小时同步一次；同步完成后需通过联系表单提交镜像，以加入官方 redirector。当前 24h 配置不是官方周期，不能据此宣称满足官方要求。
-    - 本条目只覆盖 dl；Armbian 的 apt 是不同数据集，不能把两个模块合并或用 apt 条目替代 dl。
-  bootstrap:
-    status: succeeded-and-published-paused
-    job: armbian-releases-sync-1791206585
-    succeeded_at: '2026-10-05T18:37:53Z'
-    published_at: '2026-10-05T18:38:03Z'
-    note: 本地 rollout-live.json 记录 Ready=True、Degraded=False，activeSnapshot=armbian-releases-snap-1791206585，sizeBytes=566246768640；自动同步随后暂停。
-    official_cutover_blocker: 当前生产清单仍使用 USTC bootstrap 源并设置 24h；官方要求 2–4h，并要求运行后通过联系表单登记 redirector。保存的 2026-09-30 证据显示 rsync.armbian.com
-      IPv4 成功、IPv6 失败，因此切源需固定 IPv4 起步并在生产容器复核。
-    action: 保留已发布 USTC 快照并暂停自动增量；在调整周期、完成生产 IPv4 验证并通过官方联系表单登记前，不解除暂停或宣称已加入官方 redirector。
+    - 官方要求镜像提供可访问的 HTTPS（也接受 HTTP）主机，并从官方 rsync.armbian.com/dl 模块每 2–4 小时同步一次。
+    - 同步追齐并稳定运行后，需通过官方联系表单登记以加入官方 redirector。
+    - 本条目只覆盖 dl（全树约 635.83 GiB / 3,168 个文件）；Armbian apt 由独立的 armbian 条目覆盖，不合并。
   upstreams:
+  - url: rsync://rsync.armbian.com/dl/
+    stack: dual
+    surveyed_at: '2026-11-21'
+    status: selected
+    metrics: 's1 实测 3 个 IPv4 全通(185.94.135.238 6.77 MB/s, 23.186.113.5 6.99 MB/s, 193.40.103.61 4.12 MB/s)；IPv6 中 2605:6400:: 873 超时、2001:bb8:: 仅 514 KB/s；dry-run 51s 完成（3,168 文件 / 635.83 GiB）'
+    note: '官方指定源；配置 ipv6: false 去掉 -6 后 3/3 次探测均正常连接，周期调整为 4h 对齐官方要求；切换追齐需补传 +542 文件/193.36 GiB 并清理 432 个过期镜像。'
+  - url: rsync://mirror.aarnet.edu.au/armbian-dl/
+    stack: dual
+    surveyed_at: '2026-11-21'
+    status: rejected
+    metrics: 'IPv6 实测 51.5–73.1 MB/s，但最新镜像停留在 2026-08-22 (Armbian_26.8.3)'
+    note: '内容比官方滞后约 3 个月（缺少 26.11.2），不予采用。'
+  - url: rsync://mirrors.dotsrc.org/armbian-dl/
+    stack: dual
+    surveyed_at: '2026-11-21'
+    status: rejected
+    metrics: 'IPv6 873 可连，但 10s 内未进入有效传输即超时'
+    note: '连接吞吐过慢，不予采用。'
   - url: rsync://rsync.mirrors.ustc.edu.cn/armbian-dl/
     surveyed_at: '2026-10-02'
-    status: bootstrap-complete
-    note: USTC bootstrap 数据集；expanded-distros.json 报告 563.05 GiB，根布局与 armbian dl 对应；当前自动同步暂停。
-  - url: rsync://rsync.armbian.com/dl/
-    surveyed_at: '2026-09-30'
-    status: official-candidate-ipv4-verified
-    note: 项目保存的 expanded-distros.md 记录官方 IPv4 根及生产探测成功、IPv6 失败；未在本次 review 中重新传输数据。
-  verification:
-    surveyed_at: '2026-10-05'
-    checks:
-    - 已读取官方 run-a-mirror 文档，确认 HTTPS/HTTP 可达、rsync 模块范围、2–4h cron 周期及联系表单登记要求。
-    - 仅使用项目目录中的本地证据：expanded-distros.json、expanded-distros.md 与 rollout-live.json；未修改镜像配置，未执行同步传输或集群切换。
-    - 保存的最新同步作业 armbian-releases-sync-1791206585 成功并发布快照；公开服务状态为 Ready=True。
-    remaining: 需要在生产同步容器以官方 dl 源进行 IPv4 连接和范围核对，按官方 2–4h 周期运行，并通过官方联系表单登记后再考虑切换；IPv6 失败仍是已知限制。
+    status: rejected
+    note: '历史初始化源；近期同步频繁触发 rsync-proxy Server queue is full，现已切回官方 dl 源。'
