@@ -2,11 +2,10 @@ metadata:
   name: libreoffice
 info:
   description: LibreOffice 开源办公套件发布文件
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/tdf/ # 仅首次初始化；完成后切换 comment.upstreams 中的官方源
+  upstream: rsync://rsync.documentfoundation.org/tdf-pub/
 sync:
   type: rsync
-  # USTC 初始化期间按每日一次；官方源日常周期见下方注释。
-  interval: 24h
+  interval: 6h
   timeout: 24h
   # WaitForFirstConsumer 首次落盘到 s1；PVC 绑定后可移除此选择器。
   nodeSelector:
@@ -27,28 +26,24 @@ comment:
     policy:
     - Document Foundation 明确公共 rsync 源为 rsync://rsync.documentfoundation.org/tdf-pub/；staging 源需授权，不能用于本次公开镜像。
     - 官方要求镜像同步到顶层 tdf/，保留原目录层级，并提供 HTTPS；公共源建议每 4–8h。镜像登记需向 hostmaster@documentfoundation.org 提交运营者、tdf HTTPS/FTP/rsync URL、联系方式和带宽信息。
-    - 官方对 public repository 建议每 4–8h 同步；本站 6h 候选符合该建议，当前初始化配置仍为 24h 且暂停。
+    - 官方对 public repository 建议每 4–8h 同步；本站已配置为 6h，符合官方建议。
   bootstrap:
-    status: succeeded-and-published-paused
+    status: migrated-from-ustc
     job: libreoffice-sync-1790969988
     succeeded_at: '2026-10-02T22:14:56Z'
     published_at: '2026-10-02T22:15:05Z'
-    note: USTC bootstrap source libreoffice-sync-1790969988 于 2026-10-02T22:14:56Z UTC 成功，快照发布于 2026-10-02T22:15:05Z UTC；mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。此
-      URL 只记录首次初始化来源，不表示已切换到官方源。
-    official_cutover: 未执行；须先按下列候选源完成范围、删除集、新鲜度和完整性验收。
+    note: 2026-10-02由USTC初始化成功并发布；2026-11-21切换至官方公共源 rsync://rsync.documentfoundation.org/tdf-pub/（保留 -6，interval=6h）。
   upstreams:
+  - url: rsync://rsync.documentfoundation.org/tdf-pub/
+    surveyed_at: '2026-11-21'
+    status: active-verified
+    note: 官方公共 daemon；s1 节点 IPv6(-6) 实测 55M .dmg 3.72MB/s（默认模式 25s 超时，必须保留 -6），完整 dry-run 33s（35,554 文件 / 167.31G，+2,516 / 6.69G，0 删除）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/tdf/
     surveyed_at: '2026-10-03'
-    status: bootstrap-complete
-    note: USTC 仅作为本次首次同步种子；该镜像的 USTC bootstrap rsync 已成功，自动增量仍暂停。
-  - url: rsync://rsync.documentfoundation.org/tdf-pub/
-    surveyed_at: '2026-10-03'
-    status: candidate-unverified-registration-required
-    note: 官方公共 daemon 根列表 exit 0，根含 TIMESTAMP 和 libreoffice/；尚未完成 HTTPS 公网路径登记、生产 dry-run/真实同步，不能宣布官方 cutover。
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-21 已迁移至官方源。
   verification:
-    surveyed_at: '2026-10-03'
+    surveyed_at: '2026-11-21'
     checks:
-    - 公共根列表成功；TIMESTAMP 为 2026-10-03 03:42:01，libreoffice/ 子树可见。
-    - 官方文档的 4–8h 建议适用于 public repository；本地 6h 候选与之相容但仍待登记和验收。
-    caveats:
-    - 必须以公开 /tdf/ 顶层提供 HTTPS；现有 ZJU 发布配置的路径映射需父任务另行确认。staging 源不是公开候选。
+    - 2026-11-21 在 s1.mirrors.zjusct.io 验证官方 rsync://rsync.documentfoundation.org/tdf-pub/ IPv6(-6) 连通（TIMESTAMP、libreoffice/ 正常），对只读挂载的 libreoffice-sync（137G 已用 / 164G 可用）完整 dry-run 耗时 33s 退出 0：35,554 文件 / 167.31G，0 删除。
+    - 本站通过 publish.http.subPath=libreoffice 对外提供 /libreoffice/ 访问；若后续向 TDF 申请加入 MirrorBrain 官方列表，需按官方要求确认 /tdf/ 顶层路径与登记邮件。
