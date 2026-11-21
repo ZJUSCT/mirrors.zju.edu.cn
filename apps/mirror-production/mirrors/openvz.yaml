@@ -2,10 +2,10 @@ metadata:
   name: openvz
 info:
   description: OpenVZ 容器虚拟化平台的模板与软件包
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/openvz/
+  upstream: rsync://mirror-hk.koddos.net/openvz/
 sync:
   type: rsync
-  interval: 24h
+  interval: 6h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -45,10 +45,16 @@ comment:
     official_interval_candidate: 1h
     official_cutover_state: documented-rsync-candidate-pending-scope-discrepancy-and-production-validation
   upstreams:
+  - url: rsync://mirror-hk.koddos.net/openvz/
+    surveyed_at: '2026-11-21'
+    status: selected
+    stack: dual
+    metrics: IPv6 RTT 67.0ms、28.4MB/s；IPv4 36.5MB/s
+    note: '香港镜像，支持 IPv6（-6）；根目录结构与官方一致且 timestamp 为当日最新。'
   - url: rsync://rsync.mirrors.ustc.edu.cn/openvz/
-    surveyed_at: '2026-10-05'
-    status: bootstrap-complete
-    note: 当前仍为USTC且暂停；未执行新增USTC连接或rsync探测。
+    surveyed_at: '2026-11-21'
+    status: obsolete
+    note: '2026-10-05 首次同步来源；2026-11-21 实测 rsync 返回 @ERROR: chdir failed。'
   - url: rsync://download.openvz.org/openvz-download/
     surveyed_at: '2026-10-05'
     status: official-documented-not-rsync-probed
