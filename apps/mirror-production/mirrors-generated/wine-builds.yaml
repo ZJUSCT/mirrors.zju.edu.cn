@@ -8,16 +8,16 @@ metadata:
 spec:
   info:
     description: 在类 Unix 系统上运行 Windows 应用的 Wine 软件包
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/wine-builds/
+    upstream: https://dl.winehq.org/wine-builds/
   sync:
     interval: 24h
     retryInterval: 15m
-    timeout: 24h
+    timeout: 168h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:
       spec:
-        # 仅用于 WaitForFirstConsumer PVC 的首次落盘；PV 绑定后应从清单移除
+        # 仅用于首次落盘；绑定后由 PVC 的 nodeAffinity 保持位置
         nodeSelector:
           kubernetes.io/hostname: s1.mirrors.zjusct.io
         securityContext:
@@ -53,38 +53,41 @@ spec:
               requests: {cpu: 10m, memory: 16Mi}
               limits: {cpu: 100m, memory: 32Mi}
         containers:
-          - name: rsync
-            image: ghcr.io/zjusct/rsync:latest
+          - name: tsumugu
+            image: ghcr.io/zjusct/tsumugu:latest
             imagePullPolicy: Always
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: [ALL]
               readOnlyRootFilesystem: true
-            command: [rsync]
+            command: [tsumugu]
             args:
-              - -aH
-              - "-6"
-              - --no-o
-              - --no-g
-              - --stats
-              - -h
-              - --itemize-changes
-              - --partial-dir=.rsync-partial
-              - --filter=P .rsync-partial/
-              - --exclude=.~tmp~/
-              - --delete
-              - --delete-excluded
-              - --safe-links
-              - --timeout=120
-              - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/wine-builds/
+              - sync
+              - --parser
+              - apache-f2
+              - --threads
+              - '12'
+              - --max-delete
+              - '100'
+              - --exclusion-v2
+              - --exclude
+              - ^/(debian/dists/bookworm|ubuntu/dists/jammy)/main/binary-all(/|$)
+              - --include
+              - ^/$
+              - --include
+              - ^/(debian|fedora|ubuntu)(/|$)
+              - --include
+              - '^/(Release[.]key|winehq[.]key)$'
+              - --exclude
+              - .
+              - 'https://dl.winehq.org/wine-builds/'
               - /data/
             volumeMounts:
-              - name: tmp
-                mountPath: /tmp
               - name: sync-data
                 mountPath: /data
+              - name: tmp
+                mountPath: /tmp
             resources:
               requests: {cpu: 500m, memory: 512Mi}
               limits: {cpu: "4", memory: 4Gi}
@@ -101,7 +104,7 @@ spec:
       accessModes: [ReadWriteOnce]
       resources:
         requests:
-          storage: 244Gi
+          storage: 2Ti
       volumeMode: Filesystem
     volumeSnapshotClassName: openebs-zfs-snapshot
     retention: 1

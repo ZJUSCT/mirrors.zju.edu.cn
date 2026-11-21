@@ -2,15 +2,31 @@ metadata:
   name: wine-builds
 info:
   description: 在类 Unix 系统上运行 Windows 应用的 Wine 软件包
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/wine-builds/
+  upstream: https://dl.winehq.org/wine-builds/
 sync:
-  type: rsync
+  type: tsumugu
   interval: 24h
-  timeout: 24h
+  timeout: 168h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
+  tsumugu:
+    parser: apache-f2
+    threads: 12
+    max_delete: 100
+    extra_args:
+      - --exclusion-v2
+      - --exclude
+      - ^/(debian/dists/bookworm|ubuntu/dists/jammy)/main/binary-all(/|$)
+      - --include
+      - ^/$
+      - --include
+      - ^/(debian|fedora|ubuntu)(/|$)
+      - --include
+      - ^/(Release[.]key|winehq[.]key)$
+      - --exclude
+      - .
 storage:
-  size: 244Gi
+  size: 2Ti
 publish:
   http:
     tier: small
@@ -52,11 +68,11 @@ comment:
       - --exclude
       - .
   upstreams:
-  - url: rsync://rsync.mirrors.ustc.edu.cn/wine-builds/
-    surveyed_at: '2026-10-03'
-    status: selected
-    note: 仅指已完成的首次同步源；本轮未访问 USTC rsync。
   - url: https://dl.winehq.org/wine-builds/
-    surveyed_at: '2026-10-03'
-    status: candidate-validated
-    note: 现有 tsumugu/apache-f2 目录实测通过，范围过滤与 APT 签名样本验证完成；仍需工作卷全树预检及正式同步发布。必须保持 debian/fedora/ubuntu 与两个根密钥子集。
+    surveyed_at: '2026-11-21'
+    status: selected
+    note: 'USTC 已撤下 wine-builds（@ERROR: chdir failed）；切换至官方 HTTPS + tsumugu/apache-f2（threads 12，timeout 168h，扩容至 2Ti），排除 404 的空 binary-all 目录及 android/macosx/mageia。'
+  - url: rsync://rsync.mirrors.ustc.edu.cn/wine-builds/
+    surveyed_at: '2026-11-21'
+    status: obsolete
+    note: '仅用于 2026-10-03 首次同步；2026-11-21 实测前端页面已下线且 rsync 返回 @ERROR: chdir failed。'

@@ -2,15 +2,27 @@ metadata:
   name: winehq
 info:
   description: Wine 源码及相关发布文件
-  upstream: rsync://mirrors.tuna.tsinghua.edu.cn/winehq/
+  upstream: https://dl.winehq.org/
 sync:
-  type: rsync
+  type: tsumugu
   interval: 24h
-  timeout: 72h
+  timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
+  tsumugu:
+    parser: apache-f2
+    threads: 8
+    max_delete: 100
+    extra_args:
+      - --exclusion-v2
+      - --include
+      - ^/$
+      - --include
+      - ^/(wine|mono|other|vkd3d)(/|$)
+      - --exclude
+      - .
 storage:
-  size: 88Gi
+  size: 128Gi
 publish:
   http:
     tier: small
@@ -32,11 +44,16 @@ comment:
       前缀，因此不能恢复自动同步。
     - 官方没有公开固定同步间隔；Wine 发布和辅助运行时可能不规则，24h 为本站配置建议。
   upstreams:
-  - url: rsync://mirrors.tuna.tsinghua.edu.cn/winehq/
+  - url: https://dl.winehq.org/
     stack: dual
     status: selected
-    surveyed_at: '2026-10-03'
-    note: TUNA 首轮初始化已成功；仅作为已完成初始化来源，当前保持暂停。
+    surveyed_at: '2026-11-21'
+    note: 使用 tsumugu/apache-f2 从官方父根保留 wine/、mono/、other/、vkd3d/（排除已独立部署的 wine-builds/），与原有 /winehq/ 目录布局完全一致；2026-11-21 dry-run 验证 4,084 对象、60.42 GiB。
+  - url: rsync://mirrors.tuna.tsinghua.edu.cn/winehq/
+    stack: dual
+    status: obsolete
+    surveyed_at: '2026-11-21'
+    note: 因官方 ftp.winehq.org 关停，TUNA/NJU 等国内上游停更在 2025 年 2–3 月（wine-mono 停在 9.4.0、wine/source 停在 10.x）。
   - url: https://dl.winehq.org/wine/
     stack: dual
     status: scope-incompatible
