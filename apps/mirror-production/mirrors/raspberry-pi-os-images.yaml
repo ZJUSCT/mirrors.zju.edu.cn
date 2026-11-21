@@ -2,13 +2,28 @@ metadata:
   name: raspberry-pi-os-images
 info:
   description: Raspberry Pi OS（原 Raspbian）的安装镜像
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/raspberry-pi-os-images/
+  upstream: https://downloads.raspberrypi.org/
 sync:
-  type: rsync
+  type: tsumugu
   interval: 24h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
+  tsumugu:
+    parser: apache-f2
+    threads: 8
+    max_delete: 100
+    extra_args:
+      - --exclusion-v2
+      - --include
+      - ^/$
+      # 官方根另有 46 项无关目录/镜像，仅白名单保留现有已发布的 14 个目录与教育手册，避免全根扩容
+      - --include
+      - ^/(imager|raspios_arm64|raspios_armhf|raspios_full_arm64|raspios_full_armhf|raspios_lite_arm64|raspios_lite_armhf|raspios_oldstable_arm64|raspios_oldstable_armhf|raspios_oldstable_full_arm64|raspios_oldstable_full_armhf|raspios_oldstable_lite_arm64|raspios_oldstable_lite_armhf|rpd_x86)(/|$)
+      - --include
+      - ^/Raspberry_Pi_Education_Manual\.pdf$
+      - --exclude
+      - ^/
 storage:
   size: 692Gi
 publish:
@@ -40,14 +55,15 @@ comment:
     official_interval_candidate: 24h
     official_cutover_state: viable-existing-tsumugu-pending-filtered-production-validation
   upstreams:
-  - url: rsync://rsync.mirrors.ustc.edu.cn/raspberry-pi-os-images/
-    surveyed_at: '2026-10-04'
-    status: bootstrap-complete
-    note: 当前仍为USTC且暂停；与保存的USTC根列表及当前ZJU公开目录对照，根15项完全一致。本轮未重新同步或切源。
   - url: https://downloads.raspberrypi.org/
-    surveyed_at: '2026-10-04'
-    status: candidate-verified-readonly
-    note: 官方HTTPS源；apache-f2解析与exclusion-v2允许列表在本机CLI通过，根保留15项、排除46项。尚未验证生产容器网络、全树链接/隐藏文件/大小与删除集，不把本机非递归列表等同正式同步成功。
+    surveyed_at: '2026-11-21'
+    status: selected
+    metrics: 单连接 4.62MB/s、8 并发 28.9MB/s；全树 dry-run 28s（3,698 对象 / 366.47GiB，not_deleting=0）
+    note: '官方 HTTPS + tsumugu/apache-f2（threads 8）；按精确 15 项白名单过滤，与原有范围一致。'
+  - url: rsync://rsync.mirrors.ustc.edu.cn/raspberry-pi-os-images/
+    surveyed_at: '2026-11-21'
+    status: bootstrap-complete
+    note: 'USTC 首次初始化源（2026-11-21 日志遇 Server queue is full）；现已切至官方 HTTPS。'
   verification:
     surveyed_at: '2026-10-04'
     checks:
