@@ -8,8 +8,9 @@ EOF
 
 RUN python -m pip install --no-cache-dir beautifulsoup4 "httpx2[http2]" pydantic-settings tenacity
 
-COPY --chmod=0644 nix-channels.py /usr/local/lib/nix-channels.py
+COPY nix_channels /usr/local/lib/nix-channels/nix_channels
 
-ENV HOME=/tmp
+ENV HOME=/tmp \
+    PYTHONPATH=/usr/local/lib/nix-channels
 WORKDIR /data
 USER 65532:65532
