@@ -12,8 +12,11 @@ resources:
   - julia-releases.yaml
   - libnvidia-container.yaml
   - nix-channels.yaml
+  - packaging-gitea-act-runner.yaml
+  - packaging-gitea.yaml
   - pypi.yaml
   - rosdistro.yaml
+  - termux-its-pointless.yaml
   - terra.yaml
   - winget-fonts.yaml
   - winget-source.yaml

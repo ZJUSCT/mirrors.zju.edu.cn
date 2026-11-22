@@ -123,8 +123,6 @@ resources:
   - openwrt.yaml
   - osdn.yaml
   - osmc.yaml
-  - packaging-gitea.yaml
-  - packaging-gitea-act-runner.yaml
   - packman.yaml
   - parrot.yaml
   - postgresql.yaml
@@ -153,7 +151,6 @@ resources:
   - sury.yaml
   - tailscale.yaml
   - termux.yaml
-  - termux-its-pointless.yaml
   - tex-historic-archive.yaml
   - tlpretest.yaml
   - trisquel.yaml
