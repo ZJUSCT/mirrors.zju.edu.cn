@@ -73,7 +73,6 @@ resources:
   - gnu-alpha.yaml
   - hackage.yaml
   - immortalwrt.yaml
-  - incus.yaml
   - influxdata.yaml
   - ius.yaml
   - jenkins.yaml
@@ -175,7 +174,6 @@ resources:
   - vyos.yaml
   - wine-builds.yaml
   - winehq.yaml
-  - winget-fonts.yaml
   - wireshark.yaml
   - xanmod.yaml
   - xtom.yaml

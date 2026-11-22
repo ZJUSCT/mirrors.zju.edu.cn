@@ -1,3 +1,5 @@
+# 由 mirrors/incus.yaml 迁入：pkgs.zabbly.com/incus/ 根目录 403，但实际唯一已发布的 stable/ 子目录
+# 开启完整 Nginx autoindex；直接以 /data/stable/ 为 tsumugu 目标以保持对外路径 /incus/stable/ 不变。
 apiVersion: mirrors.zjusct.io/v1alpha1
 kind: Mirror
 metadata:
@@ -8,16 +10,15 @@ metadata:
 spec:
   info:
     description: Incus 系统容器与虚拟机管理器的软件包
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/incus/
+    upstream: https://pkgs.zabbly.com/incus/stable/
   sync:
-    interval: 24h
+    interval: 1h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:
       spec:
-        # 仅用于 WaitForFirstConsumer PVC 的首次落盘；PV 绑定后应从清单移除
         nodeSelector:
           kubernetes.io/hostname: s1.mirrors.zjusct.io
         securityContext:
@@ -26,7 +27,6 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         initContainers:
-          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
           - name: init-sync-volume
             image: busybox:1.37
             imagePullPolicy: Always
@@ -53,38 +53,30 @@ spec:
               requests: {cpu: 10m, memory: 16Mi}
               limits: {cpu: 100m, memory: 32Mi}
         containers:
-          - name: rsync
-            image: ghcr.io/zjusct/rsync:latest
+          - name: tsumugu
+            image: ghcr.io/zjusct/tsumugu:latest
             imagePullPolicy: Always
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: [ALL]
               readOnlyRootFilesystem: true
-            command: [rsync]
+            command: [tsumugu]
             args:
-              - -aH
-              - "-6"
-              - --no-o
-              - --no-g
-              - --stats
-              - -h
-              - --itemize-changes
-              - --partial-dir=.rsync-partial
-              - --filter=P .rsync-partial/
-              - --exclude=.~tmp~/
-              - --delete
-              - --delete-excluded
-              - --safe-links
-              - --timeout=120
-              - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/incus/
-              - /data/
+              - sync
+              - --parser
+              - nginx
+              - --threads
+              - "4"
+              - --max-delete
+              - "100"
+              - https://pkgs.zabbly.com/incus/stable/
+              - /data/stable/
             volumeMounts:
-              - name: tmp
-                mountPath: /tmp
               - name: sync-data
                 mountPath: /data
+              - name: tmp
+                mountPath: /tmp
             resources:
               requests: {cpu: 500m, memory: 512Mi}
               limits: {cpu: "4", memory: 4Gi}

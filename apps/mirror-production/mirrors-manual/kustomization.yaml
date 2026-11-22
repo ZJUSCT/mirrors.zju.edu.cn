@@ -8,10 +8,12 @@ resources:
   - elpa.yaml
   - homebrew.yaml
   - homebrew-bottles.yaml
+  - incus.yaml
   - julia-releases.yaml
   - libnvidia-container.yaml
   - nix-channels.yaml
   - pypi.yaml
   - rosdistro.yaml
   - terra.yaml
+  - winget-fonts.yaml
   - winget-source.yaml
