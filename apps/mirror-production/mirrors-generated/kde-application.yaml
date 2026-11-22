@@ -10,7 +10,7 @@ spec:
     description: KDE 应用程序源码镜像
     upstream: rsync://rsync.kde.org/applicationdata/
   sync:
-    interval: 2h
+    interval: 4h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3
