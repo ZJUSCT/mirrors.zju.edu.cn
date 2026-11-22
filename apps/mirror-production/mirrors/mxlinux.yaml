@@ -5,7 +5,7 @@ info:
   upstream: rsync://[2602:ff75:7:30c7::1]/workspace/
 sync:
   type: rsync
-  interval: 24h
+  interval: 6h
   timeout: 24h
 storage:
   size: 356Gi

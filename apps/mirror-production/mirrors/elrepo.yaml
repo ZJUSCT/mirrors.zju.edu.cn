@@ -6,7 +6,7 @@ info:
 sync:
   type: rsync
   ipv6: false
-  interval: 12h
+  interval: 4h
   timeout: 12h
 storage:
   size: 300Gi

@@ -10,7 +10,7 @@ spec:
     description: ELRepo 企业级 Linux 软件包仓库
     upstream: rsync://hkg.mirror.rackspace.com/elrepo/
   sync:
-    interval: 12h
+    interval: 4h
     retryInterval: 15m
     timeout: 12h
     failureRetryLimit: 3

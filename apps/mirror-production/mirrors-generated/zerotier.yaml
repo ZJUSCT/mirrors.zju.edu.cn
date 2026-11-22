@@ -10,7 +10,7 @@ spec:
     description: ZeroTier 虚拟组网工具的软件包
     upstream: https://download.zerotier.com/
   sync:
-    interval: 1h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3

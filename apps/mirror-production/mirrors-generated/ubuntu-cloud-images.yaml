@@ -10,7 +10,7 @@ spec:
     description: Ubuntu 官方云平台预装磁盘镜像
     upstream: rsync://cloud-images.ubuntu.com/cloud-images/
   sync:
-    interval: 12h
+    interval: 6h
     retryInterval: 15m
     timeout: 12h
     failureRetryLimit: 3

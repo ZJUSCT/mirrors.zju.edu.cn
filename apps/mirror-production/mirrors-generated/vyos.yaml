@@ -10,7 +10,7 @@ spec:
     description: 面向路由器和防火墙的 VyOS 网络操作系统镜像
     upstream: https://packages.vyos.net/
   sync:
-    interval: 1h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3

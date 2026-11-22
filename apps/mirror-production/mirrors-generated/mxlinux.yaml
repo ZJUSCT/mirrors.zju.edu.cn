@@ -10,7 +10,7 @@ spec:
     description: MX Linux 软件仓库
     upstream: rsync://[2602:ff75:7:30c7::1]/workspace/
   sync:
-    interval: 24h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3

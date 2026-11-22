@@ -10,7 +10,7 @@ spec:
     description: EndeavourOS 软件仓库与安装镜像
     upstream: rsync://mirror.alpix.eu/endeavouros/
   sync:
-    interval: 24h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3

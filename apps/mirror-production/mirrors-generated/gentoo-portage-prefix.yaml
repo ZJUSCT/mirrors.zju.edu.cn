@@ -10,7 +10,7 @@ spec:
     description: Gentoo Prefix ebuild 仓库
     upstream: rsync://rsync.prefix.bitzolder.nl/gentoo-portage-prefix/
   sync:
-    interval: 24h
+    interval: 1h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3

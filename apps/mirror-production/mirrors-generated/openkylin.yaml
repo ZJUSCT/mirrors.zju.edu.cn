@@ -10,7 +10,7 @@ spec:
     description: openKylin 开源操作系统软件包仓库
     upstream: rsync://openkylin@ftp.factory.openkylin.top/openkylin/
   sync:
-    interval: 12h
+    interval: 6h
     retryInterval: 15m
     timeout: 12h
     failureRetryLimit: 3

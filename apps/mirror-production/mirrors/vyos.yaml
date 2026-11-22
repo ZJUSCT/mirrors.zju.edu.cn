@@ -5,7 +5,7 @@ info:
   upstream: https://packages.vyos.net/
 sync:
   type: tsumugu
-  interval: 1h
+  interval: 6h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io

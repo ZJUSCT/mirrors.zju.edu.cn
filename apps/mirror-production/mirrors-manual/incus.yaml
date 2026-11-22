@@ -12,7 +12,7 @@ spec:
     description: Incus 系统容器与虚拟机管理器的软件包
     upstream: https://pkgs.zabbly.com/incus/stable/
   sync:
-    interval: 1h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3
