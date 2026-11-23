@@ -1,5 +1,5 @@
 # Nix channel/closure synchronization for Falcon's snapshot publication.
-# Runtime: python:3-slim; script: containers/nix-channels/nix-channels.py.
+# Runtime: python:3-slim; package: containers/nix-channels/nix_channels/.
 # Discover all nixos/nixpkgs channels updated within 360 days, as upstream does.
 # RETAIN_DAYS retains binary closures, not historical release metadata directories.
 # First sync can take days; 168h is the bootstrap deadline, 6h is local polling policy.
@@ -73,7 +73,7 @@ spec:
               drop:
               - ALL
             readOnlyRootFilesystem: true
-          command: [python3, /usr/local/lib/nix-channels.py]
+          command: [python3, -m, nix_channels]
           env:
           - name: NIX_MIRROR_WORKING_DIR
             value: /data
@@ -84,7 +84,7 @@ spec:
           - name: NIX_MIRROR_CLONE_SINCE_DAYS
             value: '360'
           - name: NIX_MIRROR_THREADS
-            value: '8'
+            value: '16'
           - name: NIX_MIRROR_QUERY_THREADS
             value: '64'
           - name: NIX_MIRROR_DELETE_OLD
