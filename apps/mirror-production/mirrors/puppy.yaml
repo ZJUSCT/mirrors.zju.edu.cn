@@ -2,10 +2,10 @@ metadata:
   name: puppy
 info:
   description: Puppy Linux 系统镜像与 PET 软件包
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/puppy/
+  upstream: rsync://mirror.aarnet.edu.au/puppylinux/
 sync:
   type: rsync
-  interval: 24h
+  interval: 6h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -33,25 +33,29 @@ comment:
       rsync 运维政策未确认的限制。
     - 未查到固定官方同步周期或针对该模块的登记前置条件；6h 是本站候选，不是上游要求。现有 rsync 模板直接支持标准发布文件树，无需定制下载器或其它模板。
   bootstrap:
-    status: succeeded-and-published-paused
+    status: migrated-from-ustc
     job: puppy-sync-1791068722
     succeeded_at: '2026-10-04T00:51:29Z'
     published_at: '2026-10-04T00:51:38Z'
-    note: USTC 首次同步及快照发布成功，Ready=True、Degraded=False，自动同步保持暂停；本次没有执行官方切源。
-    official_interval_candidate: 6h
+    note: 2026-10-04由USTC初始化成功并发布；2026-11-22切换至 rsync://mirror.aarnet.edu.au/puppylinux/（保留 -6，interval=6h）。官方认可的 ibiblio 主站在 s1 双栈均连接超时，aarnet 与 nluug 同源且速率达 15.58MB/s。
   upstreams:
+  - url: rsync://mirror.aarnet.edu.au/puppylinux/
+    surveyed_at: '2026-11-22'
+    status: active-verified
+    note: 澳大利亚 AARNet 公共镜像；s1 节点 IPv6(-6) 测速 70.1M .pet 15.58MB/s，dry-run 14s（18,308 文件 / 141.81G，+12 / 195.73M，0 删除）。
+  - url: rsync://ftp.nluug.nl/puppylinux/
+    surveyed_at: '2026-11-22'
+    status: candidate-verified-readonly
+    note: 荷兰 NLUUG；s1 节点 IPv6(-6) 测速 6.10MB/s，dry-run 46s（与 aarnet 差异完全一致）。
+  - url: rsync://rsync.ibiblio.org/puppylinux/
+    surveyed_at: '2026-11-22'
+    status: unreachable-timeout
+    note: s1 节点 IPv6 及默认协议均 connection timeout (code 35)。
   - url: rsync://rsync.mirrors.ustc.edu.cn/puppy/
     surveyed_at: '2026-10-04'
-    status: bootstrap-complete
-    note: USTC 初始化种子，当前配置仍指向此源但暂停；不冒称官方增量源。
-  - url: rsync://rsync.ibiblio.org/puppylinux/
-    surveyed_at: '2026-10-04'
-    status: candidate-verified-readonly
-    note: 精确模块工作站有界非递归列表 exit 0；可以继续生产 dry-run 验证，不代表生产协议栈、删除集和完整性已验收。
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-22 已迁移至 mirror.aarnet.edu.au。
   verification:
-    surveyed_at: '2026-10-04'
+    surveyed_at: '2026-11-22'
     checks:
-    - 官方下载页及 Woof-CE 配置 HTTP 200，配置第 33/37 行等明确引用 ibiblio puppylinux；ibiblio HTTPS 根可读，rsync 根列表 exit 0（105 行）。
-    - 根列表同时存在多年历史 PET 索引和 2026 年更新的 puppy-resolute/puppy-upups 等目录；不能仅因旧索引日期就判定全树停止维护。
-    - 只完成文档/根布局/根链接检查，没有把目录可用性当成包签名、ISO 校验或全树新鲜度验证；未执行下载页脚本或安装 PET 包。
-    remaining: 可在现有 rsync 模板继续生产 dry-run，先比较完整范围、删除集及内部链接；随后真实官方认可托管源同步、匹配快照发布并抽样核对 ISO/PET 校验信息与公网文件。ibiblio rsync 运维指南仍未读取到，不冒称已获特定镜像授权或已完成登记。
+    - 2026-11-22 在 s1.mirrors.zjusct.io 对只读挂载的 puppy-sync（126G 已用 / 175G 可用）执行 IPv6(-6) dry-run 耗时 14s 退出 0：18,308 文件 / 141.81G，+12（195.73M），0 删除。

@@ -8,16 +8,16 @@ metadata:
 spec:
   info:
     description: 基于 Nginx 与 Lua 的高性能 Web 平台
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/openresty/
+    upstream: https://openresty.org/package/
   sync:
-    interval: 24h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:
       spec:
-        # 仅用于 WaitForFirstConsumer PVC 的首次落盘；PV 绑定后应从清单移除
+        # 仅用于首次落盘；绑定后由 PVC 的 nodeAffinity 保持位置
         nodeSelector:
           kubernetes.io/hostname: s1.mirrors.zjusct.io
         securityContext:
@@ -53,38 +53,33 @@ spec:
               requests: {cpu: 10m, memory: 16Mi}
               limits: {cpu: 100m, memory: 32Mi}
         containers:
-          - name: rsync
-            image: ghcr.io/zjusct/rsync:latest
+          - name: tsumugu
+            image: ghcr.io/zjusct/tsumugu:latest
             imagePullPolicy: Always
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: [ALL]
               readOnlyRootFilesystem: true
-            command: [rsync]
+            command: [tsumugu]
             args:
-              - -aH
-              - "-6"
-              - --no-o
-              - --no-g
-              - --stats
-              - -h
-              - --itemize-changes
-              - --partial-dir=.rsync-partial
-              - --filter=P .rsync-partial/
-              - --exclude=.~tmp~/
-              - --delete
-              - --delete-excluded
-              - --safe-links
-              - --timeout=120
-              - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/openresty/
+              - sync
+              - --parser
+              - nginx
+              - --threads
+              - '8'
+              - --max-delete
+              - '100'
+              - --exclusion-v2
+              - --exclude
+              - ^/amazon/2022\.0\.
+              - 'https://openresty.org/package/'
               - /data/
             volumeMounts:
-              - name: tmp
-                mountPath: /tmp
               - name: sync-data
                 mountPath: /data
+              - name: tmp
+                mountPath: /tmp
             resources:
               requests: {cpu: 500m, memory: 512Mi}
               limits: {cpu: "4", memory: 4Gi}

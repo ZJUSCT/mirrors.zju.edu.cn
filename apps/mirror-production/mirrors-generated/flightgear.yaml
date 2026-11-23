@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: FlightGear 飞行模拟器资源
-    upstream: rsync://rsync.ibiblio.org/flightgear/
+    upstream: rsync://ftp.snt.utwente.nl/pub/software/flightgear/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -61,6 +61,7 @@ spec:
             command: [rsync]
             args:
               - -aH
+              - "-6"
               - --no-o
               - --no-g
               - --stats
@@ -74,8 +75,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - '-4'
-              - rsync://rsync.ibiblio.org/flightgear/
+              - rsync://ftp.snt.utwente.nl/pub/software/flightgear/
               - /data/
             volumeMounts:
               - name: tmp

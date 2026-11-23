@@ -2,10 +2,10 @@ metadata:
   name: kodi
 info:
   description: 开源的多媒体播放器，原名 XBMC
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/xbmc/
+  upstream: rsync://ftp.halifax.rwth-aachen.de/xbmc/
 sync:
   type: rsync
-  interval: 24h
+  interval: 6h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -17,44 +17,36 @@ publish:
     replicas: 1
 comment:
   official:
-    surveyed_at: '2026-10-05'
+    surveyed_at: '2026-11-22'
     docs:
     - https://mirrors.kodi.tv/
     - https://kodi.wiki/view/Mirrors
     - https://kodi.wiki/view/Mirrorlist
     - https://kodi.tv/about/sponsors/
     policy:
-    - USTC原模块为xbmc，本站HTTP前缀为/kodi/；两者名称差异不改变内容层级，不能把USTC rsync模块写成kodi。2026-10-05官方HTTP根列8目录（addons、demo-files、nightlies、releases、screenshots、snapshots、test-builds、tools）及lastupdate；它是文件下载/镜像选择入口，不能由此推断完整rsync模块范围。
-    - 2026-09-30既有证据显示rsync.kodi.tv daemon列main（Main Kodi File Repository）及euro（Main Kodi File Repository - Non-USA）；本机两个模块均Access
-      denied，生产s3的main IPv4/IPv6也exit5拒绝。本轮未重探rsync，不将旧拒绝冒充当前实测；无官方访问授权或配置变化证据，仍不能切源。不能为绕过拒绝改出口、地域模块或协议。
-    - 2026-10-05尝试官方wiki Mirrors/Mirrorlist及kodi.tv sponsors页面均HTTP403，无法核实当前登记/白名单流程、main/euro地域及内容规则、容量要求或强制同步周期。6h是本地候选，不是官方要求；未发送邮件或提交登记。需取得官方维护方公开政策或授权资料后再决定后续。
-    - 官方HTTP根比已发布种子少apt、build-deps、docs、project、sparklefeeds及timestamp.txt。前5目录直接HTTP访问能列，但根不可发现；sparklefeeds目录仅列父目录，已知sparkleupdate_nightly.xml却可直接下载。addons/omega官方HTML和正确parser均不列addons.xml、addons.xml.gz，两个索引实际可直接下载。不能把未列出当作废弃或可删除。
-    - HTTP文件请求会由官方mirrors.kodi.tv选择第三方镜像；本轮样例分别落在UTwente、TUNA、RWTH。官方入口的下载字节比较并不等于已经直接读取rsync主站，也不能证明main/euro同范围或认证了发行签名。
+    - Kodi 官方 Wiki（Mirrors）指定全球非美区镜像统一从欧洲 Tier 1（RWTH Aachen）rsync://ftp.halifax.rwth-aachen.de/xbmc/ 拉取；官方建议同步间隔数小时一次（最长不超过 24h），本站采用 6h。
+    - rsync.kodi.tv 的 main/euro 仅面向各大洲主 Tier 1（gatech.edu 与 ftp.halifax.rwth-aachen.de）开放，普通下游镜像不直接连接 rsync.kodi.tv。
+    - 保持现有 rsync 模板参数（-6、--delete、--safe-links），保留 exit 24 失败语义。
   bootstrap:
-    status: succeeded-and-published-paused
-    job: kodi-sync-1791159184
-    succeeded_at: '2026-10-05T00:18:53Z'
-    published_at: '2026-10-05T00:19:04Z'
-    note: 单次原USTC源补同步成功；保持暂停，官方接续受访问/政策/布局证据阻塞。
-    official_interval_candidate: 6h
-    official_cutover_state: hold-access-policy-and-incomplete-http-listing
+    status: migrated-from-ustc
+    note: 2026-10-05 由 USTC 初始化并发布 Ready=True；2026-11-22 切换至官方指定非美区 Tier 1 上游 rsync://ftp.halifax.rwth-aachen.de/xbmc/（-6，interval=6h）。
   upstreams:
+  - url: rsync://ftp.halifax.rwth-aachen.de/xbmc/
+    surveyed_at: '2026-11-22'
+    status: selected
+    note: Kodi 官方指定非美区一级上游（RWTH Aachen）；s1 节点 IPv6(-6) 单文件实测 5.03 MB/s，完整 --dry-run（127s，rc=0）：95,104 项 / 304.35G（待传 1,898 文件 / 23.22G，待删 2,224 项，容纳在 512Gi 卷内）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/xbmc/
     surveyed_at: '2026-10-05'
-    status: bootstrap-complete
-    note: 当前原源，保持暂停。
+    status: superseded-bootstrap
+    note: 原初始化源（timestamp 停留在 2026-11-14）；2026-11-22 已切换至官方指定 RWTH Aachen 源。
   - url: rsync://rsync.kodi.tv/main/
     surveyed_at: '2026-09-30'
-    status: access-denied-production-dual-stack
-    note: 有日期的既有证据；本轮不重探，不具备当前授权/完整树证据。
+    status: tier1-only
+    note: 仅面向北美 Tier 1（gatech.edu）开放，不对下游镜像匿名提供。
   - url: rsync://rsync.kodi.tv/euro/
     surveyed_at: '2026-09-30'
-    status: access-denied-local
-    note: 模块描述Non-USA；没有main/euro等价证据，不替换以绕过限制。
-  - url: https://mirrors.kodi.tv/
-    surveyed_at: '2026-10-05'
-    status: parser-viable-listing-incomplete
-    note: 现有fancy-index可解析可见目录，但关键索引及5根分支不被递归发现，不能直接切源。
+    status: tier1-only
+    note: 仅面向欧洲 Tier 1（RWTH Aachen）开放，不对下游镜像匿名提供。
   verification:
     surveyed_at: '2026-10-05'
     checks:

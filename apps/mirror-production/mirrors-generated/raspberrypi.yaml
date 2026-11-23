@@ -10,7 +10,7 @@ spec:
     description: Raspberry Pi OS 的附加软件包仓库
     upstream: rsync://apt-repo.raspberrypi.org/archive/debian/
   sync:
-    interval: 12h
+    interval: 4h
     retryInterval: 15m
     timeout: 12h
     failureRetryLimit: 3

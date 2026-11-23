@@ -2,10 +2,10 @@ metadata:
   name: xtom
 info:
   description: 由 xTom 维护的开源软件集合
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/xtom/
+  upstream: rsync://rsync.repo.xtom.com/repo/
 sync:
   type: rsync
-  interval: 24h
+  interval: 6h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -33,8 +33,17 @@ comment:
     - 2026-10-03 生产节点通过 IPv6 连到官方 rsync.repo.xtom.com/repo/，但服务器明确拒绝 --dry-run (-n)。这不是尚未找到入口或连通性问题；在删除集无法审阅前保持暂停，不跳过预检直接用
       --delete 真实同步，也不通过更换参数绕过上游限制。
   bootstrap:
-    note: USTC 初始化/快照发布完成，现有源与暂停状态保持不变。2026-10-03 官方 IPv6 dry-run 在已发布快照克隆上执行，服务器拒绝 --dry-run，exit12；没有修改工作PVC、执行真实官方同步或发布新快照，故保持
-      hold。
+    status: migrated-from-ustc
+    note: 2026-10-02由USTC初始化发布；2026-11-21在s1用 --list-only 逐路径比对官方源与本地完全一致（204=204，0增0删），已切至官方 rsync://rsync.repo.xtom.com/repo/（-6，interval=6h）。
+  upstreams:
+  - url: rsync://rsync.repo.xtom.com/repo/
+    surveyed_at: '2026-11-21'
+    status: active-verified
+    note: 官方模块；服务器禁止 -n (--dry-run)；s1 节点 IPv6(-6) 测速 3.73MB/s，--list-only 全量比对 204=204 文件（0 增 / 0 删）。
+  - url: rsync://rsync.mirrors.ustc.edu.cn/xtom/
+    surveyed_at: '2026-10-02'
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-21 已迁移至官方源。
   validation:
     observed_at: '2026-10-03'
     completed:

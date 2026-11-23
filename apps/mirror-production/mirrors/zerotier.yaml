@@ -2,15 +2,23 @@ metadata:
   name: zerotier
 info:
   description: ZeroTier 虚拟组网工具的软件包
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/zerotier/
+  upstream: https://download.zerotier.com/
 sync:
-  type: rsync
-  interval: 24h
+  type: tsumugu
+  interval: 6h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
+  tsumugu:
+    parser: nginx
+    threads: 8
+    max_delete: 100
+    extra_args:
+      # 根文件 contact@zerotier.com.gpg 的 HTTP 头异常导致 tsumugu 猜时区失败，显式固定 UTC (+0)
+      - --timezone
+      - "0"
 storage:
-  size: 24Gi
+  size: 64Gi # 2026-11-22：官方全树 36,454 对象 / 39.46GiB，原 24Gi 配额不足，扩容并预留增长空间。
 publish:
   http:
     tier: small
@@ -28,13 +36,14 @@ comment:
     - 官方目录包含 Debian 多发行版目录（含 trixie、bookworm、noble、resolute 等）及 dist/；切换前必须固定范围、检查 Release/Packages 签名和淘汰目录，不能把所有历史目录自动删除。
     - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
   bootstrap:
-    note: USTC 首次同步于 2026-10-03T06:00:57Z UTC 成功，发布于 2026-10-03T06:01:07Z UTC；当前 mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。官方只有
-      HTTPS 候选，当前没有经模板验证的官方 cutover；保持 USTC 快照已发布但自动同步暂停，不新增专用同步器。
+    status: migrated-from-ustc
+    note: 2026-10-03由USTC初始化（10.26GiB 子集）；2026-11-22 扩容 storage.size 至 64Gi 并切至官方 HTTPS https://download.zerotier.com/（tsumugu parser=nginx, threads=8, --timezone 0, interval=1h）。
   upstreams:
+  - url: https://download.zerotier.com/
+    surveyed_at: '2026-11-22'
+    status: active-verified
+    note: 官方 HTTPS；加 --timezone 0 后 s1 节点 8 并发 dry-run 耗时 58s 退出 0（36,454 对象 / 39.46GiB，0 删除，补齐原 USTC 未含的 RELEASES/redhat/debian 历史包）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/zerotier/
     surveyed_at: '2026-10-03'
-    status: selected
-    note: USTC 首次同步源；站点报告容量 10.26 GiB，不是实际占用保证。
-  - url: https://download.zerotier.com/
-    surveyed_at: '2026-10-03'
-    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-22 已迁移至官方 HTTPS。

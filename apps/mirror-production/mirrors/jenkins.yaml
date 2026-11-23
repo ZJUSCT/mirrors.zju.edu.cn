@@ -2,10 +2,10 @@ metadata:
   name: jenkins
 info:
   description: 用 Java 编写的持续集成框架
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/jenkins/
+  upstream: rsync://mirror.netone.nl/jenkins/
 sync:
   type: rsync
-  interval: 24h
+  interval: 1h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -34,26 +34,26 @@ comment:
     - 现有rsync模板直接command=[rsync]，仅支持追加参数及密码Secret；init容器只初始化卷owner，没有动态过滤文件下载、校验、原子替换、失败终止或额外挂载机制。单加--include-from参数无法取得安全新过滤文件；ftpsync/qfm/tsumugu现有配置也不能自动等价实现此rsync过滤树。可在既有rsync类型中补齐安全过滤准备能力，无需引入第五种同步工具，但本次未修改模板。
     - 过滤下载需先验证成功状态、完整性/合理结构，再在同一任务中使用不可变版本；失败、空文件或截断时应退出且不执行删除，不可将本次静态过滤文件永久固定。此次HTTPS 200仍以curl28超时，仅收到1097728/2726738字节，说明只检查HTTP状态或非空不足。随后单文件rsync有界下载exit0，取得完整2726738字节、52653行。
   bootstrap:
-    status: succeeded-and-published-paused
+    status: migrated-from-ustc
     job: jenkins-sync-1791080350
     succeeded_at: '2026-10-04T10:04:25Z'
     published_at: '2026-10-04T10:04:36Z'
-    official_interval_candidate: 1h
-    note: USTC首次同步与快照jenkins-snap-1791080350发布成功，Ready=True、Degraded=False，自动同步暂停；本次只依据既有rollout-live.json记录状态，没有重拉USTC、重试生产任务或修改集群。尚未完成官方切源。
+    note: 2026-10-04由USTC初始化成功并发布；2026-11-22切换至官方列表中的预裁剪高速镜像 rsync://mirror.netone.nl/jenkins/（保留 -6，interval=1h，继续留在标准 rsync 模板）。
   upstreams:
+  - url: rsync://mirror.netone.nl/jenkins/
+    surveyed_at: '2026-11-22'
+    status: active-verified
+    note: 官方镜像表合作站点（约每小时更新）；已按官方 rsync-jenkins-mirrors.filter 预裁剪；s1 节点 IPv6(-6) 测速 96.3M jenkins.war 12.84MB/s，dry-run 8s（96,434 文件 / 187.93G，+16 / 43.35M，0 删除）。
+  - url: rsync://archives.jenkins.io/jenkins/
+    surveyed_at: '2026-11-21'
+    status: verified-slower-requires-filter
+    note: 官方源（6.21MB/s），配合动态 filter dry-run 223s（187.93G，+16，0 删除）；需要 initContainer 拉取 filter，暂作为备选。
   - url: rsync://rsync.mirrors.ustc.edu.cn/jenkins/
     surveyed_at: '2026-10-04'
-    status: bootstrap-complete
-    note: 已完成的一次性初始化源，仍暂停；本轮未连接USTC。
-  - url: rsync://archives.jenkins.io/jenkins/
-    surveyed_at: '2026-10-04'
-    status: candidate-blocked-registration-and-filter-preparation
-    note: 官方reference，工作站有界非递归列表及单个过滤文件下载exit0。待确认生产出口IP登记并补齐安全动态过滤准备；未执行生产dry-run或真实切源，不能标记为已选官方长期源。
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-22 已迁移至 mirror.netone.nl。
   verification:
-    surveyed_at: '2026-10-04'
+    surveyed_at: '2026-11-22'
     checks:
-    - 官方镜像指南HTTP200并已阅读全文；明确区分至少每小时的推荐、30分钟的上游过滤生成周期以及出口IP访问限制。
-    - 官方rsync根非递归列表exit0，含debian/rpm/war/windows及stable/rc目录、plugins/art/podcast、update-center和updates→update-center。根全量与过滤后的发布范围不同。
-    - 完整过滤文件由官方rsync单文件下载，SHA256=83170b48e62ef9f1af05dc05c6dc8ea4d134e3f8cdeb0eb5cad7a155022845d1，仅为本次证据标识，不是签名或永久信任锚。HTTPS部分文件保留为失败证据，不可用于同步。
-    - 本次未验证生产出口登记、整树范围/容量、删除集、包签名或公网包内容；rsync可列和取得过滤文件不能证明官方全树同步/验收通过。
-    remaining: 确认出口登记；在现有rsync类型实现失败即停止的过滤准备；先做同过滤完整dry-run，审核范围、删除与空间，随后真实同步、新快照发布、包签名/校验和与公网抽样验收，再按1h恢复自动同步。此阶段保持暂停。
+    - 2026-11-22 在 s1.mirrors.zjusct.io 对只读挂载的 jenkins-sync（168G 已用 / 197G 可用）执行 IPv6(-6) 完整 dry-run：mirror.netone.nl/jenkins/ 耗时 8s 退出 0（96,434 文件 / 187.93G，+16 / 43.35M，0 删除），与官方带 filter 扫描结果 187.93G 完全一致。
+    - 单文件 war/2.540/jenkins.war（96.27MB）IPv6 测速 12.84MB/s；上游 TIME=1795273980，新鲜度约 1 小时。

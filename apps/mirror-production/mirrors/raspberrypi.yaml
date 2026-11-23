@@ -5,7 +5,7 @@ info:
   upstream: rsync://apt-repo.raspberrypi.org/archive/debian/ # 官方指定的 IPv6 rsync 上源；仅同步软件包子目录
 sync:
   type: rsync
-  interval: 12h
+  interval: 4h
   timeout: 12h
 storage:
   size: 1Ti

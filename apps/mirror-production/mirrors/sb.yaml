@@ -2,10 +2,10 @@ metadata:
   name: sb
 info:
   description: 为 Debian 和 Ubuntu 构建、支持新特性的 Nginx 第三方软件包
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/sb/
+  upstream: rsync://mirrors.xtom.com/repo/sb/
 sync:
   type: rsync
-  interval: 24h
+  interval: 6h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -30,7 +30,17 @@ comment:
     - 未发现官方强制同步周期；interval/timeout均24h是本站候选日常配置，不是官方要求。工作站一次非递归rsync列表成功不等于生产出口或指定IPv4/IPv6均验证。
     - sb与xtom必须独立：sb来自mirrors.xtom.com的repo模块下sb/；xtom来自另一个主机rsync.repo.xtom.com的repo模块，根只有deb/、rpm/、README.md、xtom.key，不包含sb。两个repo模块名称相同不代表同一树。
   bootstrap:
-    note: USTC初始化和快照发布完成，自动同步仍暂停。官方URI和源树已由官方文档与工作站daemon根列表独立确认；现在阻塞是生产切换验收，不是“未找到官方rsync”。
+    status: migrated-from-ustc
+    note: 2026-10-02由USTC初始化；2026-11-21在s1通过 --list-only 逐路径比对官方源与本地完全一致（903=903，0增0删），已切换至 rsync://mirrors.xtom.com/repo/sb/（-6，interval=6h）。
+  upstreams:
+  - url: rsync://mirrors.xtom.com/repo/sb/
+    surveyed_at: '2026-11-21'
+    status: active-verified
+    note: N.WTF 官方镜像说明指定；服务器禁止 -n (--dry-run)；s1 节点 IPv6(-6) 测速 0.58MB/s（全树仅194M），--list-only 903=903 文件（0 增 / 0 删）。
+  - url: rsync://rsync.mirrors.ustc.edu.cn/sb/
+    surveyed_at: '2026-10-02'
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-21 已迁移至官方源。
   validation:
     observed_at: '2026-10-02'
     completed:

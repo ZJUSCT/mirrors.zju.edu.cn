@@ -2,13 +2,25 @@ metadata:
   name: nodejs-release
 info:
   description: 预编译的 Node.js 二进制程序
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/node/
+  upstream: https://nodejs.org/dist/
 sync:
-  type: rsync
+  type: tsumugu
   interval: 24h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
+  tsumugu:
+    parser: nginx
+    threads: 12
+    max_delete: 100
+    extra_args:
+      - --exclusion-v2
+      # docs/api 和 v0.6.8/old-docs 下含静态 index.html，请求目录会返回网页而非 nginx 目录索引导致 tsumugu ParseError；USTC 原存量亦无此目录
+      - --exclude
+      - /(docs|old-docs)(/|$)
+      # 官方 2024-11 迁至 R2 后历史版本时间戳变为 2024-11-04；不可变 /v* 版本目录按文件存在即跳过，避免重下约 3 万个老文件，同时继续更新 latest* 与 index.*
+      - --skip-if-exists
+      - ^/v[0-9]
 storage:
   size: 1328Gi
 publish:
@@ -39,18 +51,19 @@ comment:
     official_interval_candidate: 24h
     official_cutover_blocker: 官方rsync对应HTTP索引仍严重陈旧，已有绝对软链接风险；官方HTTPS+现有tsumugu nginx有可行候选，尚待生产全树范围/删除集、别名和容量检查、签名及文件摘要验证与真实同步发布，属于可继续调查的技术待办。
   upstreams:
+  - url: https://nodejs.org/dist/
+    surveyed_at: '2026-11-21'
+    status: selected
+    metrics: Cloudflare HKG 8 并发 > 62.6MB/s；全树 dry-run 15s（34,317 对象 / 673.10GiB，skip=29,902、not_dl=1,851、not_del=0）
+    note: '官方 HTTPS + tsumugu/nginx；排除静态文档页 /(docs|old-docs)(/|$)，并用 --skip-if-exists ^/v[0-9] 跳过已有不可变版本目录。'
   - url: rsync://rsync.mirrors.ustc.edu.cn/node/
-    surveyed_at: '2026-10-06'
+    surveyed_at: '2026-11-21'
     status: bootstrap-complete
-    note: 已成功发布并暂停；本轮未向USTC发起额外请求。
+    note: 首次初始化源；现已切至官方 https://nodejs.org/dist/。
   - url: rsync://unencrypted.nodejs.org/nodejs/release/
     surveyed_at: '2026-10-06'
     status: stale-legacy-candidate
     note: 本轮对应HTTP索引仍v24.1.0；rsync陈旧树及绝对链接为9月30日既有证据，未新探测rsync。
-  - url: https://nodejs.org/dist/
-    surveyed_at: '2026-10-06'
-    status: tsumugu-nginx-list-verified
-    note: 官网索引v26.10.0；本机根及代表叶目录非递归list退出0，尚未正式同步或证明整树等价。
   verification:
     surveyed_at: '2026-10-06'
     checks:

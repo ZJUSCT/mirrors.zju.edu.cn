@@ -7,7 +7,7 @@ info:
 sync:
   type: rsync
   interval: 4h
-  timeout: 4h
+  timeout: 72h
 storage:
   size: 3Ti
 publish:

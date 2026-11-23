@@ -2,7 +2,7 @@ metadata:
   name: vim
 info:
   description: Vim 官方 FTP 历史发布归档（上游已停止维护）
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/vim/
+  upstream: rsync://ftp.ca.vim.org/vim/
 sync:
   type: rsync
   interval: 24h
@@ -28,16 +28,17 @@ comment:
     - 官方未给历史FTP同步周期；现配置24h是本地归档更新选择。不能把GitHub源码树强行替换成Vim FTP发布树，也不能从GitHub latest推断归档目录应删除。
     - 保留历史文件、格式和相对链接；若未来改为Git同步，需要另一个明确的Git同步定义，当前任务不改同步类型。
   bootstrap:
-    note: USTC bootstrap已完成；官方生产cutover尚未发生。当前镜像可作为历史Vim FTP归档继续服务；官方页面没有现行rsync源或维护周期，保持暂停并避免宣称提供最新Vim版本。
+    status: migrated-from-ustc
+    note: 2026-10-03由USTC初始化完成；2026-11-21在s1验证 rsync://ftp.ca.vim.org/vim/ IPv6(-6) dry-run 与本地完全一致（23,507文件/6.14G，0增0删），已切换上游（归档保留24h）。
   upstreams:
+  - url: rsync://ftp.ca.vim.org/vim/
+    surveyed_at: '2026-11-21'
+    status: active-verified
+    note: 官方镜像表列出的加拿大历史 FTP 归档镜像；s1 节点 IPv6(-6) 测速 1.35MB/s，dry-run 11s（23,507 文件 / 6.14G，0 增 / 0 删）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/vim/
     surveyed_at: '2026-10-03'
-    status: bootstrap-complete-historical
-    note: USTC初始化源；Oct2状态容量5.78GiB，非最新Vim版本保证。
-  - url: rsync://ftp.ca.vim.org/vim/
-    surveyed_at: '2026-10-03'
-    status: historical-third-party-rsync
-    note: 只读根列表exit0；官方Vim页面仅列其HTTP/HTTPS镜像并同时声明FTP不再维护，故不能称为官方当前cutover源。
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-21 已迁移出。
   - url: https://github.com/vim/vim
     surveyed_at: '2026-10-03'
     status: official-current-source-not-rsync-template

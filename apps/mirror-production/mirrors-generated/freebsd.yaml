@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: FreeBSD 的安装镜像和系统发布文件
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/freebsd/
+    upstream: rsync://mirror.aarnet.edu.au/freebsd/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,9 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/freebsd/
+              - --exclude=/development/
+              - --exclude=/snapshots/
+              - rsync://mirror.aarnet.edu.au/freebsd/
               - /data/
             volumeMounts:
               - name: tmp

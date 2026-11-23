@@ -1,3 +1,6 @@
+# 由 mirrors/termux-its-pointless.yaml 迁入：its-pointless.github.io/files/ 无目录列表（404），
+# 但 /files/24/ 下的 APT Release/InRelease/Packages 与包仍可直取；改用 apt-sync 对齐 /data/24/。
+# 注：上游自 2021-06-20 起未更新，采用 168h（7 天）低频校验周期。
 apiVersion: mirrors.zjusct.io/v1alpha1
 kind: Mirror
 metadata:
@@ -8,16 +11,15 @@ metadata:
 spec:
   info:
     description: Termux 的 its-pointless 第三方软件包仓库
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/termux-its-pointless/
+    upstream: https://its-pointless.github.io/files/
   sync:
-    interval: 24h
+    interval: 168h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:
       spec:
-        # 仅用于 WaitForFirstConsumer PVC 的首次落盘；PV 绑定后应从清单移除
         nodeSelector:
           kubernetes.io/hostname: s1.mirrors.zjusct.io
         securityContext:
@@ -26,7 +28,6 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         initContainers:
-          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
           - name: init-sync-volume
             image: busybox:1.37
             imagePullPolicy: Always
@@ -53,38 +54,31 @@ spec:
               requests: {cpu: 10m, memory: 16Mi}
               limits: {cpu: 100m, memory: 32Mi}
         containers:
-          - name: rsync
-            image: ghcr.io/zjusct/rsync:latest
+          - name: apt-sync
+            image: ustcmirror/apt-sync:latest
             imagePullPolicy: Always
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: [ALL]
               readOnlyRootFilesystem: true
-            command: [rsync]
-            args:
-              - -aH
-              - "-6"
-              - --no-o
-              - --no-g
-              - --stats
-              - -h
-              - --itemize-changes
-              - --partial-dir=.rsync-partial
-              - --filter=P .rsync-partial/
-              - --exclude=.~tmp~/
-              - --delete
-              - --delete-excluded
-              - --safe-links
-              - --timeout=120
-              - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/termux-its-pointless/
-              - /data/
+            command: [python3, /sync.py]
+            env:
+              - name: HOME
+                value: /tmp
+              - name: TO
+                value: /data/
+              - name: APTSYNC_URL
+                value: https://its-pointless.github.io/files/
+              - name: APTSYNC_UNLINK
+                value: "1"
+              - name: APTSYNC_DISTS
+                value: termux|extras|aarch64 all arm i686 x86_64|24
             volumeMounts:
-              - name: tmp
-                mountPath: /tmp
               - name: sync-data
                 mountPath: /data
+              - name: tmp
+                mountPath: /tmp
             resources:
               requests: {cpu: 500m, memory: 512Mi}
               limits: {cpu: "4", memory: 4Gi}
@@ -169,6 +163,5 @@ spec:
               configMap:
                 name: nginx-conf
             - name: tmp
-              # 目录缓存上限 512Mi，额外空间用于正在填充的响应及其他临时文件。
               emptyDir:
                 sizeLimit: 1Gi

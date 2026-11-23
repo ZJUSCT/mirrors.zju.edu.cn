@@ -28,26 +28,52 @@ comment:
     - 官方要求同步间隔不短于3h，避开整点并优先邻近源；4h是本地合规候选，启用时须核对实际启动偏移。
     - 加入官方mirror source另有1Gbit、原生IPv4/IPv6、HTTP及rsync、至少2TB、监控及六个月HTTP日志要求，并涉及邮件列表/申请；这些属于注册身份要求，不将本轮技术同步认定为已注册，也不发送邮件。
   bootstrap:
-    status: succeeded-and-published-paused
-    job: ceph-sync-1791205230
-    succeeded_at: '2026-10-06T01:22:51Z'
-    published_at: '2026-10-06T01:22:59Z'
-    note: hourly-live.json确认USTC初始化成功且匹配快照已发布；仍暂停，未执行官方切源。
+    status: succeeded-and-published
+    job: ceph-sync-1795232226
+    succeeded_at: '2026-11-21T03:39:53Z'
+    published_at: '2026-11-21T03:40:04Z'
+    note: '当前由 USTC 稳定增量同步（2026-11-21 实测 2m47s 完成，99,864 文件 / 占盘 417 GiB，924Gi PVC 使用 46%）。因官方主站 rsync 限速且海外镜像存在权限/体量/缺版阻塞，暂保留 USTC。'
     official_interval_candidate: 4h
-    official_cutover_blocker: 官方两轮rsync顺序与现有允许同步器的配置表达尚需核对；尚无生产同参数差异/容量、删除集合、签名、真实官方同步和发布验收。注册官方mirror身份的额外要求需另行决策，不能与单纯同步混同。
+    official_cutover_blocker: '1) 官方 download.ceph.com rsync 极度限速(IPv6 68.8 KB/s、IPv4 30.9 KB/s)，HTTPS 8 并发直接被对端 TLS reset，且官方完整树 4.15 TB 远超 924Gi 卷；2) eu/de/uwaterloo 在 debian-20.2.5、debian-21.1.x、rpm-21.x 等目录存在 drwx------(0700) 权限，dry-run 会导致 code 23 失败或误删本地现有 20.x/21.x 最新版；3) ftp.fau.de 缺 16.x/17.x 且 flist 超时(code 30)；4) hk/au/fr/se.ceph.com 873 与 443 均不可达。'
   upstreams:
   - url: rsync://rsync.mirrors.ustc.edu.cn/ceph/
-    surveyed_at: '2026-10-07'
-    status: bootstrap-complete
-    note: 成功发布并暂停；本轮未向USTC发起请求。
+    surveyed_at: '2026-11-21'
+    status: selected
+    metrics: '2026-11-21T03:37–03:39Z 同步 2m47s 完成；99,864 文件 / 476.63 GB(ZFS 占盘 417 GiB)'
+    note: '保持当前 USTC 上游；已保留 debian-15..21 与 rpm-15..21 完整可读发行及软链，并裁剪掉早期旧版与 archive/prerelease。'
   - url: rsync://download.ceph.com/ceph/
-    surveyed_at: '2026-10-07'
-    status: documented-candidate-not-cut-over
-    note: 官方两轮rsync顺序与现有允许同步器的配置表达尚需核对；尚无生产同参数差异/容量、删除集合、签名、真实官方同步和发布验收。注册官方mirror身份的额外要求需另行决策，不能与单纯同步混同。
+    stack: dual
+    surveyed_at: '2026-11-21'
+    status: rejected
+    metrics: 's1 实测 IPv6 rsync 68.76 KB/s、IPv4 rsync 30.90 KB/s；HTTPS 单流 8.84 MB/s、8 并发 Connection reset by peer'
+    note: '官方主站 rsync/HTTPS 均明显限速，且全树约 4.15 TB 超过当前 924Gi PVC；暂不可直接切换。'
+  - url: rsync://eu.ceph.com/ceph/
+    stack: dual
+    surveyed_at: '2026-11-21'
+    status: rejected
+    metrics: 'IPv6 10.10 MB/s；dry-run 报 Permission denied (13) on debian-20.2.5/21.1.1/15.2.* (code 23)；全树 4.15 TB'
+    note: '部分目录权限为 0700 导致报错（HTTPS 亦 403 Forbidden），且体量过大。'
+  - url: rsync://de.ceph.com/ceph/
+    stack: dual
+    surveyed_at: '2026-11-21'
+    status: rejected
+    metrics: 'IPv6 4.48 MB/s；排除 archive/prerelease 后仍 3.34 TB，且 dry-run 误删 debian-21.x/rpm-21.x/debian-20.2.5 等共 9,654 项'
+    note: '受 0700 目录权限影响会误删本地最新发行版本，不能使用。'
+  - url: rsync://ftp.fau.de/ceph/
+    stack: dual
+    surveyed_at: '2026-11-21'
+    status: rejected
+    metrics: 'IPv6 单文件 10.69 MB/s，但 dry-run 在 --timeout=120 内超时退出(code 30)'
+    note: '缺少 debian/rpm 16.x 与 17.x（pacific/quincy），且 flist 生成超时。'
+  - url: rsync://mirror.csclub.uwaterloo.ca/ceph/
+    stack: dual
+    surveyed_at: '2026-11-21'
+    status: rejected
+    metrics: 'IPv6 9.22 MB/s；根列表显示 debian-20.2.5/21.1.1 与 rpm-21.1.1 权限为 drwx------'
+    note: '与 eu/de 相同存在 0700 目录权限问题；另 hk/au/fr/se.ceph.com 实测 873 与 443 均不可达。'
   verification:
-    surveyed_at: '2026-10-07'
+    surveyed_at: '2026-11-21'
     checks:
-    - docs.ceph.com本轮HTTP403；直接读取官方GitHub main的mirrors.rst、README.md、mirror-ceph.sh成功，原文保存review-backlog.evidence/ceph-*。
-    - 未新建rsync连接；未把文档流程视为生产同步已通过。
-    - 成功发布状态依据hourly-live.json；本轮没有集群修改、传输预留或公网发布验收。
-    remaining: 官方两轮rsync顺序与现有允许同步器的配置表达尚需核对；尚无生产同参数差异/容量、删除集合、签名、真实官方同步和发布验收。注册官方mirror身份的额外要求需另行决策，不能与单纯同步混同。
+    - 已在 s1 节点实测官方 download.ceph.com、eu/de/fr/hk/au/se.ceph.com、ftp.fau.de 及 mirror.csclub.uwaterloo.ca 的 rsync 与 HTTPS 连通、速度、权限及只读 dry-run 差异。
+    - 确认当前 USTC 同步正常（2026-11-21T03:39Z Succeeded，Ready=True）。
+    remaining: '如需切离 USTC，需先将 PVC 扩容至 5Ti 并针对 download.ceph.com 制定明确历史版本排除规则与低并发 HTTPS/同步方案，或待上游及区域镜像修复 0700 目录权限后复测。'

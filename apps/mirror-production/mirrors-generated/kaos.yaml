@@ -10,7 +10,7 @@ spec:
     description: 专注 KDE 与 Qt 的 KaOS Linux 发行版
     upstream: rsync://kaosx.org/kaos/
   sync:
-    interval: 24h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3

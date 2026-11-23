@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: 完全由自由软件组成的 Trisquel GNU/Linux 软件包仓库
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/trisquel/
+    upstream: rsync://mirror.csclub.uwaterloo.ca/trisquel/packages/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/trisquel/
+              - rsync://mirror.csclub.uwaterloo.ca/trisquel/packages/
               - /data/
             volumeMounts:
               - name: tmp

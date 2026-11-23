@@ -8,9 +8,9 @@ metadata:
 spec:
   info:
     description: Armbian 单板计算机系统镜像
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/armbian-dl/
+    upstream: rsync://rsync.armbian.com/dl/
   sync:
-    interval: 24h
+    interval: 4h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3
@@ -64,7 +64,6 @@ spec:
             command: [rsync]
             args:
               - -aH
-              - "-6"
               - --no-o
               - --no-g
               - --stats
@@ -78,7 +77,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/armbian-dl/
+              - rsync://rsync.armbian.com/dl/
               - /data/
             volumeMounts:
               - name: tmp

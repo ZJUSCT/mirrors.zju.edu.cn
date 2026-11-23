@@ -2,7 +2,7 @@ metadata:
   name: knoppix
 info:
   description: 基于 Debian 的 Live Linux 发行版 KNOPPIX
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/knoppix/
+  upstream: rsync://ftp.uni-kl.de/knoppix/
 sync:
   type: rsync
   interval: 24h
@@ -27,13 +27,14 @@ comment:
     - CD 树含 ISO、`.md5/.sha1/.sha256` 及对应 `.asc` 签名文件，并有 `DVD` 绝对/相对模块链接；切换前需核对链接边界和签名。
     - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
   bootstrap:
-    note: USTC 首次同步于 2026-10-03T01:11:24Z UTC 成功，发布于 2026-10-03T01:11:33Z UTC；当前 mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。USTC
-      初始化成功，但官方 rsync 当前列表看起来停留在 2021；维持暂停，先核实 master 的同步状态和删除集合，不能用陈旧官方源覆盖 USTC 较新树。
+    status: migrated-from-ustc
+    note: 2026-10-03由USTC初始化；2026-11-21在s1验证官方master ftp.uni-kl.de IPv6(-6) dry-run 与本地完全一致（816文件/7.35G，0增0删），已切换（归档保留24h）。
   upstreams:
+  - url: rsync://ftp.uni-kl.de/knoppix/
+    surveyed_at: '2026-11-21'
+    status: active-verified
+    note: 官方标记推荐 master；s1 节点 IPv6(-6) 测速 11.7M bootonly ISO 2.12MB/s，dry-run 3s（816 文件 / 7.35G，0 增 / 0 删）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/knoppix/
     surveyed_at: '2026-10-03'
-    status: selected
-    note: USTC 首次同步源；站点报告容量 6.84 GiB，不是实际占用保证。
-  - url: rsync://ftp.uni-kl.de/knoppix/
-    surveyed_at: '2026-10-03'
-    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-21 已迁移至官方 master。

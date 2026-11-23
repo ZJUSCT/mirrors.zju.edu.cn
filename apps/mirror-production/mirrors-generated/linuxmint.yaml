@@ -10,7 +10,7 @@ spec:
     description: Linux Mint 发行版软件包仓库
     upstream: rsync://rsync-packages.linuxmint.com/packages/
   sync:
-    interval: 12h
+    interval: 6h
     retryInterval: 15m
     timeout: 12h
     failureRetryLimit: 3

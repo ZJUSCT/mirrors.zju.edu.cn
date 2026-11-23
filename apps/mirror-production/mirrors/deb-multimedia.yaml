@@ -2,10 +2,10 @@ metadata:
   name: deb-multimedia
 info:
   description: 面向 Debian 的第三方多媒体软件包仓库
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/deb-multimedia/
+  upstream: rsync://www.deb-multimedia.org/deb/
 sync:
   type: rsync
-  interval: 24h
+  interval: 6h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -30,17 +30,17 @@ comment:
     - 2026-10-04 03:54 UTC，在生产IPv6检查Pod中对官方精确模块执行rsync dry-run；服务器显式拒绝 --dry-run (-n)，exit12。官方入口已确认且可连接，阻塞在无法审阅完整差异/删除集；不绕过该限制执行真实
       --delete 同步。
   bootstrap:
-    note: USTC首次同步于2026-10-03T06:55:35Z成功，发布于06:55:53Z；仍发布deb-multimedia-snap-1791008131并保持sync-paused=true。2026-10-04官方IPv6预检只读挂载已发布VolumeSnapshot克隆，被daemon拒绝--dry-run；未挂载工作PVC、切源或发起真实官方同步。
+    status: migrated-from-ustc
+    note: 2026-10-03由USTC初始化；2026-11-21在s1通过 --list-only 比对远端与本地差异仅正常APT轮转（+773/-345），已切至官方 rsync://www.deb-multimedia.org/deb/（-6，interval=6h）。
   upstreams:
+  - url: rsync://www.deb-multimedia.org/deb/
+    surveyed_at: '2026-11-21'
+    status: active-verified
+    note: 官方入口；服务器禁止 -n (--dry-run)；s1 节点 IPv6(-6) 测速 3.17MB/s，--list-only 23,644 远端 vs 23,216 本地（+773 / -345）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/deb-multimedia/
     surveyed_at: '2026-10-03'
-    status: bootstrap-complete
-    note: USTC 首次同步源；站点报告容量 20.56 GiB，不是实际占用保证。
-  - url: rsync://www.deb-multimedia.org/deb/
-    surveyed_at: '2026-10-04'
-    note: 官方入口与生产IPv6连接已确认；服务器显式拒绝--dry-run，exit12，未取得完整范围/删除集。保持USTC源与暂停，等待允许完成预检的官方流程。
-    status: hold-dry-run-refused
-    stack: ipv6
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-21 已迁移至官方源。
   validation:
     observed_at: '2026-10-04'
     completed:

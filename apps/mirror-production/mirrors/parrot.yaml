@@ -2,10 +2,11 @@ metadata:
   name: parrot
 info:
   description: 面向安全审计的 Parrot OS 软件仓库与安装镜像
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/parrot/
+  upstream: rsync://rsync.parrot.sh/parrot/
 sync:
   type: rsync
-  interval: 24h
+  ipv6: false
+  interval: 6h
   timeout: 24h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
@@ -17,19 +18,22 @@ publish:
     replicas: 1
 comment:
   official:
-    surveyed_at: '2026-10-02'
+    surveyed_at: '2026-11-21'
     docs:
     - https://parrotsec.org/docs/mirrors/make-mirror/
+    - https://parrotsec.org/docs/mirrors/mirrors-list/
     policy:
-    - 官方完整仓库 cron 示例每日一次，使用 --delete-after；全模块包含 ISO。
+    - 官方完整仓库 rsync 模块为 /parrot（包含 ISO）；文档示例 cron 每日一次并使用 --delete-after。
+    - rsync.parrot.sh 使用 GeoDNS 自动分配最近上游，IPv6 (-6) 实测超时，不强制 -6（sync.ipv6=false）可直连通过。
   bootstrap:
-    note: 用户已通知 USTC；先初始化，官方源可行时验证后切换；初始任务暂停自动排程并按批次手动放行。
+    note: 已在 s1 验证官方 rsync.parrot.sh 与现有 PVC（196,657 个文件 / 951.14G）完全一致，切源至官方并调整同步周期为 6h。
     official_interval: 24h
   upstreams:
-  - url: rsync://rsync.mirrors.ustc.edu.cn/parrot/
-    surveyed_at: '2026-09-30'
-    status: selected
-    note: 模块根已在前期调查验证，首次初始化源。
   - url: rsync://rsync.parrot.sh/parrot/
-    surveyed_at: '2026-09-30'
-    note: 后续官方源；须先验证访问、新鲜度、路径、删除集与完整性。
+    surveyed_at: '2026-11-21'
+    status: selected
+    note: 官方 GeoDNS rsync 源；未加 -6 时 dry-run 12s（+36 / 79.13M / 0 删除），79M 包实测 7.15 MB/s。
+  - url: rsync://ftp.nluug.nl/parrot/
+    surveyed_at: '2026-11-21'
+    status: verified-backup
+    note: 荷兰学术网备用 IPv6 (-6) 源；dry-run 16s，79M 包实测 9.68 MB/s。

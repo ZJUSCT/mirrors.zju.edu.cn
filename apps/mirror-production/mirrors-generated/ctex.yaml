@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: CTEX 中文 TeX 发行版安装文件与历史存档
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/ctex/
+    upstream: rsync://mirrors.tuna.tsinghua.edu.cn/ctex/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/ctex/
+              - rsync://mirrors.tuna.tsinghua.edu.cn/ctex/
               - /data/
             volumeMounts:
               - name: tmp

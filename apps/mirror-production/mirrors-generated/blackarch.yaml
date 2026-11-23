@@ -8,9 +8,9 @@ metadata:
 spec:
   info:
     description: 面向渗透测试与安全研究的 Arch Linux 衍生发行版
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/blackarch/
+    upstream: rsync://rsync.mirrorservice.org/blackarch.org/blackarch/
   sync:
-    interval: 24h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/blackarch/
+              - rsync://rsync.mirrorservice.org/blackarch.org/blackarch/
               - /data/
             volumeMounts:
               - name: tmp

@@ -8,9 +8,9 @@ metadata:
 spec:
   info:
     description: MariaDB 关系数据库与连接器发布文件
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/mariadb/
+    upstream: rsync://mirror.kku.ac.th/mariadb/
   sync:
-    interval: 24h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/mariadb/
+              - rsync://mirror.kku.ac.th/mariadb/
               - /data/
             volumeMounts:
               - name: tmp

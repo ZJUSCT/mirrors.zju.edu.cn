@@ -5,7 +5,7 @@ info:
   upstream: rsync://cloud-images.ubuntu.com/cloud-images/ # Canonical 官方 rsync 源
 sync:
   type: rsync
-  interval: 12h
+  interval: 6h
   timeout: 12h
 storage:
   size: 4Ti

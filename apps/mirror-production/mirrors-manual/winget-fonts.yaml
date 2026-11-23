@@ -1,23 +1,24 @@
+# 由 mirrors/winget-fonts.yaml 迁入：微软 WinGet 字体源是 PreIndexed.Package，
+# 无目录索引，复用与 winget-source 相同的 ustcmirror/winget-source 容器直接同步官方 CDN。
 apiVersion: mirrors.zjusct.io/v1alpha1
 kind: Mirror
 metadata:
-  name: packaging-gitea
+  name: winget-fonts
   namespace: mirror-production
   labels:
     app.kubernetes.io/name: falcon
 spec:
   info:
-    description: 社区维护的 Gitea Debian 软件包仓库
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/packaging-gitea/
+    description: WinGet 字体源索引（不包含全部字体安装文件）
+    upstream: https://cdn.winget.microsoft.com/fonts
   sync:
-    interval: 24h
+    interval: 1h
     retryInterval: 15m
-    timeout: 24h
+    timeout: 8h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:
       spec:
-        # 仅用于 WaitForFirstConsumer PVC 的首次落盘；PV 绑定后应从清单移除
         nodeSelector:
           kubernetes.io/hostname: s1.mirrors.zjusct.io
         securityContext:
@@ -26,7 +27,6 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         initContainers:
-          # 只初始化同步卷根目录的 owner；QFM 使用独立的同步 UID。
           - name: init-sync-volume
             image: busybox:1.37
             imagePullPolicy: Always
@@ -53,38 +53,31 @@ spec:
               requests: {cpu: 10m, memory: 16Mi}
               limits: {cpu: 100m, memory: 32Mi}
         containers:
-          - name: rsync
-            image: ghcr.io/zjusct/rsync:latest
+          - name: winget
+            image: ustcmirror/winget-source:latest
             imagePullPolicy: Always
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: [ALL]
               readOnlyRootFilesystem: true
-            command: [rsync]
-            args:
-              - -aH
-              - "-6"
-              - --no-o
-              - --no-g
-              - --stats
-              - -h
-              - --itemize-changes
-              - --partial-dir=.rsync-partial
-              - --filter=P .rsync-partial/
-              - --exclude=.~tmp~/
-              - --delete
-              - --delete-excluded
-              - --safe-links
-              - --timeout=120
-              - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/packaging-gitea/
-              - /data/
+            command: [node, /sync-repo.js]
+            env:
+              - name: TO
+                value: /data/
+              - name: WINGET_REPO_URL
+                value: 'https://cdn.winget.microsoft.com/fonts'
+              - name: WINGET_REPO_JOBS
+                value: "8"
+              - name: WINGET_FORCE_SYNC
+                value: "true"
+              - name: NODE_ENV
+                value: production
             volumeMounts:
-              - name: tmp
-                mountPath: /tmp
               - name: sync-data
                 mountPath: /data
+              - name: tmp
+                mountPath: /tmp
             resources:
               requests: {cpu: 500m, memory: 512Mi}
               limits: {cpu: "4", memory: 4Gi}
@@ -162,7 +155,7 @@ spec:
                 - name: tmp
                   mountPath: /tmp
                 - name: mirror-data
-                  mountPath: /usr/share/nginx/html/packaging-gitea
+                  mountPath: /usr/share/nginx/html/winget-fonts
                   readOnly: true
           volumes:
             - name: nginx-conf

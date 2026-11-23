@@ -2,7 +2,7 @@ metadata:
   name: knoppix-dvd
 info:
   description: KNOPPIX 的 DVD 安装镜像
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/knoppix-dvd/
+  upstream: rsync://ftp.uni-kl.de/knoppix-dvd/
 sync:
   type: rsync
   interval: 24h
@@ -27,13 +27,14 @@ comment:
     - DVD 根含 ISO、校验和、`.asc` 签名、`packages-dvd.txt` 等；以 ISO 与签名文件成对验收，避免只同步 ISO。
     - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
   bootstrap:
-    note: USTC 首次同步于 2026-10-03T06:15:14Z UTC 成功，发布于 2026-10-03T06:15:25Z UTC；当前 mirrors.zjusct.io/sync-paused=true，自动同步保持暂停。USTC
-      初始化成功；官方 DVD rsync 列表停留在 2021，暂不切换，保持已发布 USTC 快照和暂停状态。
+    status: migrated-from-ustc
+    note: 2026-10-03由USTC初始化；2026-11-21在s1验证官方master ftp.uni-kl.de IPv6(-6) dry-run 与本地完全一致（269文件/18.68G，0增0删），已切换（归档保留24h）。
   upstreams:
+  - url: rsync://ftp.uni-kl.de/knoppix-dvd/
+    surveyed_at: '2026-11-21'
+    status: active-verified
+    note: 官方标记推荐 master；s1 节点 IPv6(-6) 大文件爬坡至 10.85MB/s，dry-run 3s（269 文件 / 18.68G，0 增 / 0 删）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/knoppix-dvd/
     surveyed_at: '2026-10-03'
-    status: selected
-    note: USTC 首次同步源；站点报告容量 17.39 GiB，不是实际占用保证。
-  - url: rsync://ftp.uni-kl.de/knoppix-dvd/
-    surveyed_at: '2026-10-03'
-    note: 官方或项目认可的后续候选；尚未切换，先验证协议、范围、新鲜度、签名与删除集。
+    status: retired-seed
+    note: USTC 初始化种子；2026-11-21 已迁移至官方 master。

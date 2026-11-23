@@ -8,7 +8,7 @@ metadata:
 spec:
   info:
     description: KNOPPIX 的 DVD 安装镜像
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/knoppix-dvd/
+    upstream: rsync://ftp.uni-kl.de/knoppix-dvd/
   sync:
     interval: 24h
     retryInterval: 15m
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/knoppix-dvd/
+              - rsync://ftp.uni-kl.de/knoppix-dvd/
               - /data/
             volumeMounts:
               - name: tmp

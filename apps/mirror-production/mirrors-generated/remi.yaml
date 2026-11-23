@@ -8,9 +8,9 @@ metadata:
 spec:
   info:
     description: 包含最新版本 PHP 和 MySQL 的第三方 yum 源
-    upstream: rsync://rsync.mirrors.ustc.edu.cn/remi/
+    upstream: rsync://mirror.netone.nl/remi/
   sync:
-    interval: 24h
+    interval: 6h
     retryInterval: 15m
     timeout: 24h
     failureRetryLimit: 3
@@ -78,7 +78,7 @@ spec:
               - --safe-links
               - --timeout=120
               - --contimeout=120
-              - rsync://rsync.mirrors.ustc.edu.cn/remi/
+              - rsync://mirror.netone.nl/remi/
               - /data/
             volumeMounts:
               - name: tmp

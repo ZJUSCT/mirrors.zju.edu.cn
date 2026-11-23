@@ -6,7 +6,7 @@ info:
 sync:
   type: rsync
   ipv6: false
-  interval: 24h
+  interval: 6h
   timeout: 24h
   rsync:
     password_secret: anolis-rsync

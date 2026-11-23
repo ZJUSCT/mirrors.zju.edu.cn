@@ -29,7 +29,7 @@ spec:
     description: Windows Package Manager 社区预索引软件源
     upstream: https://cdn.winget.microsoft.com/cache
   sync:
-    interval: 8h
+    interval: 1h
     retryInterval: 15m
     timeout: 8h
     failureRetryLimit: 3

@@ -2,7 +2,7 @@ metadata:
   name: lineage-rom
 info:
   description: LineageOS 社区 Android 系统安装镜像
-  upstream: rsync://rsync.mirrors.ustc.edu.cn/lineageos/
+  upstream: rsync://mirror.freedif.org/lineageos/
 sync:
   type: rsync
   interval: 24h
@@ -26,10 +26,17 @@ comment:
     note: 用户已通知 USTC；先初始化，官方源可行时验证后切换；初始任务暂停自动排程并按批次手动放行。
     official_interval: 15m
   upstreams:
-  - url: rsync://rsync.mirrors.ustc.edu.cn/lineageos/
-    surveyed_at: '2026-09-30'
+  - url: rsync://mirror.freedif.org/lineageos/
+    stack: dual
     status: selected
-    note: 模块根已在前期调查验证，首次初始化源。
+    surveyed_at: '2026-11-21'
+    metrics: IPv6 RTT 104.0ms、104.4MB/s；全树 dry-run 58s 完成（8,924 文件、1.64TB）
+    note: '新加坡官方收录镜像（同站亦为 fdroid 上游），走 IPv6（-6），根目录结构完全一致且 TIMESTAMP 为当日最新。'
+  - url: rsync://rsync.mirrors.ustc.edu.cn/lineageos/
+    surveyed_at: '2026-11-21'
+    status: bootstrap-complete
+    note: 首次初始化源（近期频繁遇到 Server queue is full）；现已切至 mirror.freedif.org。
   - url: rsync://mirror-sync.lineageos.org/mirror/
-    surveyed_at: '2026-09-30'
-    note: 后续官方源；须先验证访问、新鲜度、路径、删除集与完整性。
+    surveyed_at: '2026-11-21'
+    status: access-denied
+    note: '无 IPv6 AAAA；IPv4 出口 210.32.159.60 报 access denied，需按 lineageos.org/mirroring 登记后方可直接回源。'

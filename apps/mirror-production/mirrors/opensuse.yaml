@@ -7,7 +7,7 @@ info:
 sync:
   type: rsync
   interval: 6h
-  timeout: 24h
+  timeout: 168h
   rsync:
     extra_args:
       # 上游当前拒绝访问的路径：永久保留，不能作为阶段开关移除。
