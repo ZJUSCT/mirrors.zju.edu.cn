@@ -2,7 +2,7 @@ metadata:
   name: mariadb
 info:
   description: MariaDB 关系数据库与连接器发布文件
-  upstream: rsync://mirror.kku.ac.th/mariadb/
+  upstream: rsync://mirrors.xtom.com.hk/mariadb/
 sync:
   type: rsync
   interval: 6h
@@ -35,16 +35,20 @@ comment:
     job: mariadb-sync-1791075156
     succeeded_at: '2026-10-04T02:18:53Z'
     published_at: '2026-10-04T02:19:01Z'
-    note: 2026-10-04由USTC初始化成功并发布；2026-11-21将上游切换至 mirror.kku.ac.th（IPv6 -6）并按官方建议调整interval为6h，首次切换预计补齐完整发布树（832.32G，+645.77G，0删除）。
+    note: 2026-10-04由USTC初始化成功并发布；2026-11-21切至 mirror.kku.ac.th 后实测白天长流跌至~85 KB/s并断流；2026-11-24先借 mirror.aarnet.edu.au（13~40 MiB/s）补全832G树，长期上游切至香港 xTom（rsync://mirrors.xtom.com.hk/mariadb/，IPv6 -6）。
   upstreams:
-  - url: rsync://mirror.kku.ac.th/mariadb/
-    surveyed_at: '2026-11-21'
+  - url: rsync://mirrors.xtom.com.hk/mariadb/
+    surveyed_at: '2026-11-24'
     status: active-verified
-    note: 泰国孔敬大学公共镜像，mirmon.mariadb.org 状态 ok；s1节点IPv6（-6）实测99.4MB单文件22.10MB/s、完整dry-run 9s（49,263文件/832.32G，+17,076，0删除）。
+    note: 香港 xTom 公开源，mirmon.mariadb.org 状态 3 hours / ok（TIME 2026/11/24 05:30:01）；s1 节点 IPv6（-6）实测 15.4 MiB 文件 3,944 KB/s，树布局与官方一致。
   - url: rsync://mirror.aarnet.edu.au/mariadb/
-    surveyed_at: '2026-11-21'
-    status: candidate-verified-readonly
-    note: 澳大利亚AARNet，s1节点IPv6（-6）实测18.08MB/s、dry-run 10s，树结构与kku一致。
+    surveyed_at: '2026-11-24'
+    status: bootstrap-seed
+    note: 澳大利亚 AARNet，s1 节点 IPv6（-6）实测 13~40 MiB/s（mirmon 滞后约 18 hours）；2026-11-24 用于快速补齐完整发布树。
+  - url: rsync://mirror.kku.ac.th/mariadb/
+    surveyed_at: '2026-11-24'
+    status: candidate-slow
+    note: 泰国孔敬大学公共镜像；虽 mirmon 状态 3 hours / ok，但 2026-11-24 实测长流掉速至 ~85 KB/s 并出现 Connection reset by peer (104)。
   - url: rsync://mirror.netcologne.de/mariadb/
     surveyed_at: '2026-11-21'
     status: candidate-verified-readonly
