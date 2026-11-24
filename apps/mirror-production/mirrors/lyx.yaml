@@ -7,6 +7,7 @@ sync:
   type: tsumugu
   interval: 24h
   timeout: 24h
+  ipv6: false # 上游 ftp.lyx.org AAAA(2001:660:3302:282a:d294:66ff:fe8b:9c18) 80 端口超时，保持双栈走 IPv4
   tsumugu:
     parser: nginx
     threads: 4

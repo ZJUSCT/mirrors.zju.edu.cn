@@ -74,6 +74,9 @@ spec:
               - --yum-packages
               - 'https://repo.mysql.com/'
               - /data/
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
             volumeMounts:
               - name: sync-data
                 mountPath: /data

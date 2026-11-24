@@ -75,6 +75,9 @@ spec:
               - '^/([^/]+/(tmp|windows-fixed)|mail|nt|wpy|download|pc|win32)(/|$)'
               - 'https://www.python.org/ftp/python/'
               - /data/
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
             volumeMounts:
               - name: sync-data
                 mountPath: /data

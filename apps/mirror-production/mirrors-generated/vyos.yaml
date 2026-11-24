@@ -75,6 +75,9 @@ spec:
               - ^/(releases|repositories|tarballs)/(circinus|equuleus|sagitta|scutum|crux)(/|$)
               - 'https://packages.vyos.net/'
               - /data/
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
             volumeMounts:
               - name: sync-data
                 mountPath: /data

@@ -87,6 +87,8 @@ def validate(entry):
             value = options.get(field, default)
             if type(value) is not int or value < minimum:
                 problems.append(f"sync.tsumugu.{field} must be an integer >= {minimum}")
+        if "ipv6" in sync and type(sync["ipv6"]) is not bool:
+            problems.append("sync.ipv6 must be a boolean")
         if not isinstance(options.get("extra_args", []), list) or not all(
             isinstance(arg, str) for arg in options.get("extra_args", [])
         ):

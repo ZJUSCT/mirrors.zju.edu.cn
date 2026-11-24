@@ -77,6 +77,9 @@ spec:
               - '^/v[0-9]'
               - 'https://nodejs.org/dist/'
               - /data/
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
             volumeMounts:
               - name: sync-data
                 mountPath: /data

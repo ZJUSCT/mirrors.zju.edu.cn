@@ -7,6 +7,7 @@ sync:
   type: tsumugu
   interval: 6h
   timeout: 24h
+  ipv6: false # 上游 openresty.org 仅 A 记录（无 AAAA）
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
   tsumugu:

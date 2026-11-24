@@ -72,6 +72,9 @@ spec:
               - '100'
               - 'https://nginx.org/packages/'
               - /data/
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
             volumeMounts:
               - name: sync-data
                 mountPath: /data

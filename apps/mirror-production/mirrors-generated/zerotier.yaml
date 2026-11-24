@@ -74,6 +74,9 @@ spec:
               - '0'
               - 'https://download.zerotier.com/'
               - /data/
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
             volumeMounts:
               - name: sync-data
                 mountPath: /data
