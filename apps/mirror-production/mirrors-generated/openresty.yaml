@@ -69,10 +69,12 @@ spec:
               - --threads
               - '8'
               - --max-delete
-              - '100'
+              - '1000'
               - --exclusion-v2
               - --exclude
               - ^/amazon/2022\.0\.
+              - --exclude
+              - '^/amazon/2023(\.[^/]+)?/2023$'
               - 'https://openresty.org/package/'
               - /data/
             volumeMounts:

@@ -13,12 +13,15 @@ sync:
   tsumugu:
     parser: nginx
     threads: 8
-    max_delete: 100
+    max_delete: 1000
     extra_args:
       - --exclusion-v2
       # 上游 amazon/ 目录页列出的 13 个 2022.0.* 子目录均返回 HTTP 404，会导致 tsumugu Failed to list remote 退出 1
       - --exclude
       - '^/amazon/2022\.0\.'
+      # 上游 amazon/2023 及 2023.* 目录下名为 2023 的 4 字节条目返回 HTTP 403 Forbidden
+      - --exclude
+      - '^/amazon/2023(\.[^/]+)?/2023$'
 storage:
   size: 288Gi
 publish:
@@ -46,9 +49,9 @@ comment:
     note: 2026-10-04由USTC初始化成功并发布；2026-11-21切换至官方 HTTPS + tsumugu（parser=nginx, threads=8, max_delete=100, interval=6h），通过 --exclusion-v2 排除上游 HTTP 404 的 amazon/2022.0.* 目录，并补齐 alinux/amazon/oracle/tlinux。
   upstreams:
   - url: https://openresty.org/package/
-    surveyed_at: '2026-11-21'
+    surveyed_at: '2026-11-24'
     status: active-verified
-    note: 官方 HTTPS 软件源（仅 IPv4 182.92.62.145，单线程 1.70MB/s）；s1 节点 8 并发排除 amazon/2022.0.* 404 目录后 dry-run 耗时 34s 退出 0（89,791 对象 / 190.01GiB，+33,870 文件，0 删除）。
+    note: 官方 HTTPS 软件源（仅 IPv4 182.92.62.145，单线程 1.70MB/s）；排除 amazon/2022.0.* (404) 与 amazon/2023*/2023 (403)，max_delete=1000（应对全平台 RPM repodata 重建），2026-11-24 实测全树同步成功并发布（91,987 对象 / 193.86GiB）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/openresty/
     surveyed_at: '2026-10-04'
     status: retired-seed
