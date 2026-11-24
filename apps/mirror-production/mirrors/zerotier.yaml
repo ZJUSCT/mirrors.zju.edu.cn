@@ -17,6 +17,12 @@ sync:
       # 根文件 contact@zerotier.com.gpg 的 HTTP 头异常导致 tsumugu 猜时区失败，显式固定 UTC (+0)
       - --timezone
       - "0"
+      # 避免在已存在文件上发 GET 后掐断响应体触发 Cloudflare HTTP/2 too_many_internal_resets
+      - --trust-mtime-from-parser
+      # 排除上游固定返回 404 的坏链及 1.8.3 下重复嵌套的 dist/dist/ 目录
+      - --exclusion-v2
+      - --exclude
+      - ^/RELEASES/1\.8\.[123]/dist/(wd$|ubiquiti/zerotier-one_latest_mips\.deb$|dist(/|$))
 storage:
   size: 64Gi # 2026-11-22：官方全树 36,454 对象 / 39.46GiB，原 24Gi 配额不足，扩容并预留增长空间。
 publish:
@@ -40,9 +46,9 @@ comment:
     note: 2026-10-03由USTC初始化（10.26GiB 子集）；2026-11-22 扩容 storage.size 至 64Gi 并切至官方 HTTPS https://download.zerotier.com/（tsumugu parser=nginx, threads=8, --timezone 0, interval=1h）。
   upstreams:
   - url: https://download.zerotier.com/
-    surveyed_at: '2026-11-22'
+    surveyed_at: '2026-11-24'
     status: active-verified
-    note: 官方 HTTPS；加 --timezone 0 后 s1 节点 8 并发 dry-run 耗时 58s 退出 0（36,454 对象 / 39.46GiB，0 删除，补齐原 USTC 未含的 RELEASES/redhat/debian 历史包）。
+    note: 官方 HTTPS；加 --timezone 0、--trust-mtime-from-parser（避免 Cloudflare HTTP/2 too_many_internal_resets）与 --exclusion-v2 排除 1.8.{1,2,3}/dist 404 坏链及嵌套 dist/dist/ 后完成全树同步与发布（36,278 对象 / 39.30GiB）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/zerotier/
     surveyed_at: '2026-10-03'
     status: retired-seed

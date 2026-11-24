@@ -72,6 +72,10 @@ spec:
               - '100'
               - --timezone
               - '0'
+              - --trust-mtime-from-parser
+              - --exclusion-v2
+              - --exclude
+              - '^/RELEASES/1\.8\.[123]/dist/(wd$|ubiquiti/zerotier-one_latest_mips\.deb$|dist(/|$))'
               - 'https://download.zerotier.com/'
               - /data/
             env:
