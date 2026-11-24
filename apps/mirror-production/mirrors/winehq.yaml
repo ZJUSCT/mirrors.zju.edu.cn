@@ -6,7 +6,7 @@ info:
 sync:
   type: tsumugu
   interval: 24h
-  timeout: 24h
+  timeout: 168h
   nodeSelector:
     kubernetes.io/hostname: s1.mirrors.zjusct.io
   tsumugu:
@@ -21,6 +21,11 @@ sync:
       - ^/(wine|mono|other|vkd3d)(/|$)
       - --exclude
       - .
+      - --trust-mtime-from-parser
+      - --skip-if-exists
+      - ^/mono/monolite/
+      - --skip-if-exists
+      - ^/(wine/(source|wine-gecko|wine-mono|logos)|mono/sources|other|vkd3d/source)/.*\.(tar\.(gz|bz2|xz)|diff\.(gz|bz2|xz)|msi|cab|zip|mp4|rpm|pdf|ps|eps|png|svg|sign)$
 storage:
   size: 128Gi
 publish:
@@ -47,8 +52,8 @@ comment:
   - url: https://dl.winehq.org/
     stack: dual
     status: selected
-    surveyed_at: '2026-11-21'
-    note: 使用 tsumugu/apache-f2 从官方父根保留 wine/、mono/、other/、vkd3d/（排除已独立部署的 wine-builds/），与原有 /winehq/ 目录布局完全一致；2026-11-21 dry-run 验证 4,084 对象、60.42 GiB。
+    surveyed_at: '2026-11-24'
+    note: 使用 tsumugu/apache-f2（默认 sync.ipv6=true 注入 BIND_ADDRESS="::" 强制 IPv6）直连官方父根保留 wine/、mono/、other/、vkd3d/（排除已独立部署的 wine-builds/）；因 TUNA 存量旧文件与 2025-04 上游 Last-Modified 不一致且 IPv4 严重限速，启用 --trust-mtime-from-parser 避免全量 HEAD 校验，并用 --skip-if-exists 跳过既有历史不可变归档（sha512sums.asc 等可变文件仍按网页时间戳更新），timeout 放宽至 168h。
   - url: rsync://mirrors.tuna.tsinghua.edu.cn/winehq/
     stack: dual
     status: obsolete
