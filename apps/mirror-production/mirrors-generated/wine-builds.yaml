@@ -73,14 +73,6 @@ spec:
               - --exclusion-v2
               - --exclude
               - ^/(debian/dists/bookworm|ubuntu/dists/jammy)/main/binary-all(/|$)
-              - --include
-              - ^/$
-              - --include
-              - ^/(debian|fedora|ubuntu)(/|$)
-              - --include
-              - '^/(Release[.]key|winehq[.]key)$'
-              - --exclude
-              - .
               - 'https://dl.winehq.org/wine-builds/'
               - /data/
             env:
