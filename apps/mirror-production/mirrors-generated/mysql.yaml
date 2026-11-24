@@ -69,9 +69,10 @@ spec:
               - --threads
               - '12'
               - --max-delete
-              - '100'
+              - '2000'
               - --apt-packages
               - --yum-packages
+              - --ignore-nonexist
               - 'https://repo.mysql.com/'
               - /data/
             env:
