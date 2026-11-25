@@ -73,6 +73,8 @@ spec:
               - --exclusion-v2
               - --exclude
               - '^/([^/]+/(tmp|windows-fixed)|mail|nt|wpy|download|pc|win32)(/|$)'
+              - --exclude
+              - '^/(3\.10\.(9|10)|3\.11\.[12])/python[^/]*\.rekor$'
               - 'https://www.python.org/ftp/python/'
               - /data/
             env:

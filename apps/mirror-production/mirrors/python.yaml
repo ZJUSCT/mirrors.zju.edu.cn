@@ -18,6 +18,9 @@ sync:
       # 排除上游返回 403 的临时目录以及非 nginx 目录列表的 1990 年代静态 HTML 页 (/mail, /nt, /wpy, /download, /pc, /win32)
       - --exclude
       - '^/([^/]+/(tmp|windows-fixed)|mail|nt|wpy|download|pc|win32)(/|$)'
+      # 排除上游返回 403 Forbidden 的 4 个旧版本安装包/CHM .rekor 凭证（共 26 个，同目录源码包 Python-*.rekor 可正常下载）
+      - --exclude
+      - '^/(3\.10\.(9|10)|3\.11\.[12])/python[^/]*\.rekor$'
 storage:
   size: 256Gi # 2026-11-22：官方全树约 181.96GiB，原 180Gi 配额不足，扩容并预留增长空间。
 publish:
@@ -48,9 +51,9 @@ comment:
     - 公网 3.14.0/Python-3.14.0.tar.xz.sigstore 与官方同路径逐字节相同：5374字节，SHA256=83cf46269926bf166ca1b67e5647c44152a300a0f6d30cbbce147099e072bf41。
   upstreams:
   - url: https://www.python.org/ftp/python/
-    surveyed_at: '2026-11-22'
+    surveyed_at: '2026-11-25'
     status: active-verified
-    note: 官方 HTTPS 软件源 + tsumugu/nginx；排除 ^/([^/]+/(tmp|windows-fixed)|mail|nt|wpy|download|pc|win32)(/|$) 后 19s dry-run 退出 0（50,529 对象 / 181.96GiB）。
+    note: 官方 HTTPS 软件源 + tsumugu/nginx；排除 403 目录/旧静态页及 3.10.9/3.10.10/3.11.1/3.11.2 下 26 个 403 安装包 .rekor 后全树同步成功并发布（50,529 对象 / 181.96GiB）。
   - url: rsync://rsync.mirrors.ustc.edu.cn/python/
     surveyed_at: '2026-10-03'
     status: retired-seed
