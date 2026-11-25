@@ -1,18 +1,19 @@
 # comment:
 #   official:
-#     surveyed_at: 2026-11-16
+#     surveyed_at: 2026-11-25
 #     docs:
 #       - https://wiki.ultramarine-linux.org/en/contributing/mirroring/
 #       - https://github.com/terrapkg/mirror-script
 #       - https://admin.fedoraproject.org/pkgdb/api/collections/
 #     policy:
-#       - 官方提供 mirror.sh 和 rsync-ssl 同步方式，推荐每 5 分钟同步。
+#       - 官方文档仍写着 rsync-ssl（repos.fyralabs.com:874），但上游实际已迁至 Cloudflare + Tigris S3（874 端口不可达），推荐每 5 分钟同步。
 #       - 公开镜像须通过 HTTPS 提供服务，配置完成后向 Tetsudou 提交收录。
-#       - 仅同步处于支持周期内的 Fedora 版本仓库，EOL 版本自动清理。
+#       - 仅同步处于支持周期内的 Fedora 版本仓库（Active / Under Development + rawhide）及对应 appstream/ 子目录，EOL 版本自动清理。
 #   upstreams:
-#     - url: rsync://repos.fyralabs.com/repo/
-#       surveyed_at: 2026-11-16
-#       note: 使用官方 mirror.sh 对根目录执行过滤同步，保留所选版本的主仓库、组件、源包及对应 AppStream 目录。
+#     - url: https://fly.storage.tigris.dev (s3://repos/)
+#       stack: dual
+#       surveyed_at: 2026-11-25
+#       note: 上游 repos.fyralabs.com 背后的 Tigris S3 公开桶（virtual-hosted style 对应 repos.fly.storage.tigris.dev）；按 Fedora PkgDB 支持版本过滤并由 aws s3 sync 同步。
 apiVersion: mirrors.zjusct.io/v1alpha1
 kind: Mirror
 metadata:
@@ -23,7 +24,7 @@ metadata:
 spec:
   info:
     description: Terra RPM 软件仓库
-    upstream: rsync://repos.fyralabs.com/repo/
+    upstream: https://repos.fyralabs.com/
   sync:
     interval: 5m
     retryInterval: 15m
@@ -64,29 +65,28 @@ spec:
               requests: { cpu: 10m, memory: 16Mi }
               limits: { cpu: 100m, memory: 32Mi }
         containers:
-          - name: terra
-            image: ghcr.io/zjusct/terra:latest
+          - name: aws-cli
+            image: registry.mirrors.zjusct.io/docker.io/amazon/aws-cli:latest
             imagePullPolicy: Always
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop: [ALL]
               readOnlyRootFilesystem: true
-            command: [python3, /usr/local/lib/terra/sync.py]
+            command: [python3, /script/sync.py]
             env:
+              - name: HOME
+                value: /tmp
               - name: MIRROR_DIR
                 value: /data
-              - name: RSYNC
-                value: /usr/local/bin/terra-rsync
-              - name: PARALLEL
-                value: "0"
-              - name: USE_RCLONE
-                value: "0"
-              - name: SYNC_SOURCES
-                value: "1"
+              - name: AWS_EC2_METADATA_DISABLED
+                value: "true"
             volumeMounts:
               - name: tmp
                 mountPath: /tmp
+              - name: terra-sync-script
+                mountPath: /script
+                readOnly: true
               - name: sync-data
                 mountPath: /data
             resources:
@@ -98,6 +98,10 @@ spec:
               name: sync-volume-init
           - name: tmp
             emptyDir: {}
+          - name: terra-sync-script
+            configMap:
+              name: terra-sync-script
+              defaultMode: 0444
   storage:
     syncStorageClassName: zfs-hdd-retain-wffc
     publishStorageClassName: zfs-hdd-delete-immediate
@@ -176,3 +180,154 @@ spec:
               # 目录缓存上限 512Mi，额外空间用于正在填充的响应及其他临时文件。
               emptyDir:
                 sizeLimit: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: terra-sync-script
+  namespace: mirror-production
+  labels:
+    app.kubernetes.io/name: falcon
+data:
+  sync.py: |
+    """按 Fedora 发布状态筛选活跃分支，并通过 aws-cli 从 Tigris S3 同步。"""
+
+    import json
+    import os
+    import re
+    import shutil
+    import subprocess
+    import xml.etree.ElementTree as ET
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from pathlib import Path
+    from urllib.parse import quote
+    from urllib.request import urlopen
+
+    COLLECTIONS = "https://admin.fedoraproject.org/pkgdb/api/collections/"
+    S3_LIST_BASE = "https://repos.fly.storage.tigris.dev/"
+    S3_ENDPOINT = "https://fly.storage.tigris.dev"
+    BUCKET = "repos"
+    AWS_CFG = Path("/tmp/aws.cfg")
+    MAX_JOBS = int(os.environ.get("TERRA_SYNC_JOBS", "4"))
+
+    def release_policy():
+        supported, archived, stable = set(), set(), set()
+        with urlopen(COLLECTIONS, timeout=30) as response:
+            collections = json.load(response)["collections"]
+        if not isinstance(collections, list):
+            raise ValueError("Invalid Fedora collections response")
+        for release in collections:
+            if release["name"] != "Fedora Linux":
+                continue
+            state = release["status"]
+            if state not in {"Active", "Under Development", "EOL"}:
+                raise ValueError(f"Unknown Fedora release state: {state}")
+            if release["koji_name"] == "rawhide":
+                if state == "Under Development":
+                    supported.add("rawhide")
+                continue
+            version = release["version"]
+            if not isinstance(version, str) or not re.fullmatch(r"[1-9][0-9]*", version):
+                raise ValueError("Invalid Fedora release version")
+            if state in {"Active", "Under Development"}:
+                supported.add(version)
+            else:
+                archived.add(version)
+            if state == "Active":
+                stable.add(version)
+        if not stable or "rawhide" not in supported or supported & archived:
+            raise ValueError("Incomplete or conflicting Fedora release metadata")
+        return supported
+
+    def list_prefixes(prefix=""):
+        prefixes, token = [], None
+        while True:
+            url = f"{S3_LIST_BASE}?list-type=2&delimiter=/&max-keys=1000"
+            if prefix:
+                url += f"&prefix={quote(prefix)}"
+            if token:
+                url += f"&continuation-token={quote(token)}"
+            with urlopen(url, timeout=30) as response:
+                xml_root = ET.fromstring(response.read())
+            for item in xml_root.findall("{*}CommonPrefixes/{*}Prefix"):
+                if item.text and item.text != prefix:
+                    prefixes.append(item.text)
+            if xml_root.findtext("{*}IsTruncated") != "true":
+                return prefixes
+            token = xml_root.findtext("{*}NextContinuationToken")
+
+    def is_supported_repo(name, supported):
+        return any(
+            name == f"terra{ver}" or name.startswith(f"terra{ver}-")
+            for ver in supported
+        )
+
+    def sync_prefix(pfx, root, env):
+        dest = root / pfx.rstrip("/")
+        dest.mkdir(parents=True, exist_ok=True)
+        cmd = [
+            "aws", "s3", "sync",
+            "--exact-timestamps",
+            "--no-sign-request",
+            "--no-progress",
+            "--endpoint-url", S3_ENDPOINT,
+            f"s3://{BUCKET}/{pfx}",
+            f"{dest}/",
+            "--exclude", "*/",
+            "--delete",
+        ]
+        subprocess.run(cmd, env=env, check=True)
+        return pfx
+
+    def prune_stale(directory, keep_names):
+        if not directory.is_dir():
+            return
+        for entry in directory.iterdir():
+            if not entry.is_dir():
+                continue
+            if entry.name.startswith("terra") and entry.name not in keep_names:
+                print(f"Pruning EOL terra directory: {entry}", flush=True)
+                shutil.rmtree(entry)
+
+    def main():
+        supported = release_policy()
+        root = Path(os.environ.get("MIRROR_DIR", "/data")).resolve(strict=True)
+        print("Fedora release set: " + ", ".join(sorted(supported)), flush=True)
+
+        top_prefixes = [
+            p for p in list_prefixes("")
+            if is_supported_repo(p.rstrip("/"), supported)
+        ]
+        app_prefixes = [
+            p for p in list_prefixes("appstream/")
+            if is_supported_repo(p.removeprefix("appstream/").rstrip("/"), supported)
+        ]
+        all_prefixes = top_prefixes + app_prefixes
+        if not top_prefixes or not app_prefixes:
+            raise ValueError(f"Unexpected empty prefix set: top={len(top_prefixes)}, app={len(app_prefixes)}")
+        print(f"Syncing {len(all_prefixes)} prefixes via aws-cli (jobs={MAX_JOBS})", flush=True)
+
+        AWS_CFG.write_text("[default]\ns3 =\n  addressing_style = virtual\n  max_concurrent_requests = 8\n")
+        env = os.environ.copy()
+        env["AWS_CONFIG_FILE"] = str(AWS_CFG)
+        env["AWS_EC2_METADATA_DISABLED"] = "true"
+
+        failures = []
+        with ThreadPoolExecutor(max_workers=MAX_JOBS) as pool:
+            futures = {pool.submit(sync_prefix, pfx, root, env): pfx for pfx in all_prefixes}
+            for fut in as_completed(futures):
+                pfx = futures[fut]
+                try:
+                    fut.result()
+                except Exception as exc:
+                    print(f"ERROR syncing {pfx}: {exc}", flush=True)
+                    failures.append(pfx)
+        if failures:
+            raise RuntimeError(f"Failed prefixes ({len(failures)}): {', '.join(sorted(failures))}")
+
+        prune_stale(root, {p.rstrip("/") for p in top_prefixes})
+        prune_stale(root / "appstream", {p.removeprefix("appstream/").rstrip("/") for p in app_prefixes})
+        print("Terra sync completed successfully", flush=True)
+
+    if __name__ == "__main__":
+        main()
