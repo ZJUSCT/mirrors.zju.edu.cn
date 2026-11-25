@@ -67,16 +67,22 @@ spec:
               - --parser
               - nginx
               - --threads
-              - '12'
+              - '8'
               - --max-delete
               - '100'
               - --exclusion-v2
               - --exclude
               - /(docs|old-docs)(/|$)
+              - --exclude
+              - ^/v0\.6\.14/SHASUMS$
               - --skip-if-exists
               - '^/v[0-9]'
+              - --head-before-get
               - 'https://nodejs.org/dist/'
               - /data/
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
             volumeMounts:
               - name: sync-data
                 mountPath: /data

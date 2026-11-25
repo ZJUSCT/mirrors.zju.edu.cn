@@ -25,12 +25,6 @@ comment:
     - 官方镜像页把 rsync://blackarch.org/blackarch/ 列为官方镜像入口；有界 --list-only（exit 0）显示 lastupdate、blackarch/、iso/、ova/、torrent/ 五项顶层内容。
     - USTC 首次树缺少 torrent/；切换候选源前必须保留官方完整顶层范围和安全链接，不能让当前快照的缺项掩盖删除差异。
     - 未查到官方固定同步周期；6h 是本站本地排程候选，不是官方要求。
-  bootstrap:
-    status: migrated-from-ustc
-    job: blackarch-sync-1790957622
-    succeeded_at: '2026-10-02T18:12:09Z'
-    published_at: '2026-10-02T18:12:18Z'
-    note: 2026-10-02由USTC初始化成功并发布；2026-11-22切换至官方列表中的 UK Mirror Service rsync://rsync.mirrorservice.org/blackarch.org/blackarch/（保留 -6，interval=6h）。
   upstreams:
   - url: rsync://rsync.mirrorservice.org/blackarch.org/blackarch/
     surveyed_at: '2026-11-22'

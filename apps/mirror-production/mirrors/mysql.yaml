@@ -12,11 +12,14 @@ sync:
   tsumugu:
     parser: nginx
     threads: 12
+    max_delete: 2000
     extra_args:
       # Akamai NetStorage 目录页会在约 2000 项处截断（如 mysql-cluster-8.0 截断 8.0.50），且部分目录列表缓存陈旧（如 8.4.13），
       # 启用 APT/YUM 元数据扩展解析 Packages 与 repodata，补齐缺失包并避免误删上游实际存在的版本。
       - --apt-packages
       - --yum-packages
+      # 上游 Packages / repodata 存在大量已从 pool 删除但索引未移除的 EOL 旧包（740+ 项返回 404）
+      - --ignore-nonexist
 storage:
   size: 5Ti
 publish:
@@ -35,10 +38,10 @@ comment:
   upstreams:
   - url: https://repo.mysql.com/
     stack: dual
-    surveyed_at: '2026-11-21'
+    surveyed_at: '2026-11-24'
     status: selected
-    metrics: 's1 实测 IPv6 单流 10.1 MB/s、8 并发 121 MB/s；全树约 131,721 个对象 / 3.46 TiB'
-    note: '官方 Akamai NetStorage HTTPS 源；实测 --parser nginx 可解析但受目录截断与陈旧目录缓存影响，必须配合 --apt-packages --yum-packages（dry-run 误删从 629 降至仅 7 项废弃 yumw/mysql-tools-preview/suse）；存储已从 2316Gi 扩至 5Ti 容纳全量。'
+    metrics: 's1 实测 IPv6 单流 10.1 MB/s、8 并发 121 MB/s；全树约 132,950 个对象 / 3.52 TiB'
+    note: '官方 Akamai NetStorage HTTPS 源；实测 --parser nginx 可解析但受目录截断与陈旧目录缓存影响，必须配合 --apt-packages --yum-packages（dry-run 误删从 629 降至仅 7 项废弃 yumw/mysql-tools-preview/suse）；因上游索引含大量已删 EOL 包的悬空 404 引用且 YUM repodata 轮换删除超百项，需加 --ignore-nonexist 与 max_delete=2000；存储已从 2316Gi 扩至 5Ti 容纳全量。'
   - url: rsync://rsync.mirrors.ustc.edu.cn/mysql-repo/
     surveyed_at: '2026-10-07'
     status: rejected

@@ -22,9 +22,6 @@ comment:
     - https://lineageos.org/mirroring/
     policy:
     - 官方 rsync 需要登记出口；生产访问被拒，获得权限前不得切源；初始化后保持暂停，交用户最终处理。
-  bootstrap:
-    note: 用户已通知 USTC；先初始化，官方源可行时验证后切换；初始任务暂停自动排程并按批次手动放行。
-    official_interval: 15m
   upstreams:
   - url: rsync://mirror.freedif.org/lineageos/
     stack: dual

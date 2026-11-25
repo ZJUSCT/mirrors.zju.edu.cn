@@ -37,8 +37,6 @@ comment:
     stack: ipv6
     note: 生产采用 rsync -6；切源 dry-run 的新增、删除、普通文件传输均为 0。真实官方任务 bjlx-sync-1790954842 于 2026-10-02T15:27:32Z 成功，官方快照于 15:27:41Z
       发布，Ready=True；已解除暂停，按 6h 自动同步。
-  bootstrap:
-    note: USTC 初始化、官方差异审阅、真实官方同步和发布校验均已完成。dry-run 检查 1628 项（含 2 个软链接），未发现需转移层级或删除的差异；该结果是 rsync 常规比较，不是整树逐文件哈希验证。
   verification:
     surveyed_at: '2026-10-02'
     checks:

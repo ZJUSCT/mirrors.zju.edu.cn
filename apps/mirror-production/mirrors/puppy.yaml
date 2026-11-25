@@ -32,12 +32,6 @@ comment:
     - ibiblio /help/rsync/ 本次 HTTP 200 内容仍为 Anubis 挑战页，未取得实际运维政策；不能把 HTTP 200 写成已阅读指南，也不能由此虚构禁止 pull 或必须申请。已观测匿名 rsync 可用，官方配方认可托管内容来源，仍须如实保留
       rsync 运维政策未确认的限制。
     - 未查到固定官方同步周期或针对该模块的登记前置条件；6h 是本站候选，不是上游要求。现有 rsync 模板直接支持标准发布文件树，无需定制下载器或其它模板。
-  bootstrap:
-    status: migrated-from-ustc
-    job: puppy-sync-1791068722
-    succeeded_at: '2026-10-04T00:51:29Z'
-    published_at: '2026-10-04T00:51:38Z'
-    note: 2026-10-04由USTC初始化成功并发布；2026-11-22切换至 rsync://mirror.aarnet.edu.au/puppylinux/（保留 -6，interval=6h）。官方认可的 ibiblio 主站在 s1 双栈均连接超时，aarnet 与 nluug 同源且速率达 15.58MB/s。
   upstreams:
   - url: rsync://mirror.aarnet.edu.au/puppylinux/
     surveyed_at: '2026-11-22'

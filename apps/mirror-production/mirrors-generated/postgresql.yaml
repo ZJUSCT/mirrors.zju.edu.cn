@@ -79,6 +79,9 @@ spec:
               - --ignore-nonexist
               - 'https://download.postgresql.org/pub/'
               - /data/
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
             volumeMounts:
               - name: sync-data
                 mountPath: /data

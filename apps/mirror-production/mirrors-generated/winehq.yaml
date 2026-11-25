@@ -12,7 +12,7 @@ spec:
   sync:
     interval: 24h
     retryInterval: 15m
-    timeout: 24h
+    timeout: 168h
     failureRetryLimit: 3
     keepJobs: 1
     podTemplate:
@@ -77,8 +77,16 @@ spec:
               - ^/(wine|mono|other|vkd3d)(/|$)
               - --exclude
               - .
+              - --trust-mtime-from-parser
+              - --skip-if-exists
+              - ^/mono/monolite/
+              - --skip-if-exists
+              - ^/(wine/(source|wine-gecko|wine-mono|logos)|mono/sources|other|vkd3d/source)/.*\.(tar\.(gz|bz2|xz)|diff\.(gz|bz2|xz)|msi|cab|zip|mp4|rpm|pdf|ps|eps|png|svg|sign)$
               - 'https://dl.winehq.org/'
               - /data/
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
             volumeMounts:
               - name: sync-data
                 mountPath: /data

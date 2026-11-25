@@ -32,9 +32,6 @@ comment:
     - 根包含历史版本 v0.99–v3.2、help/fonts/plug-ins 等及 AppImage zsync；不是只镜像最新版本。保留校验和、版本 marker 和历史发布结构，不把官网下载按钮或包管理器渠道替换成整个归档。
     - 公开文件下载会由 MirrorBits 跳到合作镜像：本次 v3.2/SHA256SUMS 最终到 https://mirror.nju.edu.cn/gimp/gimp/v3.2/SHA256SUMS。生产候选须核对现有工具重定向行为、镜像选择和内容一致性，不能把成功响应当项目自营传输证明。
     - 官方下载安装页给 SHA256；已取 v3.2/SHA256SUMS，尚未下载/认证代表 tarball。未发现官方固定轮询周期；24h 当前配置、先前6h建议均属本站选择。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-03由USTC初始化（job gimp-sync-1791047460）；2026-11-21在s1验证官方列表合作源 rsync.mirrorservice.org IPv6(-6) dry-run 与本地完全一致（2,330文件/82.23G，0增0删），已切换（interval=24h）。另测得 ftp.nluug.nl/gimp 仅16.85G（会删除766文件），未选用。
   validation:
     observed_at: '2026-11-21'
     completed:

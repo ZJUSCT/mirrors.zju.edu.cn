@@ -39,6 +39,11 @@
 {% endfor %}
               - {{ m.info.upstream | ys }}
               - /data/
+{% if ipv6 %}
+            env:
+              - name: BIND_ADDRESS
+                value: "::"
+{% endif %}
             volumeMounts:
               - name: sync-data
                 mountPath: /data

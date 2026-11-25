@@ -17,14 +17,6 @@ sync:
       - --exclusion-v2
       - --exclude
       - ^/(debian/dists/bookworm|ubuntu/dists/jammy)/main/binary-all(/|$)
-      - --include
-      - ^/$
-      - --include
-      - ^/(debian|fedora|ubuntu)(/|$)
-      - --include
-      - ^/(Release[.]key|winehq[.]key)$
-      - --exclude
-      - .
 storage:
   size: 2Ti
 publish:
@@ -39,7 +31,7 @@ comment:
     - https://gitlab.winehq.org/wine/wine/-/wikis/Debian-Ubuntu
     - https://gitlab.winehq.org/wine/wine/-/wikis/Fedora
     policy:
-    - 已发布范围为 debian/、fedora/、ubuntu/ 与 Release.key、winehq.key；官方根另有 android/macosx/mageia，接续必须通过明确过滤保留当前范围，不能无过滤复制整个根。
+    - 保持官方根完整目录树同步（android/、debian/、fedora/、macosx/、mageia/、ubuntu/ 与 Release.key、winehq.key），仅排除上游已知 404 的空 binary-all 目录。
     - 保留既有发行版、架构、历史包及 stable/devel/staging 分支；不能按仅当前支持发行版的脚本缩小范围，也不能全局删 i386。保留官方签名元数据、包、密钥和 sources/repo 文件，不改写或重签。
     - 本机 tsumugu 0.20260921.0 的 apache-f2 已实际通过官方根、Debian/Ubuntu dists 和 pool、Fedora 44 repodata 与 RPM 目录解析；默认 nginx 失败。现有
       tsumugu 模板可设置 parser 与范围过滤，无需新同步类型。
@@ -47,31 +39,17 @@ comment:
       摘要与签名索引匹配。此为样本验证，未全面校验种子或 RPM。
     - 未发现官方固定镜像周期；24h 是当前本地配置，旧建议 6h 也不是官方要求。
   bootstrap:
-    note: USTC 首次同步 wine-builds-sync-1791061271 于 2026-10-03T21:58:49Z 成功，快照 wine-builds-snap-1791061271 于 2026-10-03T21:58:57Z
-      发布，Ready=True，自动同步暂停。官方接续已有现有工具内的可行候选，但本轮未实施切换。
-    official_cutover_status: candidate-validated-pending-volume-preflight
-    official_cutover_requirements: 使用 tsumugu/apache-f2 与已测试 v2 白名单保留三平台及两个根密钥；正式交接前核验生产二进制、工作卷完整 dry-run/删除集、范围内容量变化、元数据与包一致性。不得将列表/签名样本通过记为已完成生产切换。
-    action: 将官方候选交给交接执行流程；预检和官方同步成功发布前保留既有快照及暂停状态，不重跑 USTC。
-    candidate_sync:
-      type: tsumugu
-      parser: apache-f2
-      threads: 4
-      max_delete: 100
-      extra_args:
-      - --exclusion-v2
-      - --include
-      - ^/$
-      - --include
-      - ^/(debian|fedora|ubuntu)(/|$)
-      - --include
-      - ^/(Release[.]key|winehq[.]key)$
-      - --exclude
-      - .
+    note: 2026-10-03 由 USTC 首次同步（114.18 GiB 裁剪子集，后 USTC 撤下模块）；2026-11-24 通过 NJU rsync（rsync://mirrors.nju.edu.cn/wine-builds/）完成 debian/fedora/ubuntu 补全（1.13 TiB）并发布，后续需全量保留 android/macosx/mageia（约 1.32 TiB，可通过 NJU bootstrap 补齐后再由官方 HTTPS + tsumugu 保持全量增量同步）。
+    official_cutover_status: full-tree-tsumugu-ready
   upstreams:
   - url: https://dl.winehq.org/wine-builds/
-    surveyed_at: '2026-11-21'
+    surveyed_at: '2026-11-24'
     status: selected
-    note: 'USTC 已撤下 wine-builds（@ERROR: chdir failed）；切换至官方 HTTPS + tsumugu/apache-f2（threads 12，timeout 168h，扩容至 2Ti），排除 404 的空 binary-all 目录及 android/macosx/mageia。'
+    note: '保持官方 HTTPS + tsumugu/apache-f2（threads 12，timeout 168h，2Ti PVC）全量同步，仅排除 404 的空 binary-all 目录；大容量初始/全量补齐可通过 NJU rsync bootstrap 完成。'
+  - url: rsync://mirrors.nju.edu.cn/wine-builds/
+    surveyed_at: '2026-11-24'
+    status: bootstrap-seed
+    note: '用于 2026-11-24 快速补全 1.13 TiB（debian/fedora/ubuntu）及全量（约 1.32 TiB）bootstrap 种子。'
   - url: rsync://rsync.mirrors.ustc.edu.cn/wine-builds/
     surveyed_at: '2026-11-21'
     status: obsolete

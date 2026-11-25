@@ -30,12 +30,6 @@ comment:
     - 现有 rsync 模板可直接同步发布文件，无需增加同步器。HTTPS 根只是指向下载页的短页面，不应把它误当目录清单；已有 rsync 入口可避免 HTTP 目录发现问题。
     - 2026-10-04已切换官方rsync://releases.libreelec.tv/releases/；DNS仅观察到A=164.92.230.217，生产明确使用IPv4。完整同过滤dry-run与真实同步exit0，公网完整系统镜像SHA256验证通过后恢复自动同步。
     - 官方全树含12个NOOBS绝对别名链接，目标形如/var/www/releases/noobs/LibreELEC_RPi2/System.tar.xz；现有safe-links已将这些别名排除，USTC种子快照同样没有它们。保持safe-links，不跟随绝对链接或重写它们；8个不同规范Storage/System文件均在镜像中，noobs及.bk_noobs目录保留。该别名限制并非本次切源新增，不宣称NOOBS安装器兼容验收。
-  bootstrap:
-    status: official-handoff-complete
-    job: libreelec-sync-1791050061
-    succeeded_at: '2026-10-03T18:38:22Z'
-    published_at: '2026-10-03T18:38:30Z'
-    note: USTC初始化于2026-10-03T18:38:22Z成功、18:38:30Z发布。2026-10-04官方切源完成：libreelec-sync-1791110389于10:40:01Z成功，10:40:12Z发布libreelec-snap-1791110389；新快照/PVC与Ready匹配，公网清单及完整149601724字节系统镜像SHA256通过后解除暂停。
   upstreams:
   - url: rsync://rsync.mirrors.ustc.edu.cn/libreelec/
     surveyed_at: '2026-10-03'

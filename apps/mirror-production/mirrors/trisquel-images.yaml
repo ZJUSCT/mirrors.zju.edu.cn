@@ -28,13 +28,6 @@ comment:
     - 官方模块内 trisquel-archive-signkey.gpg 是指向 /home/archive/trisquel/trisquel-archive-signkey.gpg 的绝对外部链接；现有 --safe-links 应排除此链接，不能取消保护或扩大同步根。ISO
       的 .asc 文件必须保留，验证公钥可从项目 HTTPS 独立取得。
     - 现有 rsync 模板可直接处理该文件树，不需要 ftpsync/qfm/tsumugu 或新同步器；切换前必须审阅生产 dry-run，确认缺失链接不会影响 ISO/签名文件发布。
-  bootstrap:
-    status: succeeded-and-published-paused
-    job: trisquel-images-sync-1791044076
-    succeeded_at: '2026-10-03T16:31:59Z'
-    published_at: '2026-10-03T16:32:07Z'
-    note: USTC 首次同步与快照发布成功，Ready=True；自动同步仍暂停，本次只复核官方资料和端点，没有官方切源。
-    official_interval_candidate: 24h
   upstreams:
   - url: rsync://mirror.csclub.uwaterloo.ca/trisquel/iso/
     stack: dual

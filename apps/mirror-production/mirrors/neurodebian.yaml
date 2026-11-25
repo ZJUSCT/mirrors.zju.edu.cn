@@ -25,12 +25,6 @@ comment:
     - 官方 FAQ 明确仓库可用 rsync 镜像，并要求镜像赞助者联系项目；候选模块为 rsync://neuro.debian.net/neurodebian/。
     - FAQ 标出仓库签名密钥 0x439754ED1F42AA2C；根列表显示 .timestamp、dists/、extracts/、pool/、vm/，应保持这些范围和 APT 元数据边界。
     - 未查到官方固定同步周期；6h 是本站本地排程候选，不是官方要求。
-  bootstrap:
-    status: migrated-from-ustc
-    job: neurodebian-sync-1790954927
-    succeeded_at: '2026-10-02T19:39:35Z'
-    published_at: '2026-10-02T19:39:45Z'
-    note: 2026-10-02由USTC初始化成功并发布；2026-11-22切换至 rsync://mirror.aarnet.edu.au/neurodebian/（保留 -6，interval=6h）。
   upstreams:
   - url: rsync://mirror.aarnet.edu.au/neurodebian/
     surveyed_at: '2026-11-22'

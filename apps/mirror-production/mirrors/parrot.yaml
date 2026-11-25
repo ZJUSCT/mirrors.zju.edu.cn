@@ -25,9 +25,6 @@ comment:
     policy:
     - 官方完整仓库 rsync 模块为 /parrot（包含 ISO）；文档示例 cron 每日一次并使用 --delete-after。
     - rsync.parrot.sh 使用 GeoDNS 自动分配最近上游，IPv6 (-6) 实测超时，不强制 -6（sync.ipv6=false）可直连通过。
-  bootstrap:
-    note: 已在 s1 验证官方 rsync.parrot.sh 与现有 PVC（196,657 个文件 / 951.14G）完全一致，切源至官方并调整同步周期为 6h。
-    official_interval: 24h
   upstreams:
   - url: rsync://rsync.parrot.sh/parrot/
     surveyed_at: '2026-11-21'

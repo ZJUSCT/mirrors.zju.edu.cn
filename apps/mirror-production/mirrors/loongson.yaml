@@ -34,8 +34,6 @@ comment:
     stack: ipv6
     note: 生产采用 rsync -6；切源 dry-run 的新增、删除、普通文件传输均为 0。真实官方任务 loongson-sync-1790955319 于 2026-10-02T15:35:29Z 成功，官方快照于 15:35:37Z
       发布，Ready=True；已解除暂停，按 24h 自动同步。
-  bootstrap:
-    note: USTC 初始化、官方差异审阅、真实官方同步和公开发布校验均已完成。dry-run 检查 4431 项（含 57 个软链接），未发现需转移层级或删除的差异；不再处于等待官方切源或等待解除暂停状态。
   verification:
     surveyed_at: '2026-10-02'
     checks:

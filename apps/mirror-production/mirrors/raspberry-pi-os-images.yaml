@@ -46,14 +46,6 @@ comment:
     - 官方release_notes最新条目2026-09-15；官方Imager v4元数据标识stable为Debian Trixie、legacy为有安全更新的Debian Bookworm，两者都有2026-09-15镜像。rpd_x86/images最近目录仍为2022-07-04；这是需保留的历史PC发行，不能据此断言整个项目停更。
     - 已读目录与发行元数据未规定下游同步频率或强制登记；软件与安装文档页面本轮403，根README为404，因此不宣称已完成全部官方政策核实。24h仅保留为本站暂定周期，不是官方要求；不将发行日期当作同步调度规范。未联系维护者。
     - 本条目仅镜像既有静态文件。根os_list_imagingutility_v4.json等不在种子范围，下载仅用于核验；其URL指向downloads.raspberrypi.com且含外部系统。无需为发布原始文件重写JSON；若将来提供完整Imager目录服务，应另行设计URL/签名/外部依赖与范围，不在此次自动扩容。
-  bootstrap:
-    status: succeeded-and-published-paused
-    job: raspberry-pi-os-images-sync-1791121274
-    succeeded_at: '2026-10-04T16:52:00Z'
-    published_at: '2026-10-04T16:52:10Z'
-    note: 保存的rollout-live.json记录activePVC/activeSnapshot=raspberry-pi-os-images-snap-1791121274，Ready=True、Degraded=False，自动同步暂停；sizeBytes=352579485696，配置692Gi。本轮未查询或修改集群。
-    official_interval_candidate: 24h
-    official_cutover_state: viable-existing-tsumugu-pending-filtered-production-validation
   upstreams:
   - url: https://downloads.raspberrypi.org/
     surveyed_at: '2026-11-21'

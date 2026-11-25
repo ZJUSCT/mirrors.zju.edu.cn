@@ -29,9 +29,6 @@ comment:
     - N.WTF测试仓库debian-repo.xxx.sb含未测试构建，官方明确现有镜像仅接收测试发布后的包；不要把测试仓库作为生产上游。
     - 未发现官方强制同步周期；interval/timeout均24h是本站候选日常配置，不是官方要求。工作站一次非递归rsync列表成功不等于生产出口或指定IPv4/IPv6均验证。
     - sb与xtom必须独立：sb来自mirrors.xtom.com的repo模块下sb/；xtom来自另一个主机rsync.repo.xtom.com的repo模块，根只有deb/、rpm/、README.md、xtom.key，不包含sb。两个repo模块名称相同不代表同一树。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-02由USTC初始化；2026-11-21在s1通过 --list-only 逐路径比对官方源与本地完全一致（903=903，0增0删），已切换至 rsync://mirrors.xtom.com/repo/sb/（-6，interval=6h）。
   upstreams:
   - url: rsync://mirrors.xtom.com/repo/sb/
     surveyed_at: '2026-11-21'

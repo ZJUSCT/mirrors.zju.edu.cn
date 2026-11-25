@@ -28,9 +28,6 @@ comment:
     - 未找到官方固定同步周期；现配置24h是本地选择，不能写成官方频率。官方HTTPS php/README.txt安装示例要求debsuryorg-archive-keyring.gpg与signed-by，镜像应保留密钥/Release校验。
     - 官方daemon/module只读列表已成功，但2026-10-04生产IPv6 rsync预检被服务器显式拒绝 --dry-run (-n)，exit12。官方入口已确认且能连通；当前阻塞是无法审阅全树差异与删除集，不是未找到官方源。不能跳过预检直接使用
       --delete 真实同步或绕过上游限制。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-03由USTC初始化发布（约8.0G不完整子集）；2026-11-21通过 --list-only 统计官方全量为 47,873 文件 / 41.76GiB，已扩容 storage.size 至 64Gi 并切至官方 rsync://rsync.sury.org/repositories/（-6，interval=6h）。
   upstreams:
   - url: rsync://rsync.sury.org/repositories/
     surveyed_at: '2026-11-21'

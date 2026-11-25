@@ -50,6 +50,3 @@ comment:
     surveyed_at: '2026-11-21'
     metrics: IPv4 实测约 16KB/s
     note: '旧主机 873 端口虽通但无 IPv6 且下载仅约 16KB/s；MOTD 仍标注 2024-05-01 退役。'
-  bootstrap:
-    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
-    reported_size: 336G

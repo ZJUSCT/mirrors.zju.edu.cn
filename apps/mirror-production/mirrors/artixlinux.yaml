@@ -54,6 +54,3 @@ comment:
     note: 项目域名 daemon 公布 Artix repositories；根目录与 mirror2 同为 lastsync+15 个仓库目录。生产节点实际读取 world-goblins.links.tar.gz 成功，
       完整 dry-run 退出 0，无删除，数据库及元数据可同步，另有 2 个数据库符号链接待恢复及文件权限差异。当前官方 HTTPS mirrorlist 未列此主机，按运维指定选用。
       HTTPS 对应路径为 /repos/，不同于 mirror2 的网站根路径。
-  bootstrap:
-    note: 历史上由 TUNA 完成初始化，随后 mirror2 同步因上游元数据权限失败；2026-10-31 改用 mirror1。
-    reported_size: 54.5G

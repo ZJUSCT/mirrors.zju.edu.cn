@@ -23,9 +23,6 @@ comment:
     policy:
     - applicationdata不是kdeftp，也不是包含两者的alldata；root含digikam/kdenlive/krita/kde-linux等，原样目录树。
     - 官方明确in-app data必须每2h
-  bootstrap:
-    note: 用户已通知 USTC；初始放行由会话按并发上限控制。官方源可行时验证后切换，否则先记录阻塞，不擅自改写内容。
-    official_interval_candidate: 2h
   upstreams:
   - url: rsync://rsync.kde.org/applicationdata/
     stack: dual

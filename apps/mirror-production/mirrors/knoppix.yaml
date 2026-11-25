@@ -26,9 +26,6 @@ comment:
     - 本次官方 `rsync://ftp.uni-kl.de/knoppix/` 根列表成功，但文件/目录时间多为 2021-02-19；列表新鲜度显著落后当前日期，不能直接据连通性宣布官方 cutover 可用。
     - CD 树含 ISO、`.md5/.sha1/.sha256` 及对应 `.asc` 签名文件，并有 `DVD` 绝对/相对模块链接；切换前需核对链接边界和签名。
     - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-03由USTC初始化；2026-11-21在s1验证官方master ftp.uni-kl.de IPv6(-6) dry-run 与本地完全一致（816文件/7.35G，0增0删），已切换（归档保留24h）。
   upstreams:
   - url: rsync://ftp.uni-kl.de/knoppix/
     surveyed_at: '2026-11-21'

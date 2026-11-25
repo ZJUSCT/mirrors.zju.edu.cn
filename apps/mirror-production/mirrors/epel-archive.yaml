@@ -38,12 +38,6 @@ comment:
     - 本项仅保留USTC现有EPEL7子集，不是完整EPEL历史全集。2026-10-04获准的两次HTTP目录元数据读取确认：/epel-archive/仅含7/，/epel-archive/7/含aarch64/、source/、SRPMS/、x86_64/及58字节state；公开路径保持/epel-archive/7/<架构>/。
     - 官方/pub/archive/epel/7/还包含ppc64/、ppc64le/，种子未展示这些目录；已配置 --include 白名单仅保留 aarch64/、source/、SRPMS、x86_64/、state，不自动加入新架构。
     - 现有rsync模板通过 extra_args 传入 -R 与白名单即可保持同范围（2026-11-21 在 s1 节点 IPv6(-6) dry-run 34s：40,105 文件 / 87.89G，0 新增，0 删除），无需增加新同步类型。
-  bootstrap:
-    status: migrated-from-ustc
-    job: epel-archive-sync-1791277707
-    succeeded_at: '2026-10-06T11:56:59Z'
-    published_at: '2026-10-06T11:57:08Z'
-    note: 2026-10-06由USTC初始化成功并发布；2026-11-21切换至 Fedora Tier1 ftp-stud.hs-esslingen.de（IPv6 -6 + -R 白名单，interval=24h）。
   upstreams:
   - url: rsync://ftp-stud.hs-esslingen.de/fedora-archive/epel/./7/
     surveyed_at: '2026-11-21'

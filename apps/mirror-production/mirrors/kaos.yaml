@@ -61,6 +61,3 @@ comment:
     status: alternative
     surveyed_at: '2026-10-02'
     note: 官方状态页列出的 HTTPS 树可列目录且布局相同；其 rsync 端口在工作站超时。优先使用 kaosx.org 的直接 rsync。
-  bootstrap:
-    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。
-    reported_size: 20.7G

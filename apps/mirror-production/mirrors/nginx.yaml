@@ -33,12 +33,6 @@ comment:
     - APT component为nginx；Debian/Ubuntu稳定与mainline仓库分开。RPM文档要求gpgcheck=1；APK使用独立RSA公钥。保留原元数据、包及签名，不重签，不用trusted=yes或关闭校验。keys/nginx_signing.key已包含多个签名钥，不应只保留文档示例中的旧主钥。
     - 官方说明公钥和包在同一服务器，建议进一步认证钥的真实性；本轮信任锚来自官方HTTPS，未做Web of Trust或带外认证。两份实际InRelease签名钥为8540A6F18833A80E9C1653A42FD21310B49F6B46。
     - 所查官方Linux packages/PGP页未给公开rsync模块、强制轮询周期或镜像登记前置要求；不据此推断未公开政策。6h仅是本地排程候选。现有tsumugu nginx解析器可读取官方树，无需新增同步类型或脚本。
-  bootstrap:
-    status: migrated-from-ustc
-    job: nginx-sync-1791153916
-    succeeded_at: '2026-10-05T00:12:28Z'
-    published_at: '2026-10-05T00:12:39Z'
-    note: 2026-10-05由USTC初始化成功并发布；2026-11-21切换为官方 HTTPS + tsumugu（parser=nginx, threads=8, max_delete=100, interval=6h），并修正 description。
   upstreams:
   - url: https://nginx.org/packages/
     surveyed_at: '2026-11-21'

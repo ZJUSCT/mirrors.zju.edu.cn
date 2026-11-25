@@ -32,9 +32,6 @@ comment:
     - 官方APT说明使用signed-by密钥；RPM官方xtom.repo启用gpgcheck=1，gpgkey=https://repo.xtom.com/xtom.key。更换下载baseurl为本站时仍保留密钥与签名校验，不改成gpgcheck=0。
     - 2026-10-03 生产节点通过 IPv6 连到官方 rsync.repo.xtom.com/repo/，但服务器明确拒绝 --dry-run (-n)。这不是尚未找到入口或连通性问题；在删除集无法审阅前保持暂停，不跳过预检直接用
       --delete 真实同步，也不通过更换参数绕过上游限制。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-02由USTC初始化发布；2026-11-21在s1用 --list-only 逐路径比对官方源与本地完全一致（204=204，0增0删），已切至官方 rsync://rsync.repo.xtom.com/repo/（-6，interval=6h）。
   upstreams:
   - url: rsync://rsync.repo.xtom.com/repo/
     surveyed_at: '2026-11-21'

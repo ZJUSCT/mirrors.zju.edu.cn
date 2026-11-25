@@ -27,9 +27,6 @@ comment:
     - ftp.ca.vim.org/vim/的rsync列表当前可用(exit 0)，但它是页面列出的历史加拿大镜像树，不是Vim项目官方rsync源；根含1990年代网页/平台目录和历史发布文件，适合历史归档而非最新发行更新。
     - 官方未给历史FTP同步周期；现配置24h是本地归档更新选择。不能把GitHub源码树强行替换成Vim FTP发布树，也不能从GitHub latest推断归档目录应删除。
     - 保留历史文件、格式和相对链接；若未来改为Git同步，需要另一个明确的Git同步定义，当前任务不改同步类型。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-03由USTC初始化完成；2026-11-21在s1验证 rsync://ftp.ca.vim.org/vim/ IPv6(-6) dry-run 与本地完全一致（23,507文件/6.14G，0增0删），已切换上游（归档保留24h）。
   upstreams:
   - url: rsync://ftp.ca.vim.org/vim/
     surveyed_at: '2026-11-21'

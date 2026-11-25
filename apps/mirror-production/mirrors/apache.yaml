@@ -24,9 +24,6 @@ comment:
     policy:
     - 官方 apache-dist rsync 模块仍开放；指南建议每日同步 4 次（6h），保留 --delete 与 --safe-links 且不改写 HEADER.html/README.html。
     - 现有 rsync 模板（含 -6）可直接与官方双栈源配合，无需额外排他规则。
-  bootstrap:
-    note: 已在 s1 验证官方 rsync.apache.org/apache-dist/ 与现有 PVC（339G / 800G）对齐，正式切源并设为 6h。
-    official_interval: 6h
   upstreams:
   - url: rsync://rsync.apache.org/apache-dist/
     surveyed_at: '2026-11-21'

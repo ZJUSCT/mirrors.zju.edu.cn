@@ -26,9 +26,6 @@ comment:
     - 本次官方 `rsync://ftp.uni-kl.de/knoppix-dvd/` 根列表成功，但最新列出的 KNOPPIX_V9.1DVD 文件时间为 2021-02-19，不能视作当前新鲜官方增量。
     - DVD 根含 ISO、校验和、`.asc` 签名、`packages-dvd.txt` 等；以 ISO 与签名文件成对验收，避免只同步 ISO。
     - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-03由USTC初始化；2026-11-21在s1验证官方master ftp.uni-kl.de IPv6(-6) dry-run 与本地完全一致（269文件/18.68G，0增0删），已切换（归档保留24h）。
   upstreams:
   - url: rsync://ftp.uni-kl.de/knoppix-dvd/
     surveyed_at: '2026-11-21'
