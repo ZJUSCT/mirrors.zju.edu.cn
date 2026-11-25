@@ -33,14 +33,6 @@ comment:
       symlink 均为同层 grd 或 server/earth 内部目标，保留 safe-links 和相对链接语义。
     - gmt_data_server.txt 是版本/数据集目录说明，gmt_hash_server.txt 提供当前示例的64位十六进制SHA256和大小；保留历史目录/索引。未发现本轮可用签名认证流程，不应把散列一致当发行者签名。
     - 2026-10-04已完成生产IPv4同过滤dry-run、Oceania真实同步与新快照公网数据验收；启用24h自动同步，保留24h任务timeout和164Gi容量。未执行镜像登记或联系。
-  bootstrap:
-    note: USTC初始化完成。官方Job gmtdata-sync-1791145953于2026-10-04T20:32:55Z同步成功，20:32:58Z Job完成、20:33:04Z发布gmtdata-snap-1791145953；rsync
-      exit0，新快照/PVC和Ready匹配，公网校验后解除暂停。
-    official_interval_candidate: 24h
-    status: official-handoff-complete
-    job: gmtdata-sync-1791047557
-    succeeded_at: '2026-10-03T21:00:37Z'
-    published_at: '2026-10-03T21:00:45Z'
   validation:
     observed_at: '2026-10-04'
     completed:

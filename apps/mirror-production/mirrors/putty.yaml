@@ -41,6 +41,3 @@ comment:
     status: selected
     surveyed_at: '2026-10-02'
     note: 官方文档精确指定当前模块；生产 IPv4 回源成功，完整 dry-run 为 891 项、0 新增、0 删除、0 文件传输。当前 -4 与实际可用协议族保持一致。
-  bootstrap:
-    note: TUNA 初始化、官方源只读 dry-run、官方源真实同步、快照发布及 HTTP 文件内容校验均已通过，已恢复自动同步。
-    reported_size: 88.3M

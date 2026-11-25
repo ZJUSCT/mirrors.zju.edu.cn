@@ -27,9 +27,6 @@ comment:
     - Kodi 官方 Wiki（Mirrors）指定全球非美区镜像统一从欧洲 Tier 1（RWTH Aachen）rsync://ftp.halifax.rwth-aachen.de/xbmc/ 拉取；官方建议同步间隔数小时一次（最长不超过 24h），本站采用 6h。
     - rsync.kodi.tv 的 main/euro 仅面向各大洲主 Tier 1（gatech.edu 与 ftp.halifax.rwth-aachen.de）开放，普通下游镜像不直接连接 rsync.kodi.tv。
     - 保持现有 rsync 模板参数（-6、--delete、--safe-links），保留 exit 24 失败语义。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-05 由 USTC 初始化并发布 Ready=True；2026-11-22 切换至官方指定非美区 Tier 1 上游 rsync://ftp.halifax.rwth-aachen.de/xbmc/（-6，interval=6h）。
   upstreams:
   - url: rsync://ftp.halifax.rwth-aachen.de/xbmc/
     surveyed_at: '2026-11-22'

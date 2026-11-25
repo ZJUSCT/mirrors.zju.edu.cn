@@ -29,9 +29,6 @@ comment:
     - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
     - 2026-10-04 03:54 UTC，在生产IPv6检查Pod中对官方精确模块执行rsync dry-run；服务器显式拒绝 --dry-run (-n)，exit12。官方入口已确认且可连接，阻塞在无法审阅完整差异/删除集；不绕过该限制执行真实
       --delete 同步。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-03由USTC初始化；2026-11-21在s1通过 --list-only 比对远端与本地差异仅正常APT轮转（+773/-345），已切至官方 rsync://www.deb-multimedia.org/deb/（-6，interval=6h）。
   upstreams:
   - url: rsync://www.deb-multimedia.org/deb/
     surveyed_at: '2026-11-21'

@@ -41,9 +41,6 @@ comment:
       tsumugu 的稳定 parser、包签名和链接范围完全适配。
     - 官方目录包含 Debian 多发行版目录（含 trixie、bookworm、noble、resolute 等）及 dist/；切换前必须固定范围、检查 Release/Packages 签名和淘汰目录，不能把所有历史目录自动删除。
     - 未找到官方固定同步周期；当前 24h 是本地排程候选，不是官方要求。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-03由USTC初始化（10.26GiB 子集）；2026-11-22 扩容 storage.size 至 64Gi 并切至官方 HTTPS https://download.zerotier.com/（tsumugu parser=nginx, threads=8, --timezone 0, interval=1h）。
   upstreams:
   - url: https://download.zerotier.com/
     surveyed_at: '2026-11-24'

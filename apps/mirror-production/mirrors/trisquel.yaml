@@ -23,9 +23,6 @@ comment:
     policy:
     - USTC .info 与官方 .org 当前解析同IP；完整APT包树，大体积2.35TiB。
     - 官方2026-08建议包库4TB空间，文档未给频率；不将.iso模块与包库合并。
-  bootstrap:
-    note: 用户已通知 USTC；初始放行由会话按并发上限控制。官方源可行时验证后切换，否则先记录阻塞，不擅自改写内容。
-    official_interval_candidate: 6h
   upstreams:
   - url: rsync://mirror.csclub.uwaterloo.ca/trisquel/packages/
     stack: dual

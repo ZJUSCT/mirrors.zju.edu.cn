@@ -41,12 +41,6 @@ comment:
     - APT Debian component为openresty，Ubuntu为main；官方分别给出签名钥与仓库路径。RPM/APK也有独立元数据/签名机制。保持索引、包、签名和旧钥原文，不重签名，不用trusted=yes，不能把更新的pubkey2.gpg自动替代所有仓库的旧钥。
     - 未找到公开rsync模块或镜像固定轮询/登记前置要求；6h仅为本地排程候选。没有rsync并不构成四类工具全部不支持：本轮已经实测现有tsumugu nginx解析器可枚举官方树。
     - 现有tsumugu模板支持parser=nginx，无需新增类型/脚本。默认HTTP递归可发现APT池、RPM repodata及APK文件；不用fallback忽略目录、忽略404或信任HTML时间戳来掩盖缺失。已有树的历史/平台范围仍需完整差异审核。
-  bootstrap:
-    status: migrated-from-ustc
-    job: openresty-sync-1791078322
-    succeeded_at: '2026-10-04T03:54:14Z'
-    published_at: '2026-10-04T03:54:22Z'
-    note: 2026-10-04由USTC初始化成功并发布；2026-11-21切换至官方 HTTPS + tsumugu（parser=nginx, threads=8, max_delete=100, interval=6h），通过 --exclusion-v2 排除上游 HTTP 404 的 amazon/2022.0.* 目录，并补齐 alinux/amazon/oracle/tlinux。
   upstreams:
   - url: https://openresty.org/package/
     surveyed_at: '2026-11-24'

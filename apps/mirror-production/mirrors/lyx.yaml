@@ -48,6 +48,3 @@ comment:
     status: preferred-candidate
     surveyed_at: '2026-10-02'
     note: 官方下载页明示与 ftp.lyx.org 为同一主站，HTTPS 证书校验通过，/pub/lyx/ 索引与现用 HTTP 一致；生产切换仍须执行完整同步和发布验收。
-  bootstrap:
-    note: TUNA 初始化、官方源只读 dry-run、官方源真实同步、快照发布及 HTTP 文件内容校验均已通过，已恢复自动同步。
-    reported_size: 31.3G

@@ -23,9 +23,6 @@ comment:
     policy:
     - USTC remi是已经拼合的enterprise/fedora及根文件；官方主站 rpms.remirepo.net 对未登记 IP 拒绝直连，改从官方镜像列表内的完整双栈镜像 mirror.netone.nl 同步。
     - 官方 FAQ 未规定固定同步周期；本站选用 6h。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-02由USTC初始化；2026-11-22在s1实测全部28个官方IPv6+rsync镜像，仅 mirror.netone.nl 在30s内完成76.8万文件dry-run，并交叉验证删除集为官方主站已清理(HTTP 404)的旧RPM，已切换（-6，interval=6h）。
   upstreams:
   - url: rsync://mirror.netone.nl/remi/
     surveyed_at: '2026-11-22'

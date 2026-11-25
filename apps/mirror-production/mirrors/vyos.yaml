@@ -37,9 +37,6 @@ comment:
     - 官方安装文档要求用VyOS发布签名公钥/minisign验证镜像；rolling公钥由vyos-nightly-build仓库公开。保留签名文件和验证路径，不能把HTTP目录200当作镜像完整性。
     - packages.vyos.net:873连接超时(exit 35)，未发现可用官方rsync模块；官方候选是HTTPS静态树。
     - 未发现官方固定同步周期；现配置24h是本地选择，不是VyOS政策。现有rsync类型不能直接切HTTPS，生产cutover保持阻塞。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-11-22 切换至官方 HTTPS https://packages.vyos.net/（tsumugu parser=nginx, threads=8, interval=1h），使用 --exclusion-v2 排除受 403 访问控制的 LTS 目录。
   upstreams:
   - url: https://packages.vyos.net/
     surveyed_at: '2026-11-22'

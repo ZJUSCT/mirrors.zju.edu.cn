@@ -41,9 +41,6 @@ comment:
     - 根下有版本目录以及其他平台/文档资源；3.14.0 包含源码压缩包、Windows MSI/EXE、签名bundle等，不能只同步tarball。维持文件时间戳、相对路径和伴随元数据，不改写签名材料。
     - 官方说明 Python 3.14 起只提供 Sigstore 验证；较早系列还提供 legacy OpenPGP。验证需要匹配发布者证书身份和OIDC issuer；不能把缺少.asc当3.14发布损坏，也不能把bundle字节相同当签名验证成功。
     - 未找到本轮可确认的官方公共 rsync 或固定镜像轮询周期；24h 是本站选择。HTTPS已有parser候选，应继续验证，而非因没有rsync就判定现有四类模板均不支持。
-  bootstrap:
-    status: migrated-from-ustc
-    note: 2026-10-03由USTC初始化（job python-sync-1791052733）；2026-11-22切换至官方 HTTPS + tsumugu（parser=nginx, threads=8, interval=24h），并将 storage.size 从 180Gi 扩至 256Gi。
   validation:
     observed_at: '2026-11-22'
     completed:

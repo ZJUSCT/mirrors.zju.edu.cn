@@ -74,7 +74,3 @@ comment:
     status: obsolete
     surveyed_at: '2026-10-03'
     note: 计划中的旧 FTP 主机当前 DNS 不可用，不能作为切源。
-  bootstrap:
-    note: TUNA 初始化已成功完成，当前保持 sync-paused；官方 HTTPS wine/ 内容可读，但直接以 wine/ 为 URL 会丢失 TUNA 既有 wine/ 前缀，父根 include/exclude
-      尚未通过通用验证，保持暂停。
-    reported_size: 54.5G

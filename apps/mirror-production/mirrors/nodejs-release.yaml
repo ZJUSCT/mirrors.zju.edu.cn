@@ -47,14 +47,6 @@ comment:
     - 官方https://nodejs.org/dist/是可继续验证的tsumugu候选：本机现有nginx解析器对根及v26.10.0叶目录非递归list均退出0，无需先开发新同步器；这不证明生产网络、完整范围或删除集已通过。latest别名展开、历史文件、隐藏文件及种子链接/硬链接语义仍需全树核对。
     - 官方验证说明要求使用nodejs/release-keys可信keyring验证SHASUMS256.txt.asc，再核对下载文件SHA256。仅有index.json或目录可列不能当成二进制真实性验证。
     - 本轮所读官方资料没有给出镜像注册前置或固定同步周期，不能虚构要求，也不能以可下载代替政策确认。24h保留为本地候选。ftpsync/qfm没有证明适用于此发行树，不替代范围与完整性验收。
-  bootstrap:
-    status: succeeded-and-published-paused
-    job: nodejs-release-sync-1791215428
-    succeeded_at: '2026-10-06T00:34:39Z'
-    published_at: '2026-10-06T00:34:47Z'
-    note: hourly-live.json确认同步成功，匹配nodejs-release-snap-1791215428已发布且Ready；仍使用USTC源并暂停，未执行官方切源。
-    official_interval_candidate: 24h
-    official_cutover_blocker: 官方rsync对应HTTP索引仍严重陈旧，已有绝对软链接风险；官方HTTPS+现有tsumugu nginx有可行候选，尚待生产全树范围/删除集、别名和容量检查、签名及文件摘要验证与真实同步发布，属于可继续调查的技术待办。
   upstreams:
   - url: https://nodejs.org/dist/
     surveyed_at: '2026-11-24'

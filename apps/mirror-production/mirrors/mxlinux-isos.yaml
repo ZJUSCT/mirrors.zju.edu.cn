@@ -62,5 +62,3 @@ comment:
     status: fallback
     note: antiX 官方下载页认可的社区镜像，匿名 rsync 根列表通过；仅作备选，尚未执行完整内容/集群验证。
     surveyed_at: '2026-10-02'
-  bootstrap:
-    note: TUNA 初始化、官方源只读 dry-run、真实回源、快照发布及公开 HTTP 文件 SHA256 校验均已通过；已满足恢复自动同步条件。

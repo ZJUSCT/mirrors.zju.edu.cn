@@ -25,8 +25,6 @@ comment:
     - 当前USTC路径与官方精确模块rfcs匹配，保持模块根内容到发布根的直接映射；不要误用everything-ftp或只文本/PDF/JSON子集。
     - 官方未发布固定同步周期；RFC新增/索引变化由发布流程驱动，现配置24h是本地选择。
     - 2026-10-03工作站官方daemon根与rfcs一级列表exit0；2026-10-04生产IPv6 dry-run、真实同步和新快照发布已完成。保留文本、PDF、JSON、XML、索引及内部链接，未改变模块范围或重写内容。
-  bootstrap:
-    note: USTC初始化完成后，2026-10-04已正式切到rsync://ftp.rfc-editor.org/rfcs/（IPv6，24h本站周期）。官方job rfc-sync-1791075102于00:52:24Z成功，00:52:33Z发布rfc-snap-1791075102；Ready=True，五项公网/官方内容一致后已解除sync-paused。GitOps自动同步未启用。
   upstreams:
   - url: rsync://rsync.mirrors.ustc.edu.cn/rfc/
     surveyed_at: '2026-10-03'

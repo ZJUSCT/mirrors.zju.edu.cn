@@ -27,12 +27,6 @@ comment:
     - Document Foundation 明确公共 rsync 源为 rsync://rsync.documentfoundation.org/tdf-pub/；staging 源需授权，不能用于本次公开镜像。
     - 官方要求镜像同步到顶层 tdf/，保留原目录层级，并提供 HTTPS；公共源建议每 4–8h。镜像登记需向 hostmaster@documentfoundation.org 提交运营者、tdf HTTPS/FTP/rsync URL、联系方式和带宽信息。
     - 官方对 public repository 建议每 4–8h 同步；本站已配置为 6h，符合官方建议。
-  bootstrap:
-    status: migrated-from-ustc
-    job: libreoffice-sync-1790969988
-    succeeded_at: '2026-10-02T22:14:56Z'
-    published_at: '2026-10-02T22:15:05Z'
-    note: 2026-10-02由USTC初始化成功并发布；2026-11-21切换至官方公共源 rsync://rsync.documentfoundation.org/tdf-pub/（保留 -6，interval=6h）。
   upstreams:
   - url: rsync://rsync.documentfoundation.org/tdf-pub/
     surveyed_at: '2026-11-21'

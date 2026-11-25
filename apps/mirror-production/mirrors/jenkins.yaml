@@ -33,12 +33,6 @@ comment:
     - 官网容量参考为至少300Gb存约一年、全量约600Gb，属于文档估计而非本次容量测量。USTC成功快照181061812224字节约168.63GiB，卷364Gi，不能据此证明官方过滤树或无过滤全量可容纳；切源前需同过滤完整dry-run、增删集和后端可用空间审阅。
     - 现有rsync模板直接command=[rsync]，仅支持追加参数及密码Secret；init容器只初始化卷owner，没有动态过滤文件下载、校验、原子替换、失败终止或额外挂载机制。单加--include-from参数无法取得安全新过滤文件；ftpsync/qfm/tsumugu现有配置也不能自动等价实现此rsync过滤树。可在既有rsync类型中补齐安全过滤准备能力，无需引入第五种同步工具，但本次未修改模板。
     - 过滤下载需先验证成功状态、完整性/合理结构，再在同一任务中使用不可变版本；失败、空文件或截断时应退出且不执行删除，不可将本次静态过滤文件永久固定。此次HTTPS 200仍以curl28超时，仅收到1097728/2726738字节，说明只检查HTTP状态或非空不足。随后单文件rsync有界下载exit0，取得完整2726738字节、52653行。
-  bootstrap:
-    status: migrated-from-ustc
-    job: jenkins-sync-1791080350
-    succeeded_at: '2026-10-04T10:04:25Z'
-    published_at: '2026-10-04T10:04:36Z'
-    note: 2026-10-04由USTC初始化成功并发布；2026-11-22切换至官方列表中的预裁剪高速镜像 rsync://mirror.netone.nl/jenkins/（保留 -6，interval=1h，继续留在标准 rsync 模板）。
   upstreams:
   - url: rsync://mirror.netone.nl/jenkins/
     surveyed_at: '2026-11-22'

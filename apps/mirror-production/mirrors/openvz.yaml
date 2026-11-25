@@ -36,14 +36,6 @@ comment:
       testing，testing不因名称而删掉。
     - 存在明确待查范围差异：官方kernel/branches/rhel6-2.6.32-testing列67项，ZJU列66项，缺debuginfo；官方debuginfo/HTTP200并列5子项，ZJU索引和普通公开URL均404。HTTP无法判断是USTC范围差异、断链、--safe-links跳过链接还是同步遗漏；不能称整树一致，也不擅自排除或扩充此分支。
     - 保留标准rsync -aH与--safe-links，不加-L/--copy-links；current、版本别名和debuginfo等真实链接类型/目标、隐藏文件、硬链接与跨根闭包须由固定快照lstat及后续上游rsync列表确认，HTTP显示directory不能代替此检查。
-  bootstrap:
-    status: succeeded-and-published-paused
-    job: openvz-sync-1791146014
-    succeeded_at: '2026-10-05T01:42:17Z'
-    published_at: '2026-10-05T01:42:28Z'
-    note: 父会话hourly-live.json保存状态：UID bd3ccb9e-4eb9-48dd-9ec1-d9024497e30f、generation2、resourceVersion26843739；lastSync.jobName与lastSnapshot.jobName均为本job，activePVC/activeSnapshot/lastSnapshot.name均为openvz-snap-1791146014，成功早于发布；Ready=True、Degraded=False、Progressing=False、sync-paused=true。sizeBytes=389714804736，capacity792Gi。核对了job/snapshot/publication对应关系，不只依赖Ready。本轮没有查询或修改集群。
-    official_interval_candidate: 1h
-    official_cutover_state: documented-rsync-candidate-pending-scope-discrepancy-and-production-validation
   upstreams:
   - url: rsync://mirror-hk.koddos.net/openvz/
     surveyed_at: '2026-11-21'

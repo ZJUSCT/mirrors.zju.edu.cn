@@ -30,12 +30,6 @@ comment:
       PVC也不能证明后端可用空间足够。
     - NetCologne实际daemon MOTD限定每IP最多4个rsync连接，并声明禁用checksum(-c)。切源使用普通大小/mtime dry-run与独立文件哈希验收，不添加-c或并行超过对方限制。
     - 现有rsync模板（--delete、--partial-dir=.rsync-partial）配合 Falcon ZFS 快照隔离发布，无需额外追加 --delete-after 或 --delay-updates。官网两段保留版数表述不完全一致（最新2版/3–4版），应以完整dry-run和实际源树为准，不自己按网页数字清理版本。
-  bootstrap:
-    status: migrated-from-ustc
-    job: mariadb-sync-1791075156
-    succeeded_at: '2026-10-04T02:18:53Z'
-    published_at: '2026-10-04T02:19:01Z'
-    note: 2026-10-04由USTC初始化成功并发布；2026-11-21切至 mirror.kku.ac.th 后实测白天长流跌至~85 KB/s并断流；2026-11-24先借 mirror.aarnet.edu.au（13~40 MiB/s）补全832G树，长期上游切至香港 xTom（rsync://mirrors.xtom.com.hk/mariadb/，IPv6 -6）。
   upstreams:
   - url: rsync://mirrors.xtom.com.hk/mariadb/
     surveyed_at: '2026-11-24'

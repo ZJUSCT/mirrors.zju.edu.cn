@@ -36,6 +36,3 @@ comment:
     status: selected
     surveyed_at: '2026-10-02'
     note: 生产 IPv6 rsync 已验证；完整 dry-run 为 2,498,911,046 字节且无差异，官方实际同步和 HTTP 文件哈希校验成功。官方文档确认二进制布局；公开 rsync 模块由项目自营域名提供。
-  bootstrap:
-    note: TUNA 初始化、官方源只读 dry-run、官方源真实同步、快照发布及 HTTP 文件内容校验均已通过，已恢复自动同步。
-    reported_size: 2.35G

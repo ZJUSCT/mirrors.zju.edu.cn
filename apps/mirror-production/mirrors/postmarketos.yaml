@@ -26,12 +26,6 @@ comment:
     - 项目现名 Nura，官方镜像页列出 rsync://mirror.nura.eco/postmarketos/（与原 mirror.postmarketos.org 同一主机）。
     - 有界根列表成功并显示 master 软链接、main/、extra-repos/ 及 v20.05 至 v26.06 版本树；切换时必须保留 symlink、目录层级和历史版本，不把 Nura 改名重写到发布路径。
     - 未查到官方固定同步周期；4h 为本站本地排程。
-  bootstrap:
-    status: migrated-from-ustc
-    job: postmarketos-sync-1790953371
-    succeeded_at: '2026-10-02T18:00:24Z'
-    published_at: '2026-10-02T18:00:32Z'
-    note: 2026-10-02由USTC初始化成功并发布；2026-11-21切换至官方新品牌域名 rsync://mirror.nura.eco/postmarketos/（保留 -6，interval=4h）。
   upstreams:
   - url: rsync://mirror.nura.eco/postmarketos/
     surveyed_at: '2026-11-21'

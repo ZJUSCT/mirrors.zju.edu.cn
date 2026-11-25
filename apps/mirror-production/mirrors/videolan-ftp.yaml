@@ -27,12 +27,6 @@ comment:
     - 有界根列表成功，包含 trace、keys 及多个项目目录（如 vlc、x264、x265）；目标是 videolan-ftp 范围，不得误用 videolan-ftp-full 或把 Mirrorbits HTTP 页面当 rsync
       源。
     - 未查到官方固定同步周期；6h 是本站本地排程候选，不是官方要求。
-  bootstrap:
-    status: migrated-from-ustc
-    job: videolan-ftp-sync-1790964749
-    succeeded_at: '2026-10-02T21:36:42Z'
-    published_at: '2026-10-02T21:36:50Z'
-    note: 2026-10-02由USTC初始化成功并发布；2026-11-22切换至官方 rsync://rsync.videolan.org/videolan-ftp/（官方主站 IPv6 超时故设 ipv6=false，interval=6h）。
   upstreams:
   - url: rsync://rsync.videolan.org/videolan-ftp/
     surveyed_at: '2026-11-22'
