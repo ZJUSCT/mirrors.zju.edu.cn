@@ -5,6 +5,20 @@ metadata:
   namespace: envoy-gateway
 spec:
   ipFamily: DualStack
+  bootstrap:
+    type: JSONPatch
+    jsonPatches:
+    # Envoy 默认将 cluster.* 的首个点号视为分隔符，导致名称含点号的路由坍缩成重复的
+    # envoy_cluster_total_match_count（触发 PrometheusDuplicateTimestamps）并产生畸形指标名。
+    # 开启默认标签覆盖并显式匹配完整 Gateway API 路由 / SecurityPolicy cluster 名。
+    - op: add
+      path: /stats_config/allow_default_tag_overrides
+      value: true
+    - op: add
+      path: /stats_config/stats_tags/-
+      value:
+        tag_name: envoy.cluster_name
+        regex: ^cluster\.(((?:httproute|grpcroute|tcproute|udproute|tlsroute)/[^/]+/[^/]+/rule/-?[0-9]+|securitypolicy/[^/]+/[^/]+/extauth/-?[0-9]+|.+?)\.)
   logging:
     level:
       default: warn
